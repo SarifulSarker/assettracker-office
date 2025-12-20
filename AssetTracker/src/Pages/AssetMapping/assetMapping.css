@@ -1,0 +1,5 @@
+.movable-item.glow {
+  box-shadow: 0 0 15px 3px #74c0fc;
+  transform: scale(1.03);
+  transition: all 0.2s;
+}
