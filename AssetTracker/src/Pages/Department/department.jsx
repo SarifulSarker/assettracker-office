@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button, Group, Text, Flex } from "@mantine/core";
+import { Button, Group, Text, Flex, Tooltip } from "@mantine/core";
 import { closeAllModals, modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
-import { IconEdit, IconTrash, IconPlus } from "@tabler/icons-react";
+import { IconEdit, IconTrash } from "@tabler/icons-react";
 
 import PageTop from "../../components/global/PageTop.jsx";
 import TablePaperContent from "../../components/global/TablePaperContent";
@@ -18,6 +18,8 @@ import {
   deleteDepartmentApi,
 } from "../../services/department.js";
 import useDebounce from "../../hooks/useDebounce.js";
+import dayjs from "dayjs";
+
 const PAGE_SIZE = 10;
 
 const Department = () => {
@@ -25,20 +27,26 @@ const Department = () => {
 
   const [page, setPage] = useState(1);
   const [searchKey, setSearchKey] = useState("");
+  const [status, setStatus] = useState("active"); // default active
   const [createModalOpened, setCreateModalOpened] = useState(false);
   const [editModalOpened, setEditModalOpened] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState(null);
 
-  const debouncedSearch = useDebounce(searchKey, 2000); // 3 sec delay
+  const debouncedSearch = useDebounce(searchKey, 1000);
 
+  // Convert status string to boolean
+  const statusBool =
+    status === "active" ? true : status === "inactive" ? false : undefined;
+   console.log(statusBool)
   // fetch departments
   const { data, isLoading, isRefetching, isPending } = useQuery({
-    queryKey: ["departments", page, debouncedSearch],
+    queryKey: ["departments", page, debouncedSearch, status],
     queryFn: () =>
       getAllDepartmentsApi({
         page,
         pageSize: PAGE_SIZE,
         search: debouncedSearch,
+        status: statusBool,
       }),
     keepPreviousData: true,
   });
@@ -46,15 +54,26 @@ const Department = () => {
   const departments = data?.data?.departments || [];
   const total = data?.data?.total || 0;
 
-  // search handler
-  const handleSearch = (e) => {
+  // Handlers
+  const handleSearchChange = (e) => {
     setSearchKey(e.currentTarget.value);
     setPage(1);
   };
 
-  // Delete department
+  const handleStatusChange = (value) => {
+    setStatus(value);
+    setPage(1);
+  };
+
+  const handleRefresh = () => {
+    setSearchKey("");
+    setStatus("active");
+    setPage(1);
+    queryClient.invalidateQueries(["departments"]);
+  };
+
   const deleteMutation = useMutation({
-    mutationFn: (id) => deleteDepartmentApi(id),
+    mutationFn: deleteDepartmentApi,
     onSuccess: () => {
       queryClient.invalidateQueries(["departments"]);
       closeAllModals();
@@ -76,7 +95,6 @@ const Department = () => {
     });
   };
 
-  // Edit modal
   const openEditModal = (department) => {
     setSelectedDepartment(department);
     setEditModalOpened(true);
@@ -84,64 +102,38 @@ const Department = () => {
 
   // Table headers
   const tableHeaders = [
+    { key: "sl", headerTitle: "SL", row: (v, r, i) => (page - 1) * PAGE_SIZE + i + 1 },
+    { key: "name", headerTitle: "Department Name", row: (v, r) => r.name },
     {
-      key: "sl",
-      headerTitle: "SL",
-      row: (v, row, index) => (page - 1) * PAGE_SIZE + index + 1,
-    },
-    { key: "name", headerTitle: "Department Name", row: (v, row) => row.name },
-    {
-      key: "is_active",
+      key: "status",
       headerTitle: "Status",
-      row: (value, row) => {
-        const active = row?.is_active;
-
-        return (
-          <span
-            style={{
-              padding: "4px 10px",
-              borderRadius: "12px",
-              fontSize: "12px",
-              fontWeight: 500,
-              color: active ? "#0f5132" : "#842029",
-              backgroundColor: active ? "#d1e7dd" : "#f8d7da",
-            }}
-          >
-            {active ? "Active" : "Inactive"}
-          </span>
-        );
-      },
+      row: (v, r) => (r.is_active ? "Active" : "Inactive"),
+    },
+    {
+      key: "createdAt",
+      headerTitle: "Created At",
+      row: (v, r) => dayjs(r.createdAt).format("DD-MM-YYYY hh:mm A"),
     },
     {
       key: "action",
       headerTitle: "Actions",
-      row: (v, row) => (
+      row: (v, r) => (
         <Group spacing="xs">
-          <Button
-            size="xs"
-            onClick={() => openEditModal(row)}
-            style={{ backgroundColor: "#3b82f6", color: "#fff" }}
-          >
-            <IconEdit size={14} />
-          </Button>
-          <Button
-            size="xs"
-            onClick={() => openDeleteModal(row.id)}
-            style={{ backgroundColor: "#ef4444", color: "#fff" }}
-          >
-            <IconTrash size={14} />
-          </Button>
+          <Tooltip label="Edit" withArrow>
+            <Button size="xs" onClick={() => openEditModal(r)} style={{ backgroundColor: "#3b82f6", color: "#fff" }}>
+              <IconEdit size={14} />
+            </Button>
+          </Tooltip>
+
+          <Tooltip label="Delete" withArrow>
+            <Button size="xs" onClick={() => openDeleteModal(r.id)} style={{ backgroundColor: "#ef4444", color: "#fff" }}>
+              <IconTrash size={14} />
+            </Button>
+          </Tooltip>
         </Group>
       ),
     },
   ];
-
-  // Refresh
-  const handleRefresh = () => {
-    setSearchKey("");
-    setPage(1);
-    queryClient.invalidateQueries(["departments"]);
-  };
 
   return (
     <div>
@@ -151,7 +143,9 @@ const Department = () => {
         filters={
           <DepartmentFilters
             searchKey={searchKey}
-            onSearchChange={handleSearch}
+            status={status}
+            onStatusChange={handleStatusChange}
+            onSearchChange={handleSearchChange}
             onRefresh={handleRefresh}
             onCreate={() => setCreateModalOpened(true)}
           />
@@ -159,21 +153,10 @@ const Department = () => {
         filterBadges={null}
         exportAndPagination={
           <Flex justify="flex-end" align="center">
-            <CustomPagination
-              page={page}
-              setPage={setPage}
-              total={total}
-              pageSize={PAGE_SIZE}
-            />
+            <CustomPagination page={page} setPage={setPage} total={total} pageSize={PAGE_SIZE} />
           </Flex>
         }
-        table={
-          <CustomTable
-            tableHeaders={tableHeaders}
-            data={departments}
-            isFetching={isPending || isLoading || isRefetching}
-          />
-        }
+        table={<CustomTable tableHeaders={tableHeaders} data={departments} isFetching={isPending || isLoading || isRefetching} />}
       />
 
       <DepartmentCreateModal

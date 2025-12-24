@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button, Group, Text, Flex } from "@mantine/core";
+import { Button, Group, Text, Flex, Tooltip } from "@mantine/core";
 import { useNavigate } from "react-router-dom";
 import { closeAllModals, modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
@@ -22,25 +22,29 @@ const Assets = () => {
 
   const [page, setPage] = useState(1);
   const [searchKey, setSearchKey] = useState("");
+  const [status, setStatus] = useState("active"); // default active
 
-  const debouncedSearch = searchKey;
+  const handleSearchChange = (e) => {
+    setSearchKey(e.currentTarget.value);
+    setPage(1);
+  };
 
-  const { data, isLoading, isFetching, isError, error } = useQuery({
-    queryKey: ["assets", page, debouncedSearch],
-    queryFn: () =>
-      getAllAssetsApi({ page, pageSize: PAGE_SIZE, search: debouncedSearch }),
-    keepPreviousData: true,
-  });
+  const handleStatusChange = (value) => {
+    setStatus(value);
+    setPage(1);
+  };
 
-  if (isError) return <Text color="red">{error.message}</Text>;
-
-  const assets = data?.data?.assets || [];
-  const total = data?.data?.total || 0;
+  const handleRefresh = () => {
+    setSearchKey("");
+    setStatus("active");
+    setPage(1);
+    queryClient.invalidateQueries(["assets"]);
+  };
 
   const deleteMutation = useMutation({
     mutationFn: (id) => deleteAssetApi(id),
     onSuccess: () => {
-      queryClient.invalidateQueries(["assets"]);
+      queryClient.invalidateQueries(["assets", page, searchKey, status]);
       closeAllModals();
       notifications.show({
         title: "Deleted",
@@ -60,12 +64,26 @@ const Assets = () => {
     });
   };
 
-  const handleSearchChange = (e) => setSearchKey(e.currentTarget.value);
-  const handleRefresh = () => {
-    setSearchKey("");
-    setPage(1);
-    queryClient.invalidateQueries(["assets"]);
-  };
+  // Convert status string to boolean before sending to API
+  const statusBool =
+    status === "active" ? true : status === "inactive" ? false : undefined;
+
+  const { data, isLoading, isFetching, isError, error } = useQuery({
+    queryKey: ["assets", page, searchKey, status],
+    queryFn: () =>
+      getAllAssetsApi({
+        page,
+        perpage: PAGE_SIZE,
+        search: searchKey,
+        status: statusBool,
+      }),
+    keepPreviousData: true,
+  });
+
+  if (isError) return <Text color="red">{error.message}</Text>;
+
+  const assets = data?.data?.assets || [];
+  const total = data?.data?.total || 0;
 
   const tableHeaders = [
     {
@@ -78,16 +96,16 @@ const Assets = () => {
       headerTitle: "Asset Name",
       row: (v, row) => row.name || "-",
     },
+    { key: "specs", headerTitle: "Specs", row: (v, row) => row.specs || "-" },
     {
       key: "mainCategory",
       headerTitle: "Category",
-      row: (v, row) =>
-        row.subCategory ? row.category?.name || "-" : row.category?.name || "-", // main category if no sub
+      row: (v, row) => row.category?.name || "-",
     },
     {
       key: "subCategory",
       headerTitle: "Subcategory",
-      row: (v, row) => row.subCategory?.name || "-", // show subcategory if exists
+      row: (v, row) => row.subCategory?.name || "-",
     },
     {
       key: "brand",
@@ -99,61 +117,41 @@ const Assets = () => {
       headerTitle: "Vendor",
       row: (v, row) => row.vendor?.name || "-",
     },
-    {
-      key: "status",
-      headerTitle: "Status",
-      row: (v, row) => row.status || "-",
-    },
-    {
-      key: "is_active",
-      headerTitle: "Status",
-      row: (value, row) => {
-        const active = row?.is_active;
 
-        return (
-          <span
-            style={{
-              padding: "4px 10px",
-              borderRadius: "12px",
-              fontSize: "12px",
-              fontWeight: 500,
-              color: active ? "#0f5132" : "#842029",
-              backgroundColor: active ? "#d1e7dd" : "#f8d7da",
-            }}
-          >
-            {active ? "Active" : "Inactive"}
-          </span>
-        );
-      },
-    },
     {
       key: "actions",
       headerTitle: "Actions",
       row: (v, row) => (
         <Group spacing="xs">
-          <Button
-            size="xs"
-            onClick={() => navigate(`/asset/edit/${row.id}`)}
-            style={{ backgroundColor: "#3b82f6", color: "#fff" }}
-          >
-            <IconEdit size={14} />
-          </Button>
-          <Button
-            size="xs"
-            onClick={() => openDeleteModal(row.id)}
-            style={{ backgroundColor: "#ef4444", color: "#fff" }}
-          >
-            <IconTrash size={14} />
-          </Button>
+          <Tooltip label="Edit Asset" withArrow>
+            <Button
+              size="xs"
+              onClick={() => navigate(`/asset/edit/${row.id}`)}
+              style={{ backgroundColor: "#3b82f6", color: "#fff" }}
+            >
+              <IconEdit size={14} />
+            </Button>
+          </Tooltip>
 
-          {/* Asset Log */}
-          <Button
-            size="xs"
-            onClick={() => navigate(`/asset-log/${row.id}`)}
-            style={{ backgroundColor: "#10b981", color: "#fff" }}
-          >
-            <IconHistory size={14} />
-          </Button>
+          <Tooltip label="Delete Asset" color="red" withArrow>
+            <Button
+              size="xs"
+              onClick={() => openDeleteModal(row.id)}
+              style={{ backgroundColor: "#ef4444", color: "#fff" }}
+            >
+              <IconTrash size={14} />
+            </Button>
+          </Tooltip>
+
+          <Tooltip label="Asset History" color="green" withArrow>
+            <Button
+              size="xs"
+              onClick={() => navigate(`/asset-log/${row.id}`)}
+              style={{ backgroundColor: "#10b981", color: "#fff" }}
+            >
+              <IconHistory size={14} />
+            </Button>
+          </Tooltip>
         </Group>
       ),
     },
@@ -168,6 +166,8 @@ const Assets = () => {
           <AssetFilters
             searchKey={searchKey}
             onSearchChange={handleSearchChange}
+            status={status}
+            onStatusChange={handleStatusChange}
             onRefresh={handleRefresh}
             onCreate={() => navigate("/asset/create")}
           />

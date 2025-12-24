@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Flex, Button, Text, Group } from "@mantine/core";
+import { Flex, Button, Text, Group, Tooltip } from "@mantine/core";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
@@ -12,7 +12,6 @@ import CategoryFilters from "../../components/Category/CategoryFilters";
 import { closeAllModals, modals } from "@mantine/modals";
 import {
   getAllCategoriesApi,
-
   deleteCategoryApi,
 } from "../../services/category.js";
 import { notifications } from "@mantine/notifications";
@@ -36,14 +35,18 @@ const CategoryPage = () => {
   const [CreateSubCategoryOpened, setCreateSubCategoryOpened] = useState(false);
   const [editModalOpened, setEditModalOpened] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
-  
+
   const debouncedSearch = useDebounce(searchKey, 2000); // 2 sec
 
   // fetch categories
   const { data, isPending, isLoading, isRefetching } = useQuery({
     queryKey: ["categories", page, debouncedSearch],
     queryFn: () =>
-      getAllCategoriesApi({ page, perpage: PAGE_SIZE, search: debouncedSearch }),
+      getAllCategoriesApi({
+        page,
+        perpage: PAGE_SIZE,
+        search: debouncedSearch,
+      }),
     keepPreviousData: true,
   });
 
@@ -130,28 +133,32 @@ const CategoryPage = () => {
     {
       key: "createdAt",
       headerTitle: "Created At",
-      row: (keyData) => dayjs(keyData).format("DD-MM-YYYY HH:mm"),
+      row: (keyData) => dayjs(keyData).format("DD-MM-YYYY hh:mm A"),
     },
     {
       key: "action",
       headerTitle: "Actions",
       row: (v, row) => (
         <Group spacing="xs">
-          <Button
-            size="xs"
-            onClick={() => openEditModal(row)}
-            style={{ backgroundColor: "#3b82f6", color: "#fff" }}
-          >
-            <IconEdit size={14} />
-          </Button>
+          <Tooltip label="Edit" position="top" withArrow>
+            <Button
+              size="xs"
+              onClick={() => openEditModal(row)}
+              style={{ backgroundColor: "#3b82f6", color: "#fff" }}
+            >
+              <IconEdit size={14} />
+            </Button>
+          </Tooltip>
 
-          <Button
-            size="xs"
-            onClick={() => openDeleteModal(row.id)}
-            style={{ backgroundColor: "#ef4444", color: "#fff" }}
-          >
-            <IconTrash size={14} />
-          </Button>
+          <Tooltip label="Delete" position="top" withArrow>
+            <Button
+              size="xs"
+              onClick={() => openDeleteModal(row.id)}
+              style={{ backgroundColor: "#ef4444", color: "#fff" }}
+            >
+              <IconTrash size={14} />
+            </Button>
+          </Tooltip>
         </Group>
       ),
     },

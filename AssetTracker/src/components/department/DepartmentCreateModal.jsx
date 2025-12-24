@@ -83,7 +83,7 @@ const createMutation = useMutation({
             withAsterisk
             {...form.getInputProps("name")}
           />
-          <Button type="submit" loading={createMutation.isLoading}>
+          <Button type="submit" loading={createMutation.isPending}>
             Create
           </Button>
         </Stack>

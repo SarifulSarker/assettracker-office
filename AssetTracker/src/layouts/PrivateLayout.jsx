@@ -59,14 +59,14 @@ const dispatch = useDispatch();
     <AppShell
       padding={"md"}
       navbar={{
-        width: 260,
+        width: 250,
         breakpoint: "md",
         collapsed: { mobile: !opened },
       }}
       header={{ height: { base: 50 } }}
       styles={{
         main: {
-          background: COLORS.mainBg ,
+          background: COLORS.background ,
       
         },
       }}
@@ -74,8 +74,8 @@ const dispatch = useDispatch();
       {/* HEADER */}
       <AppShell.Header
         style={{
-          backgroundColor: COLORS.primary,
-          color: COLORS.secondary,
+          backgroundColor: "#062855",
+          color: COLORS.background,
           boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
         }}
       >
@@ -98,7 +98,7 @@ const dispatch = useDispatch();
           component="img"
           src={Logo}
           alt="Logo"
-          style={{ width: 40 ,marginLeft: 99,  }}
+          style={{ width: 40 ,marginLeft: 50,  }}
         />
       </Flex>
 
@@ -111,7 +111,7 @@ const dispatch = useDispatch();
       <AppShell.Navbar
         p="xs"
         style={{
-          backgroundColor: COLORS.secondary,
+          backgroundColor:  "#062855",
           borderRight: "1px solid rgba(0,0,0,0.05)",
           display: "flex",
           flexDirection: "column",

@@ -3,11 +3,14 @@ import httpRequest from "../helpers/httpRequest.js";
 const BASE_URL = "/employee";
 
 // Get all employees with pagination + search
-export const getAllEmployeesApi = ({ page, perpage, search }) => {
-  const data =  httpRequest.get(`${BASE_URL}/get-all-employee`, {
-    page, perpage, search, // query params
+export const getAllEmployeesApi = ({ page, perpage, search, status }) => {
+  const data = httpRequest.get(`${BASE_URL}/get-all-employee`, {
+    page,
+    perpage,
+    search,
+    status, // query params
   });
-  //console.log("form service emp",data)
+
   return data;
 };
 

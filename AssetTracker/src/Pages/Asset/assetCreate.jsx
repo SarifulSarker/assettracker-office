@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import {
-  Box,
-  Text,
-  TextInput,
-  Button,
   Stack,
   Paper,
+  Text,
+  TextInput,
   Select,
+  Button,
+  ScrollArea,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { useForm } from "@mantine/form";
@@ -54,6 +54,7 @@ const AssetCreate = () => {
       vendorId: "",
       purchasePrice: "",
       purchaseDate: null,
+      specs: "",
       status: "in-stock",
       notes: "",
     },
@@ -71,15 +72,12 @@ const AssetCreate = () => {
     mutationFn: (values) =>
       createAssetApi({
         ...values,
+        specs: values.specs?.trim() || null,
         categoryId: Number(values.categoryId),
-        subCategoryId: values.subcategoryId
-          ? Number(values.subcategoryId)
-          : null, // only send if subcategory selected
+        subCategoryId: values.subcategoryId ? Number(values.subcategoryId) : null,
         brandId: Number(values.brandId),
         vendorId: Number(values.vendorId),
-        purchasePrice: values.purchasePrice
-          ? Number(values.purchasePrice)
-          : null,
+        purchasePrice: values.purchasePrice ? Number(values.purchasePrice) : null,
       }),
     onSuccess: () => {
       notifications.show({
@@ -103,97 +101,76 @@ const AssetCreate = () => {
   const handleCategoryChange = (value) => {
     form.setFieldValue("categoryId", value);
     form.setFieldValue("subcategoryId", "");
-
     const category = categories.find((c) => c.id.toString() === value);
     setSubcategories(category?.children || []);
   };
 
-
   return (
     <>
+      {/* Fixed top section */}
       <PageTop PAGE_TITLE="Create Asset" backBtn />
 
-      <Box maw={600} mx="auto" >
-        <Paper p="xl" shadow="md" radius="lg">
-          <Text fw={700} size="xl" mb="md">
-            Create New Asset
-          </Text>
+      {/* Scrollable form */}
+      <ScrollArea style={{ height: "calc(100vh - 60px)" }} px="md" py="md">
+        <Stack maw={600} mx="auto">
+          <Paper p="xl" shadow="md" radius="lg">
+            <Text fw={700} size="xl" mb="md">
+              Create New Asset
+            </Text>
 
-          <form onSubmit={form.onSubmit((v) => createMutation.mutate(v))}>
-            <Stack>
-              <TextInput
-                label="Asset Name"
-                withAsterisk
-                {...form.getInputProps("name")}
-              />
+            <form onSubmit={form.onSubmit((v) => createMutation.mutate(v))}>
+              <Stack>
+                <TextInput label="Asset Name" withAsterisk {...form.getInputProps("name")} />
+                <TextInput
+                  label="Specifications"
+                  placeholder="e.g. 8GB / Intel i5 / 512GB SSD"
+                  {...form.getInputProps("specs")}
+                />
+                <Select
+                  label="Category"
+                  withAsterisk
+                  data={categories.map((c) => ({ value: c.id.toString(), label: c.name }))}
+                  value={form.values.categoryId}
+                  onChange={handleCategoryChange}
+                  error={form.errors.categoryId}
+                />
+                <Select
+                  label="Subcategory"
+                  disabled={!form.values.categoryId || subcategories.length === 0}
+                  data={subcategories.map((sc) => ({ value: sc.id.toString(), label: sc.name }))}
+                  {...form.getInputProps("subcategoryId")}
+                />
+                <Select
+                  label="Brand"
+                  withAsterisk
+                  data={brands.map((b) => ({ value: b.id.toString(), label: b.name }))}
+                  {...form.getInputProps("brandId")}
+                />
+                <Select
+                  label="Vendor"
+                  withAsterisk
+                  data={vendors.map((v) => ({ value: v.id.toString(), label: v.name }))}
+                  {...form.getInputProps("vendorId")}
+                />
+                <TextInput label="Purchase Price" type="number" {...form.getInputProps("purchasePrice")} />
+                <DateInput
+                  label="Purchase Date"
+                  withAsterisk
+                  value={form.values.purchaseDate}
+                  onChange={(v) => form.setFieldValue("purchaseDate", v)}
+                  error={form.errors.purchaseDate}
+                />
+                <TextInput label="Status" {...form.getInputProps("status")} />
+                <TextInput label="Notes" {...form.getInputProps("notes")} />
 
-              <Select
-                label="Category"
-                withAsterisk
-                data={categories.map((c) => ({
-                  value: c.id.toString(),
-                  label: c.name,
-                }))}
-                value={form.values.categoryId}
-                onChange={handleCategoryChange}
-                error={form.errors.categoryId}
-              />
-
-              <Select
-                label="Subcategory"
-                disabled={!form.values.categoryId || subcategories.length === 0}
-                data={subcategories.map((sc) => ({
-                  value: sc.id.toString(),
-                  label: sc.name,
-                }))}
-                {...form.getInputProps("subcategoryId")}
-              />
-
-              <Select
-                label="Brand"
-                withAsterisk
-                data={brands.map((b) => ({
-                  value: b.id.toString(),
-                  label: b.name,
-                }))}
-                {...form.getInputProps("brandId")}
-              />
-
-              <Select
-                label="Vendor"
-                withAsterisk
-                data={vendors.map((v) => ({
-                  value: v.id.toString(),
-                  label: v.name,
-                }))}
-                {...form.getInputProps("vendorId")}
-              />
-
-              <TextInput
-                label="Purchase Price"
-                type="number"
-                {...form.getInputProps("purchasePrice")}
-              />
-
-              <DateInput
-                label="Purchase Date"
-                withAsterisk
-                value={form.values.purchaseDate}
-                onChange={(v) => form.setFieldValue("purchaseDate", v)}
-                error={form.errors.purchaseDate}
-              />
-
-              <TextInput label="Status" {...form.getInputProps("status")} />
-
-              <TextInput label="Notes" {...form.getInputProps("notes")} />
-
-              <Button type="submit" loading={createMutation.isLoading}>
-                Create Asset
-              </Button>
-            </Stack>
-          </form>
-        </Paper>
-      </Box>
+                <Button type="submit" loading={createMutation.isPending}>
+                  Create Asset
+                </Button>
+              </Stack>
+            </form>
+          </Paper>
+        </Stack>
+      </ScrollArea>
     </>
   );
 };

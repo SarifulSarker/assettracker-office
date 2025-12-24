@@ -1,18 +1,26 @@
 import React from "react";
-import { Flex, Button, TextInput } from "@mantine/core";
+import { Flex, Button, TextInput, Select } from "@mantine/core";
 import { IconRefresh, IconPlus } from "@tabler/icons-react";
 
-const UserFilters = ({ searchKey, onSearchChange, onRefresh, onCreate }) => {
-  console.log("Search from userFiler key:", searchKey);
-
+const UserFilters = ({ searchKey, onSearchChange, onRefresh, onCreate, status, onStatusChange }) => {
   return (
     <Flex justify="space-between" align="center" mb="sm">
-      {/* Left: Search + Refresh */}
+      {/* Left: Search + Status + Refresh */}
       <Flex gap="sm" align="center">
         <TextInput
           placeholder="Search by name or email..."
           value={searchKey}
           onChange={onSearchChange}
+        />
+
+        <Select
+          placeholder="Select Status"
+          value={status}
+          onChange={onStatusChange}
+          data={[
+            { value: "active", label: "Active" },
+            { value: "inactive", label: "Inactive" },
+          ]}
         />
 
         <Button onClick={onRefresh}>

@@ -1,5 +1,4 @@
 import {
-  Box,
   Button,
   Paper,
   PasswordInput,
@@ -21,10 +20,12 @@ import { loginSuccess } from "../../store/reducers/authReducer.js";
 import { getCookie } from "../../helpers/Cookie.js";
 import COLORS from "../../constants/Colors.js";
 
+/* ================== Validation ================== */
 const schema = Yup.object().shape({
   email: Yup.string()
     .email("Invalid email format")
     .required("Email is required"),
+  password: Yup.string().required("Password is required"),
 });
 
 const SignIn = () => {
@@ -32,6 +33,7 @@ const SignIn = () => {
   const dispatch = useDispatch();
   const [remember, setRemember] = useState(true);
 
+  /* ================== Form ================== */
   const form = useForm({
     initialValues: {
       email: getCookie("email") || "",
@@ -40,41 +42,45 @@ const SignIn = () => {
     validate: yupResolver(schema),
   });
 
+  /* ================== API ================== */
   const mutation = useMutation({
     mutationFn: async (values) => {
-      const response = await axios.post(
-        "http://localhost:5000/api/v1/auth/signin",
+      const res = await axios.post(
+        "http://localhost:3000/api/v1/auth/signin",
         values
       );
-      return response.data;
+      return res.data;
     },
-    onSuccess: (data) => {
-   
-      if (data.success) {
-        dispatch(
-          loginSuccess({
-            user: data.data,
-            remember: remember,
-            email: form.values.email,
-            password: form.values.password, // ✅ add this
-            token: data.token,
-          })
-        );
 
-        notifications.show({
-          title: "Success",
-          message: "Login successful! Redirecting...",
-          color: "green",
-        });
-        navigate("/dashboard");
-      } else {
+    onSuccess: (data) => {
+      if (!data.success) {
         notifications.show({
           title: "Error",
           message: data.error || "Login failed",
           color: "red",
         });
+        return;
       }
+
+      dispatch(
+        loginSuccess({
+          user: data.data,
+          token: data.token,
+          remember,
+          email: form.values.email,
+          password: form.values.password,
+        })
+      );
+
+      notifications.show({
+        title: "Success",
+        message: "Login successful! Redirecting...",
+        color: "green",
+      });
+
+      navigate("/dashboard");
     },
+
     onError: (error) => {
       notifications.show({
         title: "Error",
@@ -84,11 +90,13 @@ const SignIn = () => {
     },
   });
 
+  /* ================== Remember Me ================== */
   useEffect(() => {
-    const savedEmail = getCookie("email");
-    const savedPassword = getCookie("password");
-    if (savedEmail) form.setFieldValue("email", savedEmail);
-    if (savedPassword) form.setFieldValue("password", savedPassword);
+    const email = getCookie("email");
+    const password = getCookie("password");
+
+    if (email) form.setFieldValue("email", email);
+    if (password) form.setFieldValue("password", password);
   }, []);
 
   return (
@@ -96,25 +104,18 @@ const SignIn = () => {
       align="center"
       justify="center"
       style={{
-        height: "100vh",
-        position: "relative",
+        minHeight: "100vh",
         background: "linear-gradient(135deg, #8EC5FC, #E0C3FC)",
       }}
     >
-      {/* Login Card */}
-      <Paper
-        p="xl"
-        radius="md"
-        shadow="xl"
-        style={{ minWidth: 320, maxWidth: 400, width: "100%" }}
-      >
-        <div>sariful@gmail.com || 111111</div>
+      <Paper p="xl" radius="md" shadow="xl" w={380}>
         <form onSubmit={form.onSubmit((values) => mutation.mutate(values))}>
           <Stack spacing="md">
-            <Title order={3} align="center">
+            <Title order={3} ta="center">
               Login
             </Title>
-            <Text align="center" color={COLORS.dimmed}>
+               <div>sariful@gmail.com || 111111</div>
+            <Text ta="center" c={COLORS.dimmed}>
               Distribution Portal
             </Text>
 
@@ -122,55 +123,34 @@ const SignIn = () => {
               label="Email"
               placeholder="john.doe@email.com"
               {...form.getInputProps("email")}
-              error={
-                form.errors.email && (
-                  <Text color={COLORS.error}>{form.errors.email}</Text>
-                )
-              }
             />
 
             <PasswordInput
               label="Password"
-              placeholder="*******"
+              placeholder="********"
               {...form.getInputProps("password")}
-              error={
-                form.errors.password && (
-                  <Text color={COLORS.error}>{form.errors.password}</Text>
-                )
-              }
             />
 
             <Checkbox
               label="Remember me"
               checked={remember}
               onChange={(e) => setRemember(e.currentTarget.checked)}
-              styles={{
-                checkbox: {
-                  borderColor: "#000",
-                  "&:checked": {
-                    backgroundColor: COLORS.primary,
-                    borderColor: COLORS.primary,
-                    color: "#000",
-                  },
-                },
-                label: { color: "#333" },
-              }}
             />
 
             <Text
-              align="left"
-              color={COLORS.accent}
+              size="sm"
+              c={COLORS.accent}
               style={{ cursor: "pointer" }}
               onClick={() => navigate("/forget-password")}
             >
-              Forgot Password?
+              Forgot password?
             </Text>
 
             <Button
               type="submit"
+              loading={mutation.isPending}
               radius="md"
               size="md"
-              loading={mutation.isLoading}
               style={{
                 background: `linear-gradient(90deg, ${COLORS.primary}, ${COLORS.accent})`,
                 color: COLORS.secondary,
@@ -178,6 +158,20 @@ const SignIn = () => {
             >
               Login
             </Button>
+
+            {/* ===== Sign Up Link ===== */}
+            <Text ta="center" size="sm">
+              Don’t have an account?{" "}
+              <Text
+                component="span"
+                c={COLORS.primary}
+                fw={600}
+                style={{ cursor: "pointer" }}
+                onClick={() => navigate("/signup")}
+              >
+                Sign Up
+              </Text>
+            </Text>
           </Stack>
         </form>
       </Paper>

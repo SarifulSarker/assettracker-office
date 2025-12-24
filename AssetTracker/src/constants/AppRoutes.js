@@ -54,7 +54,7 @@ const appRoutes = [
     {
         path:urls.ASSETS,
         Element:Assets,
-        isIndexUrl:false,
+        isIndexUrl:true,
         isProtected:true
     },
     {

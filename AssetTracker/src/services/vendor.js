@@ -1,11 +1,12 @@
 import httpRequest from "../helpers/httpRequest.js";
 
 // Get all vendors with pagination + search
-export const getAllVendorsApi = ({ page, pageSize, search }) => {
+export const getAllVendorsApi = ({ page, pageSize, search ,status}) => {
   return httpRequest.get("/vendor/get-all-vendor", {
     page,
     pageSize,
     search,
+    status,
   });
 };
 

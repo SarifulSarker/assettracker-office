@@ -10,15 +10,15 @@ const HeaderContent = () => {
     <Flex direction="column">
       {isLoggedIn && user ? (
         <>
-          <Text fw={600} color={COLORS.secondary}>
+          <Text fw={600} color={COLORS.background}>
             {user.firstName} {user.lastName}
           </Text>
-          <Text size="sm" color={COLORS.secondary}>
+          <Text size="sm" color={COLORS.background}>
             {user.email}
           </Text>
         </>
       ) : (
-        <Text fw={600} color={COLORS.secondary}>
+        <Text fw={600} color={COLORS.background}>
           Guest
         </Text>
       )}

@@ -78,7 +78,7 @@ const BrandCreateModal = ({ opened, onClose, onSuccess }) => {
             placeholder="Brand Name"
             {...form.getInputProps("name")}
           />
-          <Button type="submit" loading={mutation.isLoading}>
+          <Button type="submit" loading={mutation.isPending}>
             Create
           </Button>
         </Stack>

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button, Group, Text, Flex } from "@mantine/core";
+import { Button, Group, Text, Flex, Tooltip } from "@mantine/core";
 import { useNavigate } from "react-router-dom";
 import { deleteUserApi, GetUserApi } from "../../services/user";
 import CustomTable from "../../components/global/CustomTable";
@@ -11,8 +11,9 @@ import { IconEdit, IconTrash } from "@tabler/icons-react";
 
 import PageTop from "../../components/global/PageTop.jsx";
 import UserFilters from "../../components/User/UserFilters.jsx";
-import TablePaperContent from "../../components/global/TablePaperContent"; // <-- Added
+import TablePaperContent from "../../components/global/TablePaperContent";
 import useDebounce from "../../hooks/useDebounce.js";
+
 const PAGE_SIZE = 10;
 
 const User = () => {
@@ -21,28 +22,40 @@ const User = () => {
 
   const [page, setPage] = useState(1);
   const [searchKey, setSearchKey] = useState("");
-  const debouncedSearch = useDebounce(searchKey, 2000); // 3 sec delay
+  const [status, setStatus] = useState("active"); // default active
+  const debouncedSearch = useDebounce(searchKey, 2000);
 
   const handleSearch = (e) => {
     setSearchKey(e.currentTarget.value);
-    setPage(1); // search e page reset
+    setPage(1);
   };
 
-  // DELETE MODAL
-  const openDeleteModal = (id) => {
+  const handleStatusChange = (value) => {
+    setStatus(value);
+    setPage(1);
+  };
+
+  const handleRefresh = () => {
+    setSearchKey("");
+    setStatus("active"); // reset to default active
+    setPage(1);
+    queryClient.invalidateQueries(["users"]);
+  };
+
+  const openDeleteModal = (uid) => {
     modals.openConfirmModal({
       title: "Are you sure?",
       children: <Text size="sm">Are You Sure To Delete This User?</Text>,
       labels: { confirm: "Confirm", cancel: "Cancel" },
       confirmProps: { color: "red" },
-      onConfirm: () => mutation.mutate(id),
+      onConfirm: () => mutation.mutate(uid),
     });
   };
 
   const mutation = useMutation({
-    mutationFn: (id) => deleteUserApi(id),
+    mutationFn: (uid) => deleteUserApi(uid),
     onSuccess: () => {
-      queryClient.invalidateQueries(["users", page]);
+      queryClient.invalidateQueries(["users", page, debouncedSearch, status]);
       closeAllModals();
       notifications.show({
         title: "Success",
@@ -52,14 +65,18 @@ const User = () => {
     },
   });
 
-  // FETCH USERS
+  // Convert status string to boolean before sending to API
+  const statusBool =
+    status === "active" ? true : status === "inactive" ? false : undefined;
+
   const { data, isLoading, isFetching, isError, error } = useQuery({
-    queryKey: ["users", page, debouncedSearch],
+    queryKey: ["users", page, debouncedSearch, status],
     queryFn: () =>
       GetUserApi({
         page,
         pageSize: PAGE_SIZE,
         search: debouncedSearch,
+        status: statusBool,
       }),
     keepPreviousData: true,
   });
@@ -69,7 +86,6 @@ const User = () => {
   const users = data?.users || [];
   const total = data?.total || 0;
 
-  // TABLE HEADERS
   const tableHeaders = [
     {
       key: "sl",
@@ -83,43 +99,42 @@ const User = () => {
     },
     { key: "email", headerTitle: "Email" },
     { key: "phone", headerTitle: "Phone" },
+
     {
       key: "actions",
       headerTitle: "Actions",
       row: (v, row) => (
         <Group spacing="xs">
-          <Button
-            size="xs"
-            onClick={() => navigate(`/user/edit/${row.id}`)}
-            style={{ backgroundColor: "#3b82f6", color: "#fff" }}
-          >
-            <IconEdit size={14} />
-          </Button>
-
-          <Button
-            size="xs"
-            onClick={() => openDeleteModal(row.id)}
-            style={{ backgroundColor: "#ef4444", color: "#fff" }}
-          >
-            <IconTrash size={14} />
-          </Button>
+          <Tooltip label="Edit user" withArrow position="top">
+            <Button
+              size="xs"
+              onClick={() => {
+               
+                navigate(`/user/edit/${row.uid}`);
+              }}
+              style={{ backgroundColor: "#3b82f6", color: "#fff" }}
+            >
+              <IconEdit size={14} />
+            </Button>
+          </Tooltip>
+          <Tooltip label="Delete user" withArrow position="top">
+            <Button
+              size="xs"
+              onClick={() => openDeleteModal(row.uid)}
+              style={{ backgroundColor: "#ef4444", color: "#fff" }}
+            >
+              <IconTrash size={14} />
+            </Button>
+          </Tooltip>
         </Group>
       ),
     },
   ];
 
-  // REFRESH
-  const handleRefresh = () => {
-    setSearchKey("");
-    setPage(1);
-    queryClient.invalidateQueries(["users"]);
-  };
-
   return (
     <div>
       <PageTop PAGE_TITLE="User Management" backBtn={false} />
 
-      {/* TABLE CONTAINER USING TablePaperContent */}
       <TablePaperContent
         filters={
           <UserFilters
@@ -127,6 +142,8 @@ const User = () => {
             onSearchChange={handleSearch}
             onRefresh={handleRefresh}
             onCreate={() => navigate("/user/create")}
+            status={status}
+            onStatusChange={handleStatusChange}
           />
         }
         filterBadges={null}

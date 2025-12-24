@@ -100,7 +100,7 @@ const VendorEditModal = ({ opened, onClose, vendor, onSuccess }) => {
             {...form.getInputProps("notes")}
           />
           <Button type="submit" loading={editMutation.isPending}>
-            {editMutation.isPending ? "Saving..." : "Update"}
+              Update
           </Button>
         </Stack>
       </form>

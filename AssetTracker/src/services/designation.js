@@ -1,11 +1,12 @@
 import httpRequest from "../helpers/httpRequest.js";
 
 // GET ALL DESIGNATIONS
-export const getAllDesignationsApi = async ({ page, perpage, search }) => {
+export const getAllDesignationsApi = async ({ page, perpage, search ,status}) => {
   return httpRequest.get("/designation/get-all-designation", {
     page,
     perpage,
     search,
+    status,
   });
 };
 

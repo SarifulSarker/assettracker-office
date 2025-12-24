@@ -7,7 +7,7 @@ import { notifications } from '@mantine/notifications';
 import { IconCheck, IconX } from '@tabler/icons-react';
 import PageTop from "../../components/global/PageTop.jsx";
 const UserEdit = () => {
-  const { id } = useParams();
+  const { uid } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -16,10 +16,10 @@ const UserEdit = () => {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
 
-  // Fetch user by ID
+  // Fetch user by uID
   const { data: user, isLoading } = useQuery({
-    queryKey: ["user", id],
-    queryFn: () => getUserByIdApi(id),
+    queryKey: ["user", uid],
+    queryFn: () => getUserByIdApi(uid),
   });
 
   // Set initial form values when data arrives
@@ -34,14 +34,14 @@ useEffect(() => {
 
   // Update Mutation
 const mutation = useMutation({
-  mutationFn: (data) => updateUserApi({ id, data }),
-  onSuccess: () => {
+  mutationFn: (data) => updateUserApi({ uid, data }),
+  onSuccess: (s) => {
     queryClient.invalidateQueries(["users"]);
     navigate("/user");
 
      notifications.show({
       title: 'Success',
-      message: 'User updated successfully!',
+      message: s?.data?.message || 'User updated successfully!',
       color: 'green',
       icon: <IconCheck size={18} />,
        position: 'top-center',

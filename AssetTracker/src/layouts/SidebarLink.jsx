@@ -29,7 +29,7 @@ const SidebarLink = ({ icon: Icon, label, link, onClick, onClickMobile }) => {
           padding: "0 12px",
           borderRadius: rem(8),
           backgroundColor: active
-            ? COLORS.primary
+            ? COLORS.background
             : hovered
             ? COLORS.secondaryShades[3]
             : "transparent",

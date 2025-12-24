@@ -51,11 +51,11 @@ const UserCreate = () => {
 
   const createUserMutation = useMutation({
     mutationFn: (value) => createUserApi(value),
-    onSuccess: () => {
+    onSuccess: (s) => {
       queryClient.invalidateQueries(["users"]);
       notifications.show({
         title: "Success",
-        message: "User created successfully!",
+        message: s?.data?.message || "User created successfully!",
         position: "top-center",
         autoClose: 3000,
       });
@@ -77,7 +77,7 @@ const UserCreate = () => {
   });
 
   const handleSubmit = (values) => {
-    //console.log("from usercreate page", token)
+  // console.log(values)
     createUserMutation.mutate(values);
   };
 

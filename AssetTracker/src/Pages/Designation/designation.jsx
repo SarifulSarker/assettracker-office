@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button, Group, Text, Flex } from "@mantine/core";
+import { Button, Group, Text, Flex, Tooltip } from "@mantine/core";
 import { modals, closeAllModals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { IconEdit, IconTrash } from "@tabler/icons-react";
@@ -18,29 +18,35 @@ import {
   getAllDesignationsApi,
   deleteDesignationApi,
 } from "../../services/designation.js";
-
 import useDebounce from "../../hooks/useDebounce.js";
 
 const PAGE_SIZE = 10;
 
-const designation = () => {
+const Designation = () => {
   const queryClient = useQueryClient();
 
   const [page, setPage] = useState(1);
   const [searchKey, setSearchKey] = useState("");
+  const [status, setStatus] = useState("active"); // default active
   const [createModalOpened, setCreateModalOpened] = useState(false);
   const [editModalOpened, setEditModalOpened] = useState(false);
   const [selectedDesignation, setSelectedDesignation] = useState(null);
 
   const debouncedSearch = useDebounce(searchKey, 1000);
 
+  // Convert status string to boolean before sending API
+  const statusBool =
+    status === "active" ? true : status === "inactive" ? false : undefined;
+   console.log(statusBool)
+  // Fetch designations
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ["designations", page, debouncedSearch],
+    queryKey: ["designations", page, debouncedSearch, status],
     queryFn: () =>
       getAllDesignationsApi({
         page,
         perpage: PAGE_SIZE,
         search: debouncedSearch,
+        status: statusBool,
       }),
     keepPreviousData: true,
   });
@@ -48,7 +54,7 @@ const designation = () => {
   const designations = data?.data?.designations || [];
   const total = data?.data?.total || 0;
 
-  // delete
+  // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: deleteDesignationApi,
     onSuccess: () => {
@@ -77,6 +83,23 @@ const designation = () => {
     setEditModalOpened(true);
   };
 
+  const handleSearchChange = (e) => {
+    setSearchKey(e.currentTarget.value);
+    setPage(1);
+  };
+
+  const handleStatusChange = (value) => {
+    setStatus(value);
+    setPage(1);
+  };
+
+  const handleRefresh = () => {
+    setSearchKey("");
+    setStatus("active");
+    setPage(1);
+    queryClient.invalidateQueries(["designations"]);
+  };
+
   const tableHeaders = [
     {
       key: "sl",
@@ -90,38 +113,21 @@ const designation = () => {
       row: (v, r) => r.description || "-",
     },
     {
-      key: "is_active",
-      headerTitle: "Status",
-      row: (value, row) => {
-        const active = row?.is_active;
-
-        return (
-          <span
-            style={{
-              padding: "4px 10px",
-              borderRadius: "12px",
-              fontSize: "12px",
-              fontWeight: 500,
-              color: active ? "#0f5132" : "#842029",
-              backgroundColor: active ? "#d1e7dd" : "#f8d7da",
-            }}
-          >
-            {active ? "Active" : "Inactive"}
-          </span>
-        );
-      },
-    },
-    {
       key: "action",
       headerTitle: "Actions",
       row: (v, r) => (
         <Group spacing="xs">
-          <Button size="xs" onClick={() => openEditModal(r)}>
-            <IconEdit size={14} />
-          </Button>
-          <Button size="xs" color="red" onClick={() => openDeleteModal(r.id)}>
-            <IconTrash size={14} />
-          </Button>
+          <Tooltip label="Edit" withArrow>
+            <Button size="xs" onClick={() => openEditModal(r)}>
+              <IconEdit size={14} />
+            </Button>
+          </Tooltip>
+
+          <Tooltip label="Delete" withArrow>
+            <Button size="xs" color="red" onClick={() => openDeleteModal(r.id)}>
+              <IconTrash size={14} />
+            </Button>
+          </Tooltip>
         </Group>
       ),
     },
@@ -135,15 +141,10 @@ const designation = () => {
         filters={
           <DesignationFilters
             searchKey={searchKey}
-            onSearchChange={(e) => {
-              setSearchKey(e.currentTarget.value);
-              setPage(1);
-            }}
-            onRefresh={() => {
-              setSearchKey("");
-              setPage(1);
-              queryClient.invalidateQueries(["designations"]);
-            }}
+            status={status}
+            onStatusChange={handleStatusChange}
+            onSearchChange={handleSearchChange}
+            onRefresh={handleRefresh}
             onCreate={() => setCreateModalOpened(true)}
           />
         }
@@ -180,4 +181,4 @@ const designation = () => {
   );
 };
 
-export default designation;
+export default Designation;

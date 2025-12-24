@@ -11,7 +11,7 @@ import {
 } from "@mantine/core";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getAssetsByEmployeeApi } from "../../services/assetMapping.js";
-import { IconX } from "@tabler/icons-react";
+import { IconBan } from "@tabler/icons-react";
 import { unassignAssetApi } from "../../services/assetMapping";
 import { notifications } from "@mantine/notifications";
 import { modals } from "@mantine/modals";
@@ -52,7 +52,7 @@ const EmployeeAssetsModal = ({ opened, onClose, employee }) => {
     });
   };
 
- const assignments = (response?.data ?? []).filter(a => !a.unassignedAt);
+  const assignments = (response?.data ?? []).filter((a) => !a.unassignedAt);
 
   return (
     <Modal
@@ -91,7 +91,7 @@ const EmployeeAssetsModal = ({ opened, onClose, employee }) => {
                     variant="light"
                     onClick={() => openUnassignModal(a.id)}
                   >
-                    <IconX size={14} />
+                    <IconBan size={14} />
                   </Button>
                 </Group>
               </Group>

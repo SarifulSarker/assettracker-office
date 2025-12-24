@@ -1,14 +1,14 @@
 import httpRequest from "../helpers/httpRequest.js";
 
-// GET ALL ASSETS
-export const getAllAssetsApi = async ({ page, perpage, search }) => {
- // console.log("service", page, perpage);
-  const data = httpRequest.get("/asset/get-all-assets", {
+export const getAllAssetsApi = async ({ page, perpage, search, status }) => {
+ 
+  const data = await httpRequest.get("/asset/get-all-assets", {
     page,
     perpage,
     search,
+    status,
   });
-  
+
   return data;
 };
 
@@ -32,7 +32,6 @@ export const updateAssetApi = async (id, data) => {
 
   return httpRequest.put(`/asset/${id}`, data);
 };
-
 
 // DELETE ASSET
 export const deleteAssetApi = async (id) => {

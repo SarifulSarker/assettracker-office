@@ -7,7 +7,7 @@ const accessToken = import.meta.env.VITE_ACCESS_TOKEN;
 
 if (!accessToken) throw new Error("Access token not found in process env!");
 
-const apiBaseUrl = "http://localhost:5000/api/v1";
+const apiBaseUrl = "http://localhost:3000/api/v1";
 if (!apiBaseUrl) throw new Error("API Base Url not found in process env!");
 
 const axiosInstance = axios.create({

@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button, Group, Text, Flex } from "@mantine/core";
+import { Button, Group, Text, Flex, Tooltip } from "@mantine/core";
 import { closeAllModals, modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
-import { IconEdit, IconTrash } from "@tabler/icons-react";
+import { IconEdit, IconTrash, IconEye } from "@tabler/icons-react";
 
 import PageTop from "../../components/global/PageTop.jsx";
 import TablePaperContent from "../../components/global/TablePaperContent.jsx";
@@ -13,58 +13,79 @@ import CustomPagination from "../../components/global/CustomPagination.jsx";
 import EmployeeFilters from "../../components/Employee/EmployeeFilters.jsx";
 import EmployeeCreateModal from "../../components/Employee/EmployeeCreateModal.jsx";
 import EmployeeEditModal from "../../components/Employee/EmployeeEditModal.jsx";
+import EmployeeAssetsModal from "../../components/Employee/EmployeeAssetsModal.jsx";
 
 import {
   getAllEmployeesApi,
   deleteEmployeeApi,
 } from "../../services/employee.js";
 import useDebounce from "../../hooks/useDebounce.js";
-import EmployeeAssetsModal from "../../components/Employee/EmployeeAssetsModal.jsx";
 
 const PAGE_SIZE = 10;
 
-const employee = () => {
+const Employee = () => {
   const queryClient = useQueryClient();
 
   const [page, setPage] = useState(1);
   const [searchKey, setSearchKey] = useState("");
+  const [status, setStatus] = useState("active"); // default active
   const [createModalOpened, setCreateModalOpened] = useState(false);
   const [editModalOpened, setEditModalOpened] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
-  // Inside component
   const [assetsModalOpened, setAssetsModalOpened] = useState(false);
-  const [assetsForEmployee, setAssetsForEmployee] = useState([]);
   const [employeeForAssets, setEmployeeForAssets] = useState(null);
 
   const debouncedSearch = useDebounce(searchKey, 2000);
-  // useMutation for fetching employee assets
+
+  // Convert status string to boolean before sending to API
+  const statusBool =
+    status === "active" ? true : status === "inactive" ? false : undefined;
 
   // Fetch employees
-  const { data, isPending, isLoading, isRefetching } = useQuery({
-    queryKey: ["employees", page, debouncedSearch],
+  const { data, isLoading, isFetching, isError, error } = useQuery({
+    queryKey: ["employees", page, debouncedSearch, status],
     queryFn: () =>
       getAllEmployeesApi({
         page,
         perpage: PAGE_SIZE,
         search: debouncedSearch,
+        status: statusBool,
       }),
     keepPreviousData: true,
   });
 
+  if (isError) return <Text color="red">{error.message}</Text>;
+
   const employees = data?.data?.employees || [];
   const total = data?.data?.total || 0;
 
-  // Search handler
+  // Handlers
   const handleSearch = (e) => {
     setSearchKey(e.currentTarget.value);
     setPage(1);
   };
 
-  // Delete employee
+  const handleStatusChange = (value) => {
+    setStatus(value);
+    setPage(1);
+  };
+
+  const handleRefresh = () => {
+    setSearchKey("");
+    setStatus("active");
+    setPage(1);
+    queryClient.invalidateQueries(["employees"]);
+  };
+
   const deleteMutation = useMutation({
     mutationFn: (id) => deleteEmployeeApi(id),
     onSuccess: () => {
-      queryClient.invalidateQueries(["employees"]);
+      queryClient.invalidateQueries([
+        "employees",
+        page,
+        debouncedSearch,
+        status,
+      ]);
       closeAllModals();
       notifications.show({
         title: "Deleted",
@@ -83,18 +104,17 @@ const employee = () => {
       onConfirm: () => deleteMutation.mutate(id),
     });
   };
+
   const openAssetsModal = (employee) => {
     setEmployeeForAssets(employee);
     setAssetsModalOpened(true);
   };
 
-  // Edit modal
   const openEditModal = (employee) => {
     setSelectedEmployee(employee);
     setEditModalOpened(true);
   };
 
-  // Table headers
   const tableHeaders = [
     {
       key: "sl",
@@ -119,66 +139,48 @@ const employee = () => {
       row: (v, row) => row.department?.name || "-",
     },
     {
-      key: "is_active",
+      key: "status",
       headerTitle: "Status",
-      row: (value, row) => {
-        const active = row?.is_active;
-
-        return (
-          <span
-            style={{
-              padding: "4px 10px",
-              borderRadius: "12px",
-              fontSize: "12px",
-              fontWeight: 500,
-              color: active ? "#0f5132" : "#842029",
-              backgroundColor: active ? "#d1e7dd" : "#f8d7da",
-            }}
-          >
-            {active ? "Active" : "Inactive"}
-          </span>
-        );
-      },
+      row: (v, row) => (row.is_active ? "Active" : "Inactive"),
     },
-
     {
       key: "action",
       headerTitle: "Actions",
       row: (v, row) => (
         <Group spacing="xs">
-          <Button
-            size="xs"
-            onClick={() => openEditModal(row)}
-            style={{ backgroundColor: "#3b82f6", color: "#fff" }}
-          >
-            <IconEdit size={14} />
-          </Button>
-          <Button
-            size="xs"
-            onClick={() => openDeleteModal(row.id)}
-            style={{ backgroundColor: "#ef4444", color: "#fff" }}
-          >
-            <IconTrash size={14} />
-          </Button>
+          <Tooltip label="Edit" withArrow position="top">
+            <Button
+              size="xs"
+              onClick={() => openEditModal(row)}
+              style={{ backgroundColor: "#3b82f6", color: "#fff" }}
+            >
+              <IconEdit size={14} />
+            </Button>
+          </Tooltip>
 
-          <Button
-            size="xs"
-            onClick={() => openAssetsModal(row)}
-            style={{ backgroundColor: "#10b981", color: "#fff" }}
-          >
-            Details
-          </Button>
+          <Tooltip label="Delete" withArrow position="top">
+            <Button
+              size="xs"
+              onClick={() => openDeleteModal(row.id)}
+              style={{ backgroundColor: "#ef4444", color: "#fff" }}
+            >
+              <IconTrash size={14} />
+            </Button>
+          </Tooltip>
+
+          <Tooltip label="View details" withArrow position="top">
+            <Button
+              size="xs"
+              onClick={() => openAssetsModal(row)}
+              style={{ backgroundColor: "#10b981", color: "#fff" }}
+            >
+              <IconEye size={14} />
+            </Button>
+          </Tooltip>
         </Group>
       ),
     },
   ];
-
-  // Refresh
-  const handleRefresh = () => {
-    setSearchKey("");
-    setPage(1);
-    queryClient.invalidateQueries(["employees"]);
-  };
 
   return (
     <div>
@@ -188,7 +190,9 @@ const employee = () => {
         filters={
           <EmployeeFilters
             searchKey={searchKey}
+            status={status}
             onSearchChange={handleSearch}
+            onStatusChange={handleStatusChange}
             onRefresh={handleRefresh}
             onCreate={() => setCreateModalOpened(true)}
           />
@@ -208,7 +212,7 @@ const employee = () => {
           <CustomTable
             tableHeaders={tableHeaders}
             data={employees}
-            isFetching={isPending || isLoading || isRefetching}
+            isFetching={isLoading || isFetching}
           />
         }
       />
@@ -225,13 +229,14 @@ const employee = () => {
         employee={selectedEmployee}
         onSuccess={() => queryClient.invalidateQueries(["employees"])}
       />
+
       <EmployeeAssetsModal
         opened={assetsModalOpened}
         onClose={() => setAssetsModalOpened(false)}
-        employee={employeeForAssets} // pass the full employee object
+        employee={employeeForAssets}
       />
     </div>
   );
 };
 
-export default employee;
+export default Employee;

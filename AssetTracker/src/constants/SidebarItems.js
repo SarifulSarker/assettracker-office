@@ -2,19 +2,22 @@
 import {
   IconBuildingStore,
   IconUser,
-  IconCategory,
+  IconListTree,
   IconBrandAngularFilled,
   IconBusinessplan,
   IconUserCircle,
   IconDeviceTabletShare,
   IconMapPinCheck,
+  IconUsersGroup,
+  IconDeviceLaptop,
+  IconLayoutDashboard,
 } from "@tabler/icons-react";
 import * as urls from "./AppUrls";
 
 const SidebarItems = [
   {
     label: "Dashboard",
-    icon: IconBuildingStore,
+    icon: IconLayoutDashboard,
     link: urls.DASHBOARD, // /assets
   },
   {
@@ -24,7 +27,7 @@ const SidebarItems = [
   },
   {
     label: "Assets",
-    icon: IconBuildingStore,
+    icon: IconDeviceLaptop,
     link: urls.ASSETS, // /assets
   },
   {
@@ -40,12 +43,12 @@ const SidebarItems = [
 
   {
     label: "Department",
-    icon: IconUser,
+    icon: IconBuildingStore,
     link: urls.DEPARTMENT,
   },
   {
     label: "Category",
-    icon: IconCategory,
+    icon: IconListTree,
     link: urls.CATEGORIES,
   },
   {

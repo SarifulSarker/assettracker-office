@@ -3,7 +3,7 @@ import { useDrop } from "react-dnd";
 
 const ITEM_TYPE = "TASK";
 
-const Column = ({ title, children, onDropItem, isActive }) => {
+const Column = ({ title, children, onDropItem, isActive, style }) => {
   const [{ isOver, canDrop }, drop] = useDrop({
     accept: ITEM_TYPE,
     drop: (item) => onDropItem(item, title),
@@ -26,10 +26,10 @@ const Column = ({ title, children, onDropItem, isActive }) => {
       radius="md"
       withBorder
       style={{
-        width: 350,
         height: 600,
         backgroundColor: getBg(),
         overflowY: "auto",
+        ...style, // allow flex / maxWidth overrides
       }}
     >
       <Text fw={700} align="center" mb="md">

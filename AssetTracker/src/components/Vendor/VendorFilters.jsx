@@ -1,16 +1,34 @@
 import React from "react";
-import { Flex, Button, TextInput } from "@mantine/core";
+import { Flex, Button, TextInput, Select } from "@mantine/core";
 import { IconRefresh, IconPlus } from "@tabler/icons-react";
 
-const VendorFilters = ({ searchKey, onSearchChange, onRefresh, onCreate }) => {
+const VendorFilters = ({
+  searchKey,
+  status,
+  onSearchChange,
+  onStatusChange,
+  onRefresh,
+  onCreate,
+}) => {
   return (
     <Flex justify="space-between" align="center" mb="sm">
       <Flex gap="sm" align="center">
         <TextInput
-          placeholder="Search by vendor name..."
+          placeholder="Search vendor..."
           value={searchKey}
           onChange={onSearchChange}
         />
+
+        <Select
+          value={status}
+          onChange={onStatusChange}
+          data={[
+            { value: "active", label: "Active" },
+            { value: "inactive", label: "Inactive" },
+          ]}
+          w={130}
+        />
+
         <Button onClick={onRefresh}>
           <IconRefresh size={16} />
         </Button>

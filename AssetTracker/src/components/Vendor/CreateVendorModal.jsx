@@ -80,7 +80,7 @@ const VendorCreateModal = ({ opened, onClose }) => {
 
           <Textarea label="Notes" autosize minRows={2} {...form.getInputProps("notes")} />
 
-          <Button type="submit" loading={createMutation.isLoading}>
+          <Button type="submit" loading={createMutation.isPending}>
             Create Vendor
           </Button>
         </Stack>

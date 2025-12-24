@@ -16,7 +16,7 @@ const EmployeeHeader = ({
       onChange={(val) => setSelectedEmployeeId(val)}
       placeholder="Select Employee"
       searchable
-      nothingFound="No employees"
+     
     />
   );
 };

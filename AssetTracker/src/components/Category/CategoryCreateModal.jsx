@@ -56,7 +56,7 @@ const CategoryCreateModal = ({ opened, onClose, onSuccess }) => {
             placeholder="Enter category name"
             {...form.getInputProps("name")}
           />
-          <Button type="submit" loading={mutation.isLoading}>
+          <Button type="submit" loading={mutation.isPending}>
             Create
           </Button>
         </Stack>

@@ -34,7 +34,7 @@ const Signup = () => {
 
   const signupMutation = useMutation({
     mutationFn: async (formData) => {
-      const res = await axios.post("http://localhost:5000/api/v1/auth/signup", formData);
+      const res = await axios.post("http://localhost:3000/api/v1/auth/signup", formData);
       return res.data;
     },
     onSuccess: (data) => {

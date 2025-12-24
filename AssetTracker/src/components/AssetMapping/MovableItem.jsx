@@ -1,11 +1,21 @@
 import React, { useRef } from "react";
 import { useDrag, useDrop } from "react-dnd";
-import { Paper } from "@mantine/core";
+import { Paper, Stack, Text, Badge, Group } from "@mantine/core";
 import { COLUMN_NAMES } from "../../Pages/AssetMapping/data.js";
 
 const ITEM_TYPE = "TASK";
 
-const MovableItem = ({ id, name, index, column, moveCardHandler }) => {
+const MovableItem = ({
+  id,
+  name,
+  index,
+  column,
+  moveCardHandler,
+  vendor,
+  specs,
+  brand,
+  subCategory,
+}) => {
   const ref = useRef(null);
 
   const [{ isOverCurrent }, drop] = useDrop({
@@ -49,17 +59,51 @@ const MovableItem = ({ id, name, index, column, moveCardHandler }) => {
       p="md"
       mb="sm"
       withBorder
-      shadow="md"
+      shadow="sm"
       radius="md"
-      className={`movable-item ${isOverCurrent ? "glow" : ""}`}
       style={{
         opacity: isDragging ? 0.5 : 1,
         cursor: "grab",
-        backgroundColor:
-          column === COLUMN_NAMES.ASSET ? "#d0ebff" : "#ffe3e3",
+        backgroundColor: column === COLUMN_NAMES.ASSET ? "#e7f5ff" : "#fff0f6",
+        transition: "box-shadow 0.2s ease",
       }}
+      sx={(theme) => ({
+        "&:hover": {
+          boxShadow: theme.shadows.md,
+        },
+      })}
     >
-      {name}
+      <Stack spacing={6}>
+        {/* Asset Name */}
+        <Text fw={600} fz="sm" lineClamp={1}>
+          {name}
+        </Text>
+
+        {/* Info row */}
+        <Group spacing={4} wrap="wrap">
+          {/* {vendor && (
+            <Badge color="gray" variant="light" size="xs">
+              Vendor: {vendor}
+            </Badge>
+          )}
+          {brand && (
+            <Badge color="gray" variant="light" size="xs">
+              Brand: {brand}
+            </Badge>
+          )}
+          {subCategory && (
+            <Badge color="gray" variant="light" size="xs">
+              Subcat: {subCategory}
+            </Badge>
+          )} */}
+
+          {specs && (
+            <Badge color="gray" variant="light" size="xs">
+              Specs: {specs}
+            </Badge>
+          )}
+        </Group>
+      </Stack>
     </Paper>
   );
 };

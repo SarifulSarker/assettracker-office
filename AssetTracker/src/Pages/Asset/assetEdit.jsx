@@ -61,6 +61,7 @@ const assetEdit = () => {
   const form = useForm({
     initialValues: {
       name: "",
+      specs: "",
       categoryId: "",
       subcategoryId: "",
       brandId: "",
@@ -78,6 +79,7 @@ const assetEdit = () => {
     if (asset && categories.length) {
       form.setValues({
         name: asset.name || "",
+        specs: asset.specs || "N/A",
         categoryId: asset.categoryId?.toString() || "",
         // subcategoryId: asset.subCategoryId?.toString() || "",
         subcategoryId: asset.subCategory?.id?.toString() || "",
@@ -102,6 +104,7 @@ const assetEdit = () => {
     mutationFn: (values) =>
       updateAssetApi(id, {
         name: values.name,
+        specs: values.specs,
         status: values.status,
         notes: values.notes,
 
@@ -131,8 +134,6 @@ const assetEdit = () => {
       navigate("/assets");
     },
     onError: (error) => {
-      console.log("AXIOS ERROR:", error);
-      console.log("RESPONSE:", error.response);
       notifications.show({
         title: "Error",
         message: error.response?.data?.message || "Something went wrong",
@@ -166,7 +167,7 @@ const assetEdit = () => {
     <>
       <PageTop PAGE_TITLE="Edit Asset" backBtn />
 
-      <Box maw={600} mx="auto" >
+      <Box maw={600} mx="auto">
         <Paper p="xl" shadow="md" radius="lg">
           <Text fw={700} size="xl" mb="md">
             Edit Asset
@@ -178,6 +179,11 @@ const assetEdit = () => {
                 label="Asset Name"
                 withAsterisk
                 {...form.getInputProps("name")}
+              />
+              <TextInput
+                label="Specs"
+                withAsterisk
+                {...form.getInputProps("specs")}
               />
 
               <Select
@@ -237,7 +243,7 @@ const assetEdit = () => {
 
               <TextInput label="Notes" {...form.getInputProps("notes")} />
 
-              <Button type="submit" loading={updateMutation.isLoading}>
+              <Button type="submit" loading={updateMutation.isPending}>
                 Update Asset
               </Button>
             </Stack>

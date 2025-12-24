@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button, Group, Text, Flex, Box, Typography } from "@mantine/core";
+import { Button, Group, Text, Flex, Tooltip } from "@mantine/core";
 import { closeAllModals, modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { IconEdit, IconTrash } from "@tabler/icons-react";
@@ -19,25 +19,31 @@ import useDebounce from "../../hooks/useDebounce.js";
 
 const PAGE_SIZE = 10;
 
-const vendor = () => {
+const Vendor = () => {
   const queryClient = useQueryClient();
 
   const [page, setPage] = useState(1);
   const [searchKey, setSearchKey] = useState("");
+  const [status, setStatus] = useState("active"); // ✅ default active
   const [createModalOpened, setCreateModalOpened] = useState(false);
   const [editModalOpened, setEditModalOpened] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState(null);
 
-  const debouncedSearch = useDebounce(searchKey, 2000); // 2 sec
+  const debouncedSearch = useDebounce(searchKey, 1000);
+
+  // 🔁 convert status string → boolean
+  const statusBool =
+    status === "active" ? true : status === "inactive" ? false : undefined;
 
   // Fetch vendors
-  const { data, isPending, isLoading, isRefetching } = useQuery({
-    queryKey: ["vendors", page, debouncedSearch],
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: ["vendors", page, debouncedSearch, status],
     queryFn: () =>
       getAllVendorsApi({
         page,
         pageSize: PAGE_SIZE,
         search: debouncedSearch,
+        status: statusBool,
       }),
     keepPreviousData: true,
   });
@@ -45,15 +51,21 @@ const vendor = () => {
   const vendors = data?.data?.vendors || [];
   const total = data?.data?.total || 0;
 
-  // Search handler
+  // Search
   const handleSearch = (e) => {
     setSearchKey(e.currentTarget.value);
     setPage(1);
   };
 
-  // Delete vendor
+  // Status
+  const handleStatusChange = (value) => {
+    setStatus(value);
+    setPage(1);
+  };
+
+  // Delete
   const deleteMutation = useMutation({
-    mutationFn: (id) => deleteVendorApi(id),
+    mutationFn: deleteVendorApi,
     onSuccess: () => {
       queryClient.invalidateQueries(["vendors"]);
       closeAllModals();
@@ -61,6 +73,7 @@ const vendor = () => {
         title: "Deleted",
         message: "Vendor deleted successfully!",
         position: "top-center",
+        color: "green",
       });
     },
   });
@@ -68,14 +81,13 @@ const vendor = () => {
   const openDeleteModal = (id) => {
     modals.openConfirmModal({
       title: "Are you sure?",
-      children: <Text size="sm">Do you want to delete this vendor?</Text>,
+      children: <Text size="sm">Delete this vendor?</Text>,
       labels: { confirm: "Confirm", cancel: "Cancel" },
       confirmProps: { color: "red" },
       onConfirm: () => deleteMutation.mutate(id),
     });
   };
 
-  // Edit modal
   const openEditModal = (vendor) => {
     setSelectedVendor(vendor);
     setEditModalOpened(true);
@@ -86,80 +98,60 @@ const vendor = () => {
     {
       key: "sl",
       headerTitle: "SL",
-      row: (v, row, index) => (page - 1) * PAGE_SIZE + index + 1,
+      row: (v, r, i) => (page - 1) * PAGE_SIZE + i + 1,
     },
-    { key: "name", headerTitle: "Vendor Name", row: (v, row) => row.name },
-    { key: "email", headerTitle: "Email", row: (v, row) => row.email },
-    { key: "contact", headerTitle: "Contact", row: (v, row) => row.contact },
-    {
-      key: "is_active",
-      headerTitle: "Status",
-      row: (value, row) => {
-        const active = row?.is_active;
-
-        return (
-          <span
-            style={{
-              padding: "4px 10px",
-              borderRadius: "12px",
-              fontSize: "12px",
-              fontWeight: 500,
-              color: active ? "#0f5132" : "#842029",
-              backgroundColor: active ? "#d1e7dd" : "#f8d7da",
-            }}
-          >
-            {active ? "Active" : "Inactive"}
-          </span>
-        );
-      },
-    },
+    { key: "name", headerTitle: "Vendor Name", row: (v, r) => r.name },
+    { key: "email", headerTitle: "Email", row: (v, r) => r.email || "-" },
+    { key: "contact", headerTitle: "Contact", row: (v, r) => r.contact || "-" },
     {
       key: "action",
       headerTitle: "Actions",
-      row: (v, row) => (
+      row: (v, r) => (
         <Group spacing="xs">
-          <Button
-            size="xs"
-            onClick={() => openEditModal(row)}
-            style={{ backgroundColor: "#3b82f6", color: "#fff" }}
-          >
-            <IconEdit size={14} />
-          </Button>
-          <Button
-            size="xs"
-            onClick={() => openDeleteModal(row.id)}
-            style={{ backgroundColor: "#ef4444", color: "#fff" }}
-          >
-            <IconTrash size={14} />
-          </Button>
+          <Tooltip label="Edit" withArrow>
+            <Button size="xs" onClick={() => openEditModal(r)}>
+              <IconEdit size={14} />
+            </Button>
+          </Tooltip>
+
+          <Tooltip label="Delete" withArrow>
+            <Button
+              size="xs"
+              color="red"
+              onClick={() => openDeleteModal(r.id)}
+            >
+              <IconTrash size={14} />
+            </Button>
+          </Tooltip>
         </Group>
       ),
     },
   ];
 
-  // Refresh
   const handleRefresh = () => {
     setSearchKey("");
+    setStatus("active");
     setPage(1);
     queryClient.invalidateQueries(["vendors"]);
   };
 
   return (
-    <div>
-      <PageTop PAGE_TITLE="Vendor Management" backBtn={false} />
+    <>
+      <PageTop PAGE_TITLE="Vendor Management" />
 
       <TablePaperContent
         filters={
           <VendorFilters
             searchKey={searchKey}
+            status={status}
             onSearchChange={handleSearch}
+            onStatusChange={handleStatusChange}
             onRefresh={handleRefresh}
             onCreate={() => setCreateModalOpened(true)}
           />
         }
-        filterBadges={null}
         exportAndPagination={
-          <Flex justify="flex-end" align="center">
+          <Flex justify="flex-end">
             <CustomPagination
               page={page}
               setPage={setPage}
@@ -172,7 +164,7 @@ const vendor = () => {
           <CustomTable
             tableHeaders={tableHeaders}
             data={vendors}
-            isFetching={isPending || isLoading || isRefetching}
+            isFetching={isLoading || isFetching}
           />
         }
       />
@@ -189,8 +181,8 @@ const vendor = () => {
         vendor={selectedVendor}
         onSuccess={() => queryClient.invalidateQueries(["vendors"])}
       />
-    </div>
+    </>
   );
 };
 
-export default vendor;
+export default Vendor;

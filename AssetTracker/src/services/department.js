@@ -1,11 +1,20 @@
-import httpRequest from "../helpers/httpRequest.js"; 
+import httpRequest from "../helpers/httpRequest.js";
 // adjust the path according to your project structure
 
 // Get all departments with pagination
-export const getAllDepartmentsApi = async ({ page, pageSize ,search}) => {
- // return httpRequest.get("/department/get-all-department", { page, pageSize,search });
-  return httpRequest.get("/department/get-all-department", { page, pageSize, search });
-  
+export const getAllDepartmentsApi = async ({
+  page,
+  pageSize,
+  search,
+  status,
+}) => {
+  // return httpRequest.get("/department/get-all-department", { page, pageSize,search });
+  return httpRequest.get("/department/get-all-department", {
+    page,
+    pageSize,
+    search,
+    status,
+  });
 };
 
 // Get department by ID
