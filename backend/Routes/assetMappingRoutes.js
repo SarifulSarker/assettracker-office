@@ -8,4 +8,6 @@ router.get("/employee/:id", (req, res) => AssetAssignmentController.getAssetsByE
 router.get("/asset/:id", (req, res) => AssetAssignmentController.getEmployeesByAsset(req, res));
 router.put("/unassign/:assignmentId", AssetAssignmentController.unassingAssets);
 
+router.get("/unassigned-asset", AssetAssignmentController.getUnassignedAssets);
+
 export default router;

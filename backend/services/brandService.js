@@ -5,7 +5,8 @@ import { SuccessResponse, ErrorResponse } from "../utils/return.js";
 const prisma = new PrismaClient();
 
 class BrandService {
-  async getAllBrands({ page, perpage, search }) {
+  // brandService.js
+  async getAllBrands({ page, perpage, search, status }) {
     try {
       if (!page || !perpage) {
         return ErrorResponse(400, "Page and perpage are required");
@@ -13,13 +14,19 @@ class BrandService {
 
       let filters = {};
 
+      // 🔍 Search by brand name
       if (search) {
         const terms = search.trim().split(/\s+/);
-        filters = {
-          AND: terms.map((term) => ({
-            name: { contains: term, mode: "insensitive" },
-          })),
-        };
+        filters.AND = terms.map((term) => ({
+          name: { contains: term, mode: "insensitive" },
+        }));
+      }
+
+      // ✅ Status filter (same as asset)
+      if (status !== undefined) {
+        filters.is_active = status;
+      } else {
+        filters.is_active = true;
       }
 
       const total = await prisma.brand.count({ where: filters });
@@ -38,6 +45,7 @@ class BrandService {
         perpage,
       });
     } catch (error) {
+      console.error(error);
       return ErrorResponse(500, error.message || "Server Error");
     }
   }
@@ -62,13 +70,12 @@ class BrandService {
 
   async updateBrand(id, data) {
     try {
-     
       if (!id) return ErrorResponse(400, "Brand ID is required");
       if (!data.name) return ErrorResponse(400, "Brand name is required");
-     
+
       const brand = await prisma.brand.update({
         where: { id: Number(id) },
-        data: { name : data.name, },
+        data: { name: data.name },
       });
 
       return SuccessResponse(200, "Brand updated successfully", brand);

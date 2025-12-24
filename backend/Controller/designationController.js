@@ -15,24 +15,31 @@ class DesignationController {
   }
 
   // GET ALL
-  async getDesignations(req, res) {
-    try {
-      const { page, perpage, search } = req.query;
+async getDesignations(req, res) {
+  try {
+    const page = parseInt(req.query.page, 10);
+    const perpage = parseInt(req.query.perpage, 10) || 10;
+    const search = req.query.search || "";
+    const status = req.query.status; // "active" / "inactive"
+   
 
-      const result = await designationService.getDesignations({
-        page: Number(page),
-        perpage: Number(perpage),
-        search: search || "",
-      });
+    const result = await designationService.getDesignations({
+      page,
+      perpage,
+      search,
+      status,
+    });
 
-      return res.status(result.responseCode).json(result);
-    } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: error.message || "Internal Server Error",
-      });
-    }
+    return res.status(result.responseCode).json(result);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Internal Server Error",
+    });
   }
+}
+
 
   // GET BY ID
   async getDesignationById(req, res) {

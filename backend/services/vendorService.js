@@ -29,9 +29,9 @@ class vendorService {
     };
   }
 
-  // Get all vendors
+
  // Get all vendors with pagination + search
-async getAllVendors({ page, perpage, search }) {
+async getAllVendors({ page, perpage, search,status }) {
   try {
     if (!page || !perpage) {
       return ErrorResponse(400, "Page and perpage are required");
@@ -52,6 +52,13 @@ async getAllVendors({ page, perpage, search }) {
           ],
         })),
       };
+    }
+
+     // Add status filter if provided (default: active assets only)
+    if (status !== undefined) {
+      filters.is_active = status;
+    } else {
+      filters.is_active = true;
     }
 
     const total = await prisma.vendor.count({ where: filters });

@@ -30,7 +30,8 @@ class departmentService {
   }
 
   // Get all departments
-  async getAllDepartments({ page, perpage, search }) {
+  // departmentService.js
+  async getAllDepartments({ page, perpage, search, status }) {
     try {
       if (!page || !perpage) {
         return ErrorResponse(400, "Page and perpage are required");
@@ -38,13 +39,18 @@ class departmentService {
 
       let filters = {};
 
+      // 🔍 Search
       if (search) {
         const terms = search.trim().split(/\s+/);
-        filters = {
-          AND: terms.map((term) => ({
-            name: { contains: term, mode: "insensitive" },
-          })),
-        };
+        filters.AND = terms.map((term) => ({
+          name: { contains: term, mode: "insensitive" },
+        }));
+      }
+
+      if (status !== undefined) {
+        filters.is_active = status;
+      } else {
+        filters.is_active = true;
       }
 
       const total = await prisma.department.count({ where: filters });
@@ -63,6 +69,7 @@ class departmentService {
         perpage,
       });
     } catch (error) {
+      console.error(error);
       return ErrorResponse(500, error.message || "Server Error");
     }
   }
@@ -70,7 +77,9 @@ class departmentService {
   // Get single department
   async getDepartmentById(id) {
     try {
-      const dept = await prisma.department.findUnique({ where: { id: Number(id) } });
+      const dept = await prisma.department.findUnique({
+        where: { id: Number(id) },
+      });
 
       if (!dept) {
         return ErrorResponse(404, "Department not found");
@@ -102,7 +111,9 @@ class departmentService {
   // Delete department
   async deleteDepartment(id) {
     try {
-      const deleted = await prisma.department.delete({ where: { id: Number(id) } });
+      const deleted = await prisma.department.delete({
+        where: { id: Number(id) },
+      });
 
       return SuccessResponse(200, "Department deleted successfully", deleted);
     } catch (error) {

@@ -8,7 +8,9 @@ generator client {
 }
 
 model User {
-  id        Int     @id @default(autoincrement())
+  id        Int    @id @default(autoincrement())
+  uid       String @unique 
+
   firstName String
   lastName  String
   email     String  @unique
@@ -23,46 +25,51 @@ model User {
 
 // -------------------- DEPARTMENT --------------------
 model Department {
-  id        Int      @id @default(autoincrement())
+  id        Int    @id @default(autoincrement())
+  uid       String @unique 
+
   name      String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
   is_active Boolean  @default(true)
 
   employees                  Employee[]
   assetAssingmentDepartments AssetAssingmentDepartment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("department")
 }
 
 // -------------------- EMPLOYEE --------------------
 model Employee {
-  id Int @id @default(autoincrement())
+  id  Int    @id @default(autoincrement())
+  uid String @unique
 
   fullName String
   email    String  @unique
   phone    String?
   status   String  @default("active")
 
-  // Department relation
   departmentId Int?
   department   Department? @relation(fields: [departmentId], references: [id])
 
-  // Designation relation
   designationId Int?
   designation   Designation? @relation(fields: [designationId], references: [id])
 
   is_active Boolean @default(true)
 
-  createdAt                DateTime                  @default(now())
-  updatedAt                DateTime                  @updatedAt
   assetAssingmentEmployees AssetAssingmentEmployee[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("employees")
 }
 
 model Designation {
-  id          Int     @id @default(autoincrement())
+  id  Int    @id @default(autoincrement())
+  uid String @unique
+
   name        String
   description String?
   is_active   Boolean @default(true)
@@ -77,7 +84,9 @@ model Designation {
 
 // -------------------- VENDOR --------------------
 model Vendor {
-  id      Int     @id @default(autoincrement())
+  id  Int    @id @default(autoincrement())
+  uid String @unique
+
   name    String
   contact String?
   email   String?
@@ -87,6 +96,7 @@ model Vendor {
   is_active Boolean @default(true)
 
   Assets    Asset[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -95,21 +105,25 @@ model Vendor {
 
 // -------------------- BRAND --------------------
 model Brand {
-  id        Int     @id @default(autoincrement())
+  id  Int    @id @default(autoincrement())
+  uid String @unique
+
   name      String  @unique
   logo      String?
   is_active Boolean @default(true)
 
+  assets Asset[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  assets Asset[]
 
   @@map("brand")
 }
 
 model Category {
-  id   Int    @id @default(autoincrement())
+  id  Int    @id @default(autoincrement())
+  uid String @unique
+
   name String
 
   parentId Int?
@@ -118,36 +132,33 @@ model Category {
 
   is_active Boolean @default(true)
 
+  assetsAsCategory     Asset[] @relation("CategoryAssets")
+  assetsAsSubCategory  Asset[] @relation("SubCategoryAssets")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  // relation for main category in Asset
-  assetsAsCategory Asset[] @relation("CategoryAssets")
-
-  // relation for subcategory in Asset
-  assetsAsSubCategory Asset[] @relation("SubCategoryAssets")
 
   @@unique([name, parentId])
   @@map("category")
 }
 
 model Asset {
-  id      Int    @id @default(autoincrement())
+  id  Int    @id @default(autoincrement())
+  uid String @unique
+
   name    String @unique
   brandId Int?
   brand   Brand? @relation(fields: [brandId], references: [id])
 
-  specs         Json?
+  specs         String?
   status        String    @default("in-stock")
   notes         String?
   purchaseDate  DateTime?
   purchasePrice Float?
 
-  // main category
   categoryId Int?
   category   Category? @relation("CategoryAssets", fields: [categoryId], references: [id])
 
-  // subcategory
   subCategoryId Int?
   subCategory   Category? @relation("SubCategoryAssets", fields: [subCategoryId], references: [id])
 
@@ -155,17 +166,19 @@ model Asset {
   vendor    Vendor? @relation(fields: [vendorId], references: [id])
   is_active Boolean @default(true)
 
-  createdAt                  DateTime                    @default(now())
-  updatedAt                  DateTime                    @updatedAt
   assetAssingmentEmployees   AssetAssingmentEmployee[]
   assetAssingmentDepartments AssetAssingmentDepartment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("assets")
 }
 
 // -------------------- ASSET ASSIGNMENT EMPLOYEE --------------------
 model AssetAssingmentEmployee {
-  id Int @id @default(autoincrement())
+  id  Int    @id @default(autoincrement())
+  uid String @unique
 
   assetId Int
   asset   Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
@@ -173,22 +186,24 @@ model AssetAssingmentEmployee {
   employeeId Int
   employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
-  assignedAt     DateTime  @default(now())
-  unassignedAt   DateTime?
+  assignedAt   DateTime  @default(now())
+  unassignedAt DateTime?
+  is_active    Boolean   @default(true)
 
-  @@unique([assetId, employeeId])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("asset_assingment_employee")
 }
 
-
 // -------------------- ASSET ASSIGNMENT DEPARTMENT --------------------
 model AssetAssingmentDepartment {
-  id Int @id @default(autoincrement())
+  id  Int    @id @default(autoincrement())
+  uid String @unique
 
   assetId      Int
   departmentId Int
 
-  // relations
   asset      Asset      @relation(fields: [assetId], references: [id], onDelete: Cascade)
   department Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
 

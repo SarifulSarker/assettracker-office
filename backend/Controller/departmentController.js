@@ -9,34 +9,38 @@ class departmentController {
   }
 
   // Get all departments
-  async getAll(req, res) {
-    try {
-      const page = parseInt(req.query.page, 10);
-      const perpage = parseInt(req.query.pageSize, 10);
-      const search = req.query.search || "";
 
-      if (!page || !perpage) {
-        return res.status(400).json({
-          success: false,
-          message: "page and pageSize are required",
-        });
+// departmentController.js
+async getAll(req, res) {
+  try {
+    const page = parseInt(req.query.page, 10);
+    const perpage = parseInt(req.query.pageSize, 10);
+    const search = req.query.search || "";
+    let status = req.query.status; // "active" | "inactive" | undefined
+
+     // Convert status string to boolean if defined
+      if (status !== undefined) {
+        status = status === "true"; // query string is always string
       }
 
-      const result = await DepartmentService.getAllDepartments({
-        page,
-        perpage,
-        search,
-      });
+    const result = await DepartmentService.getAllDepartments({
+      page,
+      perpage,
+      search,
+      status, // 🔥 only boolean or undefined
+    });
 
-      return res.status(result.responseCode).json(result);
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({
-        success: false,
-        message: "Internal server error",
-      });
-    }
+    return res.status(result.responseCode).json(result);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
+}
+
+
 
   // Get single department
   async getDepartmentById(req, res) {

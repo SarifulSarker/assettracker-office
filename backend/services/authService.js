@@ -6,7 +6,7 @@ import jwt from "jsonwebtoken";
 import redisClient from "../redis-client.js";
 const JWT_SECRET = process.env.JWT_SECRET || "SUPER_SECRET_KEY";
 import { generateTokenKey } from "../utils/tokenKeyGenerator.js";
-
+import {generateUID} from "../utils/uuid.js"
 class AuthService {
   async signup(data) {
     const { first_name, last_name, phone, email, password } = data;
@@ -35,6 +35,7 @@ class AuthService {
       data: {
         firstName: first_name,
         lastName: last_name,
+        uid: await generateUID(10),
         email,
         phone,
         password: hashedPassword,

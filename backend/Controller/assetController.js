@@ -17,12 +17,18 @@ class AssetController {
       const page = parseInt(req.query.page, 10);
       const perpage = parseInt(req.query.pageSize, 10) || 10;
       const search = req.query.search || "";
+      let status = req.query.status;
 
-     // console.log(page, perpage, "in controller")
+      // Convert status string to boolean if defined
+      if (status !== undefined) {
+        status = status === "true"; // query string is always string
+      }
+
       const result = await assetService.getAllAssets({
         page,
         perpage,
         search,
+        status,
       });
 
       return res.status(result.responseCode).json(result);
@@ -33,6 +39,7 @@ class AssetController {
         .json({ success: false, message: "Internal server error" });
     }
   }
+
   // GET BY ID
   async getAssetById(req, res) {
     try {
@@ -47,7 +54,7 @@ class AssetController {
   async updateAsset(req, res) {
     try {
       const result = await assetService.updateAsset(req.params.id, req.body);
-      console.log(req.body)
+      console.log(req.body);
       res.status(result.responseCode).json(result);
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });

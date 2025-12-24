@@ -1,24 +1,23 @@
 // db.js
-import pkg from "pg";
-import 'dotenv/config';
-
+import pkg from "pg";           // ES Module import
 const { Pool } = pkg;
 
+// PostgreSQL connection configuration
 const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT,
+  user: "postgres",       // DB username
+  host: "localhost",      // DB host
+  database: "Demo",       // Database name
+  password: "shariful",   // DB password
+  port: 5432,             // Default PostgreSQL port
 });
 
+// Test connection
 pool.connect((err, client, release) => {
   if (err) {
-    console.error("❌ Error connecting to database", err);
-  } else {
-    console.log("✅ Database connected successfully");
+    return console.error("Error connecting to database", err);
   }
+  console.log("Database connected successfully ✅");
   release();
 });
 
-export default pool;
+export default pool;       // ES Module export

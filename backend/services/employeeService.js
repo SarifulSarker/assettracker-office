@@ -49,7 +49,7 @@ class EmployeeService {
   }
 
   // LIST WITH PAGINATION + SEARCH
-  async getEmployees({ page, perpage, search }) {
+  async getEmployees({ page, perpage, search, status }) {
     try {
       if (!page || !perpage) {
         return ErrorResponse(400, "Page and perpage are required");
@@ -57,9 +57,9 @@ class EmployeeService {
 
       let where = {};
 
+      // 🔍 Search by terms
       if (search) {
         const terms = search.trim().split(/\s+/);
-
         where = {
           AND: terms.map((term) => ({
             OR: [
@@ -67,28 +67,26 @@ class EmployeeService {
               { email: { contains: term, mode: "insensitive" } },
               { phone: { contains: term, mode: "insensitive" } },
               {
-                designation: {
-                  name: { contains: term, mode: "insensitive" },
-                },
+                designation: { name: { contains: term, mode: "insensitive" } },
               },
-              {
-                department: {
-                  name: { contains: term, mode: "insensitive" },
-                },
-              },
+              { department: { name: { contains: term, mode: "insensitive" } } },
             ],
           })),
         };
+      }
+
+      // ✅ Status filter
+      if (status !== undefined) {
+        where.is_active = status; // filter by active/inactive
+      } else {
+        where.is_active = true; // default: active
       }
 
       const total = await prisma.employee.count({ where });
 
       const employees = await prisma.employee.findMany({
         where,
-        include: {
-          department: true,
-          designation: true,
-        },
+        include: { department: true, designation: true },
         orderBy: { createdAt: "desc" },
         skip: (page - 1) * perpage,
         take: perpage,
@@ -101,6 +99,7 @@ class EmployeeService {
         perpage,
       });
     } catch (err) {
+      console.error(err);
       return ErrorResponse(500, err.message || "Server Error");
     }
   }
@@ -174,10 +173,12 @@ class EmployeeService {
         return ErrorResponse(404, "Employee not found");
       }
 
-      await prisma.employee.delete({
+      const data = await prisma.employee.update({
         where: { id: Number(id) },
+        data: {
+          is_active: false,
+        },
       });
-
       return SuccessResponse(200, "Employee deleted successfully");
     } catch (err) {
       return ErrorResponse(500, err.message || "Server Error");

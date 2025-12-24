@@ -1,6 +1,7 @@
+import { v4 as uuidv4 } from 'uuid';
 import { PrismaClient } from "@prisma/client";
 import { SuccessResponse, ErrorResponse } from "../utils/return.js";
-
+import {generateUID} from "../utils/uuid.js"
 const prisma = new PrismaClient();
 
 class AssetService {
@@ -26,6 +27,7 @@ class AssetService {
       const asset = await prisma.asset.create({
         data: {
           name,
+          uid: await generateUID(10),
           specs,
           status,
           notes,
@@ -57,52 +59,59 @@ class AssetService {
 
   // GET ALL
 
-  async getAllAssets({ page, perpage, search }) {
-    try {
-      if (!page || !perpage) {
-        return ErrorResponse(400, "Page and perpage are required");
-      }
-
-      let filters = {};
-
-      // 🔍 Search by asset name
-      if (search) {
-        const terms = search.trim().split(/\s+/);
-        filters = {
-          AND: terms.map((term) => ({
-            name: { contains: term, mode: "insensitive" },
-          })),
-        };
-      }
-
-      const total = await prisma.asset.count({
-        where: filters,
-      });
-
-      const assets = await prisma.asset.findMany({
-        where: filters,
-        include: {
-           assetAssingmentEmployees: true,
-          brand: true,
-          category: true,
-          subCategory: true,
-          vendor: true,
-        },
-        orderBy: { createdAt: "desc" },
-        skip: (page - 1) * perpage,
-        take: perpage,
-      });
-      return SuccessResponse(200, "Assets fetched successfully", {
-        assets,
-        total,
-        page,
-        perpage,
-      });
-    } catch (error) {
-      console.error(error);
-      return ErrorResponse(500, error.message || "Server Error");
+async getAllAssets({ page, perpage, search, status }) {
+  try {
+    if (!page || !perpage) {
+      return ErrorResponse(400, "Page and perpage are required");
     }
+
+    let filters = {};
+
+    // 🔍 Search by asset name
+    if (search) {
+      const terms = search.trim().split(/\s+/);
+      filters = {
+        AND: terms.map((term) => ({
+          name: { contains: term, mode: "insensitive" },
+        })),
+      };
+    }
+
+    // Add status filter if provided (default: active assets only)
+    if (status !== undefined) {
+      filters.is_active = status;
+    } else {
+      filters.is_active = true;
+    }
+
+    const total = await prisma.asset.count({ where: filters });
+
+    const assets = await prisma.asset.findMany({
+      where: filters,
+      include: {
+        assetAssingmentEmployees: true,
+        brand: true,
+        category: true,
+        subCategory: true,
+        vendor: true,
+      },
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * perpage,
+      take: perpage,
+    });
+
+    return SuccessResponse(200, "Assets fetched successfully", {
+      assets,
+      total,
+      page,
+      perpage,
+    });
+  } catch (error) {
+    console.error(error);
+    return ErrorResponse(500, error.message || "Server Error");
   }
+}
+
 
   // GET BY ID
   async getAssetById(id) {
@@ -206,7 +215,13 @@ class AssetService {
       });
       if (!asset) return ErrorResponse(404, "Asset not found");
 
-      await prisma.asset.delete({ where: { id: Number(id) } });
+      const data = await prisma.asset.update({
+            where :{id: Number(id)},
+            data:{
+              is_active:false,
+            }
+      })
+
 
       return SuccessResponse(200, "Asset deleted successfully");
     } catch (error) {

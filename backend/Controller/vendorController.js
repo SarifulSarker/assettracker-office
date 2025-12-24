@@ -10,11 +10,18 @@ class vendorController {
     const page = Number(req.query.page) || 1;
     const perpage = Number(req.query.perpage) || 10;
     const search = req.query.search || "";
+    let status = req.query.status;
+
+      // Convert status string to boolean if defined
+      if (status !== undefined) {
+        status = status === "true"; // query string is always string
+      }
 
     const response = await VendorService.getAllVendors({
       page,
       perpage,
       search,
+      status,
     });
 
    // console.log("vendor controller ", response)

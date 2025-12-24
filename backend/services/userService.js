@@ -2,7 +2,7 @@
 import bcrypt from "bcrypt";
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
-
+import { generateUID } from "../utils/uuid.js";
 class userService {
   // create user
   async createUser(data) {
@@ -17,7 +17,6 @@ class userService {
         };
       }
 
-      // Check if email already exists
       const existingUser = await prisma.user.findUnique({ where: { email } });
       if (existingUser) {
         return {
@@ -32,12 +31,13 @@ class userService {
 
       // Hash the password
       const hashedPassword = await bcrypt.hash(defaultPassword, 10);
-
+      const uuid = await generateUID(10);
       // Create user
       const user = await prisma.user.create({
         data: {
           firstName: first_name,
           lastName: last_name,
+          uid: uuid,
           phone,
           email,
           password: hashedPassword,
@@ -50,7 +50,7 @@ class userService {
       return {
         success: true,
         status: 201,
-        message: "User registered successfully",
+        message: "User registered successfully back",
         data: user,
       };
     } catch (error) {
@@ -64,12 +64,12 @@ class userService {
 
   // services/userService.js
 
-  async getAllUsers({ page, perpage, search }) {
+  async getAllUsers({ page, perpage, search, status }) {
     try {
       let filters = {};
 
       if (search) {
-        const terms = search.trim().split(/\s+/); // split by space
+        const terms = search.trim().split(/\s+/);
 
         filters = {
           AND: terms.map((term) => ({
@@ -82,18 +82,25 @@ class userService {
         };
       }
 
-      const total = await prisma.user.count({ where: filters });
+      // Add status filter if defined, default: active users only
+      if (status !== undefined) {
+        filters.is_active = status;
+      } else {
+        filters.is_active = true; // default active
+      }
 
-      console.log({ total });
+      const total = await prisma.user.count({ where: filters });
 
       const users = await prisma.user.findMany({
         where: filters,
         select: {
           id: true,
+          uid: true,
           firstName: true,
           lastName: true,
           email: true,
           phone: true,
+          is_active: true,
           token: true,
           createdAt: true,
           updatedAt: true,
@@ -117,16 +124,16 @@ class userService {
     }
   }
 
-  async updateUser(id, data) {
+  async updateUser(uid, data) {
     try {
-      const userId = parseInt(id, 10);
+      //  const userId = parseInt(id, 10);
 
       if (!data || Object.keys(data).length === 0) {
         throw new Error("No fields to update");
       }
 
       const updatedUser = await prisma.user.update({
-        where: { id: userId },
+        where: { uid: uid },
         data: {
           firstName: data.firstName,
           lastName: data.lastName,
@@ -146,21 +153,16 @@ class userService {
   }
 
   // delete user by id
-  async deleteUser(id, req) {
+  async deleteUser(uid, req) {
     try {
-      if (36 == Number(id)) {
-        return {
-          success: false,
-          status: 400,
-          error: "This is SuperAdmin",
-        };
-      }
-
-      const deletedUser = await prisma.user.delete({
-        where: { id: Number(id) },
+      const data = await prisma.user.update({
+        where: { uid: uid },
+        data: {
+          is_active: false,
+        },
       });
 
-      return deletedUser;
+      
     } catch (error) {
       if (error.code === "P2025") {
         return null; // record not found
@@ -173,10 +175,10 @@ class userService {
     }
   }
 
-  async getUserById(id) {
+  async getUserById(uid) {
     try {
       const user = await prisma.user.findUnique({
-        where: { id: Number(id) },
+        where: { uid: uid },
       });
 
       if (!user) {

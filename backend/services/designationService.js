@@ -41,14 +41,15 @@ class DesignationService {
   }
 
   // GET ALL (pagination + search)
-  async getDesignations({ page, perpage, search }) {
+  async getDesignations({ page, perpage, search, status }) {
     try {
       if (!page || !perpage) {
         return ErrorResponse(400, "Page and perpage are required");
       }
-
+       
       let where = {};
 
+      // Search filter
       if (search) {
         const terms = search.trim().split(/\s+/);
         where = {
@@ -60,6 +61,18 @@ class DesignationService {
           })),
         };
       }
+
+    
+       // Convert status string to boolean
+    if (status !== undefined) {
+      if (typeof status === "string") {
+        where.is_active = status === "true"; // convert "true"/"false" to boolean
+      } else {
+        where.is_active = status; // already boolean
+      }
+    } else {
+      where.is_active = true; // default active
+    }
 
       const total = await prisma.designation.count({ where });
 
@@ -77,6 +90,7 @@ class DesignationService {
         perpage,
       });
     } catch (err) {
+      console.error(err);
       return ErrorResponse(500, err.message || "Server Error");
     }
   }
