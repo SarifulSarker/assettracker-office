@@ -36,6 +36,7 @@ class AuthMiddleware {
       req.user = {
         id: decoded.userId,
         superAdmin: decoded.userId == 36 ? true : false,
+        ...decoded,
       };
 
       next();

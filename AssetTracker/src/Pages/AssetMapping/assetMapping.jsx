@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { Group, Stack, Button, TextInput } from "@mantine/core";
+import { Button, TextInput } from "@mantine/core";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { notifications } from "@mantine/notifications";
 import { IconSearch } from "@tabler/icons-react";
@@ -9,126 +9,118 @@ import { IconSearch } from "@tabler/icons-react";
 import Column from "../../components/AssetMapping/Column";
 import MovableItem from "../../components/AssetMapping/MovableItem";
 import EmployeeHeader from "../../components/AssetMapping/EmployeeHeader";
-import { COLUMN_NAMES } from "./data.js";
+import { COLUMN_NAMES } from "./data";
 
 import { getAllEmployeesApi } from "../../services/employee";
 import {
   getUnassignedAssetsApi,
   assignAssetsToEmployeeApi,
+  getAssetsByEmployeeApi,
 } from "../../services/assetMapping";
-import { useNavigate } from "react-router-dom";
+
+const emptyBox = {
+  padding: "16px",
+  textAlign: "center",
+  color: "#888",
+  border: "1px dashed #ccc",
+  borderRadius: "8px",
+};
 
 const AssetMapping = () => {
   const [items, setItems] = useState([]);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
-  const [assetSearch, setAssetSearch] = useState(""); // <-- search state
-  const navigate = useNavigate();
+  const [assetSearch, setAssetSearch] = useState("");
 
-  // Fetch employees
+  /* ---------------- API CALLS ---------------- */
+
   const { data: empData } = useQuery({
     queryKey: ["employees"],
     queryFn: () => getAllEmployeesApi({ page: 1, perpage: 100 }),
   });
 
-  // Fetch unassigned assets (searchable)
   const { data: assetData } = useQuery({
     queryKey: ["unassignedAssets", assetSearch],
     queryFn: () => getUnassignedAssetsApi({ search: assetSearch }),
-    refetchOnWindowFocus: false,
-    keepPreviousData: true,
   });
 
-  // Assign mutation
+  const { data: employeeAssetData, isLoading } = useQuery({
+    queryKey: ["employeeAssets", selectedEmployeeId],
+    queryFn: () => getAssetsByEmployeeApi(selectedEmployeeId),
+    enabled: !!selectedEmployeeId,
+  });
+
   const mutation = useMutation({
     mutationFn: assignAssetsToEmployeeApi,
-    onSuccess: (_, variables) => {
+    onSuccess: (_, vars) => {
       notifications.show({
         title: "Success",
-        message: "Assets assigned successfully",
+        message: "Assets assigned",
         color: "green",
-        position: "top-center",
       });
 
-      const assignedIds = variables.assetIds;
-
-      setItems((prev) => prev.filter((item) => !assignedIds.includes(item.id)));
-
-    
+      setItems((prev) => prev.filter((i) => !vars.assetIds.includes(i.id)));
     },
-
-    onError: (err) =>
-      notifications.show({
-        title: "Error",
-        message: err.message || "Assignment failed",
-        color: "red",
-        position: "top-center",
-      }),
   });
+
+  /* ---------------- DATA ---------------- */
 
   const employees = empData?.data?.employees || [];
   const assets = assetData?.data?.assets || [];
+  const employeeAssets = (employeeAssetData?.data ?? []).filter(
+    (a) => !a.unassignedAt
+  );
 
-  // Format unassigned assets for DnD
+  console.log(employeeAssets);
+  /* ------------ ---- INIT ASSETS ---------------- */
+
   useEffect(() => {
-    if (!assets?.length) return;
-
     setItems(
       assets.map((a) => ({
         id: a.id,
         name: a.name,
+        specs: a.specs,
         column: COLUMN_NAMES.ASSET,
         employeeId: null,
-        vendor: a.vendor?.name,
-        brand: a.brand?.name,
-        subCategory: a.subCategory?.name,
-        specs: a.specs,
       }))
     );
-  }, [assetData]); // 🔥 assets না, assetData
+  }, [assetData]);
 
-  // Reorder items within column
-  const moveCardHandler = (fromIndex, toIndex, column) => {
+  /* ---------------- DND LOGIC ---------------- */
+
+  const moveCardHandler = (from, to, column) => {
     setItems((prev) => {
-      const newItems = [...prev];
-      const colItems = newItems.filter((i) => i.column === column);
-      const dragItem = colItems[fromIndex];
-      if (!dragItem) return prev;
+      const list = prev.filter((i) => i.column === column);
+      const dragged = list[from];
+      if (!dragged) return prev;
 
-      colItems.splice(fromIndex, 1);
-      colItems.splice(toIndex, 0, dragItem);
+      list.splice(from, 1);
+      list.splice(to, 0, dragged);
 
-      let colIndex = 0;
-      return newItems.map((i) =>
-        i.column === column ? colItems[colIndex++] : i
-      );
+      let idx = 0;
+      return prev.map((i) => (i.column === column ? list[idx++] : i));
     });
   };
 
-  // Drop item to column
   const handleDropToColumn = (item, column) => {
     if (column === COLUMN_NAMES.EMPLOYEE && !selectedEmployeeId) {
-      notifications.show({
-        message: "Select employee first",
-        color: "red",
-        position: "top-center",
-      });
+      notifications.show({ message: "Select employee first", color: "red" });
       return;
     }
 
     setItems((prev) =>
-      prev.map((i) => {
-        if (i.id !== item.id) return i;
-
-        if (column === COLUMN_NAMES.EMPLOYEE) {
-          return { ...i, column, employeeId: selectedEmployeeId };
-        } else {
-          return { ...i, column: COLUMN_NAMES.ASSET, employeeId: null };
-        }
-      })
+      prev.map((i) =>
+        i.id === item.id
+          ? {
+              ...i,
+              column,
+              employeeId:
+                column === COLUMN_NAMES.EMPLOYEE ? selectedEmployeeId : null,
+            }
+          : i
+      )
     );
   };
 
-  // Render items by column
   const renderItems = (column) =>
     items
       .filter((i) => i.column === column)
@@ -141,31 +133,22 @@ const AssetMapping = () => {
         />
       ));
 
-  const employeeItems = items.filter(
-    (i) =>
-      i.column === COLUMN_NAMES.EMPLOYEE && i.employeeId === selectedEmployeeId
-  );
-
-  const assetItems = items.filter((i) => i.column === COLUMN_NAMES.ASSET);
+  /* ---------------- UI ---------------- */
 
   return (
     <DndProvider backend={HTML5Backend}>
       <div
         style={{
-          display: "flex",
-          justifyContent: "center",
-          gap: "24px",
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)", // 🔥 equal width
+          gap: 24,
+          padding: 24,
           width: "100%",
-          minHeight: "80vh",
-          padding: "20px",
+          //minHeight: "85vh", // 🔥 more vertical space
         }}
       >
-        {/* Asset column */}
-        <Column
-          title={COLUMN_NAMES.ASSET}
-          onDropItem={handleDropToColumn}
-          style={{ flex: 1, maxWidth: 400 }}
-        >
+        {/* ASSET */}
+        <Column title="Asset" onDropItem={handleDropToColumn}>
           <TextInput
             placeholder="Search assets..."
             value={assetSearch}
@@ -173,116 +156,60 @@ const AssetMapping = () => {
             mb="sm"
             icon={<IconSearch size={16} />}
           />
-
-          {/*  No assets available */}
-          {assetItems.length === 0 && (
-            <div
-              style={{
-                padding: "16px",
-                textAlign: "center",
-                color: "#888",
-                border: "1px dashed #ccc",
-                borderRadius: "8px",
-              }}
-            >
-              No available assets
-            </div>
-          )}
-
           {renderItems(COLUMN_NAMES.ASSET)}
         </Column>
 
-        {/* Employee column */}
-        <div
-          style={{
-            flex: 1,
-            maxWidth: 400,
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          <Column title={COLUMN_NAMES.EMPLOYEE} onDropItem={handleDropToColumn}>
-            <div style={{ marginBottom: 10 }}>
-              <EmployeeHeader
-                employees={employees}
-                selectedEmployeeId={selectedEmployeeId}
-                setSelectedEmployeeId={setSelectedEmployeeId}
-              />
+        {/* EMPLOYEE */}
+        <Column title="Employee" onDropItem={handleDropToColumn}>
+          <EmployeeHeader
+            employees={employees}
+            selectedEmployeeId={selectedEmployeeId}
+            setSelectedEmployeeId={setSelectedEmployeeId}
+          />
+          {renderItems(COLUMN_NAMES.EMPLOYEE)}
+        </Column>
+
+        {/* EMPLOYEE ASSETS */}
+        <Column title="Employee Assets">
+          {!selectedEmployeeId && (
+            <div style={emptyBox}>Please select an employee</div>
+          )}
+
+          {isLoading && <div style={emptyBox}>Loading employee assets...</div>}
+
+          {!isLoading && selectedEmployeeId && employeeAssets.length === 0 && (
+            <div style={emptyBox}>
+              This employee does not have any assigned assets
             </div>
+          )}
 
-            {/* No employee selected */}
-            {!selectedEmployeeId && (
-              <div
-                style={{
-                  padding: "16px",
-                  textAlign: "center",
-                  color: "#888",
-                  border: "1px dashed #ccc",
-                  borderRadius: "8px",
-                }}
-              >
-                Select an employee first
-              </div>
-            )}
+          {employeeAssets.map((a) => (
+            <MovableItem
+              key={a.asset?.id}
+              id={a.asset?.id}
+              name={a.asset?.name}
+              column={COLUMN_NAMES.EMPLOYEE_ASSETS}
+              isReadOnly
+            />
+          ))}
+        </Column>
+      </div>
 
-            {/*  Employee selected but no assets */}
-            {selectedEmployeeId && employeeItems.length === 0 && (
-              <div
-                style={{
-                  padding: "16px",
-                  textAlign: "center",
-                  color: "#888",
-                  border: "1px dashed #ccc",
-                  borderRadius: "8px",
-                }}
-              >
-                Drop asset here
-              </div>
-            )}
-
-            {renderItems(COLUMN_NAMES.EMPLOYEE)}
-          </Column>
-
-          <Button
-            mt="sm"
-            color="blue"
-            onClick={() => {
-              const selectedAssets = items.filter(
-                (i) => i.column === COLUMN_NAMES.EMPLOYEE
-              );
-
-              if (!selectedEmployeeId) {
-                notifications.show({
-                  title: "Alert",
-                  message: "Please select an employee first",
-                  color: "red",
-                  position: "top-center",
-                });
-                return;
-              }
-
-              if (selectedAssets.length === 0) {
-                notifications.show({
-                  title: "Alert",
-                  message: "No assets selected to assign",
-                  color: "red",
-                  position: "top-center",
-                });
-                return;
-              }
-
-              // If all good, call mutation
-              mutation.mutate({
-                employeeId: Number(selectedEmployeeId),
-                assetIds: selectedAssets.map((i) => i.id),
-              });
-            }}
-            loading={mutation.isPending}
-            style={{ marginTop: "12px" }}
-          >
-            Assign Assets
-          </Button>
-        </div>
+      <div style={{ display: "flex", justifyContent: "center", marginTop: 16 }}>
+        <Button
+          size="md"
+          radius="md"
+          onClick={() =>
+            mutation.mutate({
+              employeeId: Number(selectedEmployeeId),
+              assetIds: items
+                .filter((i) => i.column === COLUMN_NAMES.EMPLOYEE)
+                .map((i) => i.id),
+            })
+          }
+        >
+          Assign Assets
+        </Button>
       </div>
     </DndProvider>
   );

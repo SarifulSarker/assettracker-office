@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { SuccessResponse, ErrorResponse } from "../utils/return.js";
-
+import {generateUID} from "../utils/uuid.js"
 const prisma = new PrismaClient();
 
 class EmployeeService {
@@ -29,6 +29,7 @@ class EmployeeService {
       const employee = await prisma.employee.create({
         data: {
           fullName,
+          uid: await generateUID(10),
           email,
           phone,
           status: status || "active",
@@ -105,10 +106,10 @@ class EmployeeService {
   }
 
   // GET BY ID
-  async getEmployeeById(id) {
+  async getEmployeeById(uid) {
     try {
       const employee = await prisma.employee.findUnique({
-        where: { id: Number(id) },
+        where: { uid: uid },
         include: {
           department: true,
           designation: true,
@@ -126,10 +127,10 @@ class EmployeeService {
   }
 
   // UPDATE
-  async updateEmployee(id, data) {
+  async updateEmployee(uid, data) {
     try {
       const exists = await prisma.employee.findUnique({
-        where: { id: Number(id) },
+        where: { uid: uid },
       });
 
       if (!exists) {
@@ -137,7 +138,7 @@ class EmployeeService {
       }
 
       const updatedEmployee = await prisma.employee.update({
-        where: { id: Number(id) },
+        where: { uid: uid },
         data: {
           fullName: data.fullName,
           phone: data.phone,
@@ -163,10 +164,10 @@ class EmployeeService {
   }
 
   // DELETE
-  async deleteEmployee(id) {
+  async deleteEmployee(uid) {
     try {
       const employee = await prisma.employee.findUnique({
-        where: { id: Number(id) },
+        where: { uid: uid },
       });
 
       if (!employee) {
@@ -174,7 +175,7 @@ class EmployeeService {
       }
 
       const data = await prisma.employee.update({
-        where: { id: Number(id) },
+        where: { uid: uid },
         data: {
           is_active: false,
         },

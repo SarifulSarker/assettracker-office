@@ -96,7 +96,13 @@ const Assets = () => {
       headerTitle: "Asset Name",
       row: (v, row) => row.name || "-",
     },
-    { key: "specs", headerTitle: "Specs", row: (v, row) => row.specs || "-" },
+    {
+      key: "specs",
+      headerTitle: "Specs",
+      row: (v, row) => row.specs || "-",
+      rowStyle: { whiteSpace: "pre" },
+    },
+
     {
       key: "mainCategory",
       headerTitle: "Category",
@@ -126,7 +132,7 @@ const Assets = () => {
           <Tooltip label="Edit Asset" withArrow>
             <Button
               size="xs"
-              onClick={() => navigate(`/asset/edit/${row.id}`)}
+              onClick={() => navigate(`/assets/edit/${row.uid}`)}
               style={{ backgroundColor: "#3b82f6", color: "#fff" }}
             >
               <IconEdit size={14} />
@@ -136,17 +142,17 @@ const Assets = () => {
           <Tooltip label="Delete Asset" color="red" withArrow>
             <Button
               size="xs"
-              onClick={() => openDeleteModal(row.id)}
+              onClick={() => openDeleteModal(row.uid)}
               style={{ backgroundColor: "#ef4444", color: "#fff" }}
             >
               <IconTrash size={14} />
             </Button>
           </Tooltip>
 
-          <Tooltip label="Asset History" color="green" withArrow>
+          <Tooltip label="Asset History" withArrow>
             <Button
               size="xs"
-              onClick={() => navigate(`/asset-log/${row.id}`)}
+              onClick={() => navigate(`/assets/asset-log/${row.uid}`)}
               style={{ backgroundColor: "#10b981", color: "#fff" }}
             >
               <IconHistory size={14} />
@@ -169,7 +175,7 @@ const Assets = () => {
             status={status}
             onStatusChange={handleStatusChange}
             onRefresh={handleRefresh}
-            onCreate={() => navigate("/asset/create")}
+            onCreate={() => navigate("/assets/create")}
           />
         }
         filterBadges={null}

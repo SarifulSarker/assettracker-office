@@ -47,7 +47,7 @@ const dispatch = useDispatch();
       
       labels: { confirm: 'Confirm', cancel: 'Cancel' },
        confirmProps: { color: 'red' },
-      onCancel: () => console.log('Cancel'),
+      //onCancel: () => console.log('Cancel'),
       onConfirm: () => {
        handleLogout()
        // closeAllModals();
@@ -63,10 +63,10 @@ const dispatch = useDispatch();
         breakpoint: "md",
         collapsed: { mobile: !opened },
       }}
-      header={{ height: { base: 50 } }}
+      header={{ height: { base: 75 } }}
       styles={{
         main: {
-          background: COLORS.background ,
+         
       
         },
       }}
@@ -98,7 +98,7 @@ const dispatch = useDispatch();
           component="img"
           src={Logo}
           alt="Logo"
-          style={{ width: 40 ,marginLeft: 50,  }}
+          style={{ width: 60 ,marginLeft: 55,  }}
         />
       </Flex>
 

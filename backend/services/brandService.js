@@ -1,7 +1,7 @@
 // services/BrandService.js
 import { PrismaClient } from "@prisma/client";
 import { SuccessResponse, ErrorResponse } from "../utils/return.js";
-
+import { generateUID } from "../utils/uuid.js";
 const prisma = new PrismaClient();
 
 class BrandService {
@@ -60,7 +60,9 @@ class BrandService {
         return ErrorResponse(400, "Brand name already exists");
       }
 
-      const brand = await prisma.brand.create({ data: { name } });
+      const brand = await prisma.brand.create({
+        data: { name, uid: await generateUID(10) },
+      });
 
       return SuccessResponse(201, "Brand created successfully", brand);
     } catch (error) {
@@ -88,7 +90,12 @@ class BrandService {
     try {
       if (!id) return ErrorResponse(400, "Brand ID is required");
 
-      await prisma.brand.delete({ where: { id: Number(id) } });
+      await prisma.brand.update({
+        where: { id: Number(id) },
+        data: {
+          is_active: false,
+        },
+      });
 
       return SuccessResponse(200, "Brand deleted successfully");
     } catch (error) {

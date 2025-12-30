@@ -13,9 +13,9 @@ export const getAllAssetsApi = async ({ page, perpage, search, status }) => {
 };
 
 // GET SINGLE ASSET
-export const getAssetByIdApi = async (id) => {
-  if (!id) throw new Error("Asset ID is required");
-  return httpRequest.get(`/asset/${id}`);
+export const getAssetByIdApi = async (uid) => {
+  if (!uid) throw new Error("Asset ID is required");
+  return httpRequest.get(`/asset/${uid}`);
 };
 
 // CREATE ASSET
@@ -26,15 +26,15 @@ export const createAssetApi = async (data) => {
 
 // // UPDATE ASSET
 
-export const updateAssetApi = async (id, data) => {
-  if (!id) throw new Error("Asset ID is required");
+export const updateAssetApi = async (uid, data) => {
+  if (!uid) throw new Error("Asset ID is required");
   if (!data) throw new Error("Asset data is required");
 
-  return httpRequest.put(`/asset/${id}`, data);
+  return httpRequest.put(`/asset/${uid}`, data);
 };
 
 // DELETE ASSET
-export const deleteAssetApi = async (id) => {
-  if (!id) throw new Error("Asset ID is required");
-  return httpRequest.delete(`/asset/${id}`);
+export const deleteAssetApi = async (uid) => {
+  if (!uid) throw new Error("Asset ID is required");
+  return httpRequest.delete(`/asset/${uid}`);
 };

@@ -7,6 +7,7 @@ import {
   Select,
   Button,
   ScrollArea,
+  Textarea,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { useForm } from "@mantine/form";
@@ -74,10 +75,14 @@ const AssetCreate = () => {
         ...values,
         specs: values.specs?.trim() || null,
         categoryId: Number(values.categoryId),
-        subCategoryId: values.subcategoryId ? Number(values.subcategoryId) : null,
+        subCategoryId: values.subcategoryId
+          ? Number(values.subcategoryId)
+          : null,
         brandId: Number(values.brandId),
         vendorId: Number(values.vendorId),
-        purchasePrice: values.purchasePrice ? Number(values.purchasePrice) : null,
+        purchasePrice: values.purchasePrice
+          ? Number(values.purchasePrice)
+          : null,
       }),
     onSuccess: () => {
       notifications.show({
@@ -120,8 +125,13 @@ const AssetCreate = () => {
 
             <form onSubmit={form.onSubmit((v) => createMutation.mutate(v))}>
               <Stack>
-                <TextInput label="Asset Name" withAsterisk {...form.getInputProps("name")} />
                 <TextInput
+                  label="Asset Name"
+                  withAsterisk
+                  {...form.getInputProps("name")}
+                />
+                <Textarea
+                  resize="vertical"
                   label="Specifications"
                   placeholder="e.g. 8GB / Intel i5 / 512GB SSD"
                   {...form.getInputProps("specs")}
@@ -129,30 +139,48 @@ const AssetCreate = () => {
                 <Select
                   label="Category"
                   withAsterisk
-                  data={categories.map((c) => ({ value: c.id.toString(), label: c.name }))}
+                  data={categories.map((c) => ({
+                    value: c.id.toString(),
+                    label: c.name,
+                  }))}
                   value={form.values.categoryId}
                   onChange={handleCategoryChange}
                   error={form.errors.categoryId}
                 />
                 <Select
                   label="Subcategory"
-                  disabled={!form.values.categoryId || subcategories.length === 0}
-                  data={subcategories.map((sc) => ({ value: sc.id.toString(), label: sc.name }))}
+                  disabled={
+                    !form.values.categoryId || subcategories.length === 0
+                  }
+                  data={subcategories.map((sc) => ({
+                    value: sc.id.toString(),
+                    label: sc.name,
+                  }))}
                   {...form.getInputProps("subcategoryId")}
                 />
                 <Select
                   label="Brand"
                   withAsterisk
-                  data={brands.map((b) => ({ value: b.id.toString(), label: b.name }))}
+                  data={brands.map((b) => ({
+                    value: b.id.toString(),
+                    label: b.name,
+                  }))}
                   {...form.getInputProps("brandId")}
                 />
                 <Select
                   label="Vendor"
                   withAsterisk
-                  data={vendors.map((v) => ({ value: v.id.toString(), label: v.name }))}
+                  data={vendors.map((v) => ({
+                    value: v.id.toString(),
+                    label: v.name,
+                  }))}
                   {...form.getInputProps("vendorId")}
                 />
-                <TextInput label="Purchase Price" type="number" {...form.getInputProps("purchasePrice")} />
+                <TextInput
+                  label="Purchase Price"
+                  type="number"
+                  {...form.getInputProps("purchasePrice")}
+                />
                 <DateInput
                   label="Purchase Date"
                   withAsterisk

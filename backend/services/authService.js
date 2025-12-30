@@ -6,7 +6,7 @@ import jwt from "jsonwebtoken";
 import redisClient from "../redis-client.js";
 const JWT_SECRET = process.env.JWT_SECRET || "SUPER_SECRET_KEY";
 import { generateTokenKey } from "../utils/tokenKeyGenerator.js";
-import {generateUID} from "../utils/uuid.js"
+import { generateUID } from "../utils/uuid.js";
 class AuthService {
   async signup(data) {
     const { first_name, last_name, phone, email, password } = data;
@@ -86,17 +86,15 @@ class AuthService {
     }
 
     // create token
-    const token = jwt.sign({ userId: user.id }, JWT_SECRET, {
+    const token = jwt.sign({ userId: user.id, ...user }, JWT_SECRET, {
       expiresIn: "1D",
     });
 
-  
     const updatedUser = await prisma.user.update({
       where: { id: user.id },
       data: { token },
     });
 
-   
     delete updatedUser.password;
     // Save token in Redis
 

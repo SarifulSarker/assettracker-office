@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { SuccessResponse, ErrorResponse } from "../utils/return.js";
-
+import { generateUID } from "../utils/uuid.js";
 const prisma = new PrismaClient();
 
 class DesignationService {
@@ -25,6 +25,7 @@ class DesignationService {
       const designation = await prisma.designation.create({
         data: {
           name,
+          uid: await generateUID(10),
           description,
           is_active: is_active ?? true,
         },
@@ -46,7 +47,7 @@ class DesignationService {
       if (!page || !perpage) {
         return ErrorResponse(400, "Page and perpage are required");
       }
-       
+
       let where = {};
 
       // Search filter
@@ -62,17 +63,16 @@ class DesignationService {
         };
       }
 
-    
-       // Convert status string to boolean
-    if (status !== undefined) {
-      if (typeof status === "string") {
-        where.is_active = status === "true"; // convert "true"/"false" to boolean
+      // Convert status string to boolean
+      if (status !== undefined) {
+        if (typeof status === "string") {
+          where.is_active = status === "true"; // convert "true"/"false" to boolean
+        } else {
+          where.is_active = status; // already boolean
+        }
       } else {
-        where.is_active = status; // already boolean
+        where.is_active = true; // default active
       }
-    } else {
-      where.is_active = true; // default active
-    }
 
       const total = await prisma.designation.count({ where });
 
@@ -146,7 +146,7 @@ class DesignationService {
         data: {
           name: data.name,
           description: data.description,
-          is_active: data.is_active,
+         
         },
       });
 
@@ -172,8 +172,11 @@ class DesignationService {
       }
 
       // hard delete
-      await prisma.designation.delete({
+      await prisma.designation.update({
         where: { id: Number(id) },
+        data: {
+          is_active: false,
+        },
       });
 
       return SuccessResponse(200, "Designation deleted successfully");

@@ -125,7 +125,7 @@ const CategoryPage = () => {
 
   // Table headers
   const tableHeaders = [
-    { key: "id", headerTitle: "ID" },
+    { key: "sl", headerTitle: "SL", row: (v, r, i) => (page - 1) * PAGE_SIZE + i + 1 },
     { key: "name", headerTitle: "Name" },
     selectedType === "subcategory"
       ? { key: "category", headerTitle: "Category" }

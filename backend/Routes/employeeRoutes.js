@@ -5,8 +5,8 @@ const router = Router();
 
 router.post("/create-employee", employeeController.createEmployee);
 router.get("/get-all-employee", employeeController.getEmployees);
-router.get("/:id", employeeController.getEmployeeById);
-router.put("/:id", employeeController.updateEmployee);
-router.delete("/:id", employeeController.deleteEmployee);
+router.get("/:uid", employeeController.getEmployeeById);
+router.put("/:uid", employeeController.updateEmployee);
+router.delete("/:uid", employeeController.deleteEmployee);
 
 export default router;

@@ -4,7 +4,9 @@ class AssetController {
   // CREATE
   async createAsset(req, res) {
     try {
-      const result = await assetService.createAsset(req.body);
+     const result = await assetService.createAsset(req.body, req.user);
+
+   //   console.log(req.user);
       res.status(result.responseCode).json(result);
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
@@ -29,6 +31,7 @@ class AssetController {
         perpage,
         search,
         status,
+        issuer: req.user,
       });
 
       return res.status(result.responseCode).json(result);
@@ -43,7 +46,7 @@ class AssetController {
   // GET BY ID
   async getAssetById(req, res) {
     try {
-      const result = await assetService.getAssetById(req.params.id);
+      const result = await assetService.getAssetById(req.params.uid);
       res.status(result.responseCode).json(result);
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
@@ -53,7 +56,7 @@ class AssetController {
   // UPDATE
   async updateAsset(req, res) {
     try {
-      const result = await assetService.updateAsset(req.params.id, req.body);
+      const result = await assetService.updateAsset(req.params.uid, req.body, req.user);
       console.log(req.body);
       res.status(result.responseCode).json(result);
     } catch (error) {
@@ -64,7 +67,7 @@ class AssetController {
   // DELETE
   async deleteAsset(req, res) {
     try {
-      const result = await assetService.deleteAsset(req.params.id);
+      const result = await assetService.deleteAsset(req.params.uid, req.user);
       res.status(result.responseCode).json(result);
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });

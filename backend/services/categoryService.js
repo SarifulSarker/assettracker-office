@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { SuccessResponse, ErrorResponse } from "../utils/return.js";
-
+import {generateUID} from "../utils/uuid.js"
 const prisma = new PrismaClient();
 
 class CategoryService {
@@ -12,6 +12,7 @@ class CategoryService {
       const category = await prisma.category.create({
         data: {
           name: data.name,
+          uid: await generateUID(10),
           parentId: data.parentId || null,
         },
       });

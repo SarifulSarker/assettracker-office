@@ -41,12 +41,12 @@ const SidebarLink = ({ icon: Icon, label, link, onClick, onClickMobile }) => {
           <Icon
             size="1.5rem"
             stroke={1.5}
-            color={active ? COLORS.secondary : COLORS.white}
+            color={active ? COLORS.app_color : COLORS.white}
           />
           <Text
             size="sm"
             fw={500}
-            color={active ? COLORS.secondary : COLORS.white}
+            color={active ? COLORS.app_color : COLORS.white}
           >
             {label}
           </Text>

@@ -8,10 +8,11 @@ import {
   Badge,
   Divider,
   Button,
+  Tooltip,
 } from "@mantine/core";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getAssetsByEmployeeApi } from "../../services/assetMapping.js";
-import { IconBan } from "@tabler/icons-react";
+import { IconBan, IconX } from "@tabler/icons-react";
 import { unassignAssetApi } from "../../services/assetMapping";
 import { notifications } from "@mantine/notifications";
 import { modals } from "@mantine/modals";
@@ -76,29 +77,31 @@ const EmployeeAssetsModal = ({ opened, onClose, employee }) => {
           assignments.length > 0 &&
           assignments.map((a) => (
             <Paper key={a.id} p="md" withBorder radius="md">
-              <Group position="apart">
+              <Group align="flex-start">
                 <Text fw={600}>{a.asset?.name || "Unknown Asset"}</Text>
 
-                <Group spacing="xs">
+                {/* Push right */}
+                <Group spacing="xs" ml="auto">
                   <Badge color={a.asset?.is_active ? "green" : "gray"}>
                     {a.asset?.is_active ? "Active" : "Inactive"}
                   </Badge>
 
-                  {/* ❌ Unassign button */}
-                  <Button
-                    size="xs"
-                    color="red"
-                    variant="light"
-                    onClick={() => openUnassignModal(a.id)}
-                  >
-                    <IconBan size={14} />
-                  </Button>
+                  <Tooltip label="Click to Unassign Asset" withArrow>
+                    <Button
+                      size="xs"
+                      color="red"
+                      variant="light"
+                      onClick={() => openUnassignModal(a.id)}
+                    >
+                      <IconX size={14} />
+                    </Button>
+                  </Tooltip>
                 </Group>
               </Group>
 
               <Divider my="xs" />
 
-              <Text size="sm" color="dimmed">
+              <Text style={{ whiteSpace: "pre" }} size="sm" color="dimmed">
                 <b>Specs:</b> {a.asset?.specs ?? "No specs available"}
               </Text>
 

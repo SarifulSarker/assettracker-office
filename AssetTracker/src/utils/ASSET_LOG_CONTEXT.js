@@ -1,0 +1,10 @@
+// utils/ASSET_LOG_CONTEXT.js
+export const ASSET_LOG_CONTEXT = {
+  CREATE: "CREATE",
+  UPDATE: "UPDATE",
+  ASSIGN: "ASSIGN",
+  
+  ACTIVATE: "ACTIVATE",
+
+  DELETE : "DELETE"
+};

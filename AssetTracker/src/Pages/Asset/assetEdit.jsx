@@ -6,6 +6,7 @@ import {
   Button,
   Stack,
   Paper,
+  Textarea,
   Select,
   Loader,
 } from "@mantine/core";
@@ -23,16 +24,16 @@ import { getAllCategoriesApi } from "../../services/category.js";
 
 const assetEdit = () => {
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { uid } = useParams();
 
   const [subcategories, setSubcategories] = useState([]);
 
   /* -------------------- QUERIES -------------------- */
 
   const { data: assetData, isLoading: assetLoading } = useQuery({
-    queryKey: ["asset", id],
-    queryFn: () => getAssetByIdApi(id),
-    enabled: !!id,
+    queryKey: ["asset", uid],
+    queryFn: () => getAssetByIdApi(uid),
+    enabled: !!uid,
   });
 
   const { data: CategoriesData } = useQuery({
@@ -102,7 +103,7 @@ const assetEdit = () => {
 
   const updateMutation = useMutation({
     mutationFn: (values) =>
-      updateAssetApi(id, {
+      updateAssetApi(uid, {
         name: values.name,
         specs: values.specs,
         status: values.status,
@@ -180,7 +181,8 @@ const assetEdit = () => {
                 withAsterisk
                 {...form.getInputProps("name")}
               />
-              <TextInput
+              <Textarea
+              resize="vertical"
                 label="Specs"
                 withAsterisk
                 {...form.getInputProps("specs")}

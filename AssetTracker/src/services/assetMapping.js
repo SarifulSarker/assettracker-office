@@ -26,10 +26,10 @@ export const getAssetsByEmployeeApi = async (employeeId) => {
 };
 
 // GET ALL EMPLOYEES ASSIGNED TO A SPECIFIC ASSET
-export const getEmployeesByAssetApi = async (assetId) => {
+export const getEmployeesByAssetApi = async (uid) => {
   try {
-    if (!assetId) throw new Error("Asset ID is required");
-    const data = httpRequest.get(`/asset-mapping/asset/${assetId}`);
+    if (!uid) throw new Error("Asset ID is required");
+    const data = httpRequest.get(`/asset-mapping/asset/${uid}`);
     return data;
   } catch (err) {
     throw new Error(err?.response?.data?.message || err.message || "API Error");
@@ -57,6 +57,18 @@ export const getUnassignedAssetsApi = async ({  search }) => {
     });
   
     return data;
+  } catch (err) {
+    throw new Error(err?.response?.data?.message || err.message || "API Error");
+  }
+};
+
+export const getAssetLogsApi = async ({ assetId, context }) => {
+  try {
+    if (!assetId) throw new Error("Asset ID is required");
+   
+
+    const { data } = await httpRequest.get(`/asset-mapping/${assetId}/${context}`);
+    return data; // { success, message, data } from backend
   } catch (err) {
     throw new Error(err?.response?.data?.message || err.message || "API Error");
   }

@@ -2,6 +2,7 @@
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 import { SuccessResponse, ErrorResponse } from "../utils/return.js";
+import { generateUID } from "../utils/uuid.js";
 
 class vendorService {
   // Create Vendor
@@ -18,7 +19,14 @@ class vendorService {
     }
 
     const vendor = await prisma.vendor.create({
-      data: { name, contact, email, address, notes },
+      data: {
+        name,
+        uid: await generateUID(10),
+        contact,
+        email,
+        address,
+        notes,
+      },
     });
 
     return {
@@ -29,57 +37,56 @@ class vendorService {
     };
   }
 
+  // Get all vendors with pagination + search
+  async getAllVendors({ page, perpage, search, status }) {
+    try {
+      if (!page || !perpage) {
+        return ErrorResponse(400, "Page and perpage are required");
+      }
 
- // Get all vendors with pagination + search
-async getAllVendors({ page, perpage, search,status }) {
-  try {
-    if (!page || !perpage) {
-      return ErrorResponse(400, "Page and perpage are required");
+      let filters = {};
+
+      // Search by name, email, contact (multiple terms)
+      if (search) {
+        const terms = search.trim().split(/\s+/);
+
+        filters = {
+          AND: terms.map((term) => ({
+            OR: [
+              { name: { contains: term, mode: "insensitive" } },
+              { email: { contains: term, mode: "insensitive" } },
+              { contact: { contains: term, mode: "insensitive" } },
+            ],
+          })),
+        };
+      }
+
+      // Add status filter if provided (default: active assets only)
+      if (status !== undefined) {
+        filters.is_active = status;
+      } else {
+        filters.is_active = true;
+      }
+
+      const total = await prisma.vendor.count({ where: filters });
+
+      const vendors = await prisma.vendor.findMany({
+        where: filters,
+        orderBy: { createdAt: "desc" },
+        skip: (page - 1) * perpage,
+        take: perpage,
+      });
+
+      return SuccessResponse(200, "Vendors fetched successfully", {
+        vendors,
+        total,
+        page,
+        perpage,
+      });
+    } catch (err) {
+      return ErrorResponse(500, err.message || "Server Error");
     }
-
-    let filters = {};
-
-    // Search by name, email, contact (multiple terms)
-    if (search) {
-      const terms = search.trim().split(/\s+/);
-
-      filters = {
-        AND: terms.map((term) => ({
-          OR: [
-            { name: { contains: term, mode: "insensitive" } },
-            { email: { contains: term, mode: "insensitive" } },
-            { contact: { contains: term, mode: "insensitive" } },
-          ],
-        })),
-      };
-    }
-
-     // Add status filter if provided (default: active assets only)
-    if (status !== undefined) {
-      filters.is_active = status;
-    } else {
-      filters.is_active = true;
-    }
-
-    const total = await prisma.vendor.count({ where: filters });
-
-    const vendors = await prisma.vendor.findMany({
-      where: filters,
-      orderBy: { createdAt: "desc" },
-      skip: (page - 1) * perpage,
-      take: perpage,
-    });
-
-    return SuccessResponse(200, "Vendors fetched successfully", {
-      vendors,
-      total,
-      page,
-      perpage,
-    });
-  } catch (err) {
-    return ErrorResponse(500, err.message || "Server Error");
   }
-}
 
   // Get vendor by ID
   async getVendorById(id) {
@@ -117,8 +124,11 @@ async getAllVendors({ page, perpage, search,status }) {
   // Delete vendor
   async deleteVendor(id) {
     try {
-      const deletedVendor = await prisma.vendor.delete({
+      const deletedVendor = await prisma.vendor.update({
         where: { id: Number(id) },
+        data: {
+          is_active: false,
+        },
       });
       return { success: true, status: 200, data: deletedVendor };
     } catch (error) {

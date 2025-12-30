@@ -37,8 +37,7 @@ const Designation = () => {
   // Convert status string to boolean before sending API
   const statusBool =
     status === "active" ? true : status === "inactive" ? false : undefined;
-   console.log(statusBool)
-  // Fetch designations
+
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ["designations", page, debouncedSearch, status],
     queryFn: () =>

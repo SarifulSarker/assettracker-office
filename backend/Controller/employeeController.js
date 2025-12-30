@@ -33,20 +33,20 @@ async getEmployees(req, res) {
 }
 
   async getEmployeeById(req, res) {
-    const result = await employeeService.getEmployeeById(req.params.id);
+    const result = await employeeService.getEmployeeById(req.params.uid);
     return res.status(result.responseCode).json(result);
   }
 
   async updateEmployee(req, res) {
     const result = await employeeService.updateEmployee(
-      req.params.id,
+      req.params.uid,
       req.body
     );
     return res.status(result.responseCode).json(result);
   }
 
   async deleteEmployee(req, res) {
-    const result = await employeeService.deleteEmployee(req.params.id);
+    const result = await employeeService.deleteEmployee(req.params.uid);
     return res.status(result.responseCode).json(result);
   }
 }

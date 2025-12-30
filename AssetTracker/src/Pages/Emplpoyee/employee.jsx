@@ -78,7 +78,7 @@ const Employee = () => {
   };
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => deleteEmployeeApi(id),
+    mutationFn: (uid) => deleteEmployeeApi(uid),
     onSuccess: () => {
       queryClient.invalidateQueries([
         "employees",
@@ -95,13 +95,13 @@ const Employee = () => {
     },
   });
 
-  const openDeleteModal = (id) => {
+  const openDeleteModal = (uid) => {
     modals.openConfirmModal({
       title: "Are you sure?",
       children: <Text size="sm">Do you want to delete this employee?</Text>,
       labels: { confirm: "Confirm", cancel: "Cancel" },
       confirmProps: { color: "red" },
-      onConfirm: () => deleteMutation.mutate(id),
+      onConfirm: () => deleteMutation.mutate(uid),
     });
   };
 
@@ -138,11 +138,7 @@ const Employee = () => {
       headerTitle: "Department",
       row: (v, row) => row.department?.name || "-",
     },
-    {
-      key: "status",
-      headerTitle: "Status",
-      row: (v, row) => (row.is_active ? "Active" : "Inactive"),
-    },
+    
     {
       key: "action",
       headerTitle: "Actions",
@@ -161,7 +157,7 @@ const Employee = () => {
           <Tooltip label="Delete" withArrow position="top">
             <Button
               size="xs"
-              onClick={() => openDeleteModal(row.id)}
+              onClick={() => openDeleteModal(row.uid)}
               style={{ backgroundColor: "#ef4444", color: "#fff" }}
             >
               <IconTrash size={14} />

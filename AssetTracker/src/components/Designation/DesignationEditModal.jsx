@@ -17,7 +17,7 @@ const DesignationEditModal = ({ opened, onClose, designation }) => {
     initialValues: {
       name: "",
       description: "",
-      is_active: true,
+      
     },
     validate: yupResolver(schema),
   });
@@ -27,7 +27,7 @@ const DesignationEditModal = ({ opened, onClose, designation }) => {
       form.setValues({
         name: designation.name,
         description: designation.description || "",
-        is_active: designation.is_active,
+       
       });
     }
   }, [designation]);
@@ -57,11 +57,7 @@ const DesignationEditModal = ({ opened, onClose, designation }) => {
             label="Description"
             {...form.getInputProps("description")}
           />
-          <Switch
-            label="Active"
-            checked={form.values.is_active}
-            {...form.getInputProps("is_active")}
-          />
+          
           <Button type="submit" loading={mutation.isPending}>
             Update
           </Button>

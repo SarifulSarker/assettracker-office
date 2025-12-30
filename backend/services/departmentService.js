@@ -1,7 +1,7 @@
 // services/departmentService.js
 import { PrismaClient } from "@prisma/client";
 import { SuccessResponse, ErrorResponse } from "../utils/return.js";
-
+import {generateUID} from "../utils/uuid.js"
 const prisma = new PrismaClient();
 
 class departmentService {
@@ -21,7 +21,7 @@ class departmentService {
         return ErrorResponse(400, "Department already exists");
       }
 
-      const dept = await prisma.department.create({ data: { name } });
+      const dept = await prisma.department.create({ data: { name ,  uid: await generateUID(10),} });
 
       return SuccessResponse(201, "Department created successfully", dept);
     } catch (error) {
@@ -111,8 +111,11 @@ class departmentService {
   // Delete department
   async deleteDepartment(id) {
     try {
-      const deleted = await prisma.department.delete({
+      const deleted = await prisma.department.update({
         where: { id: Number(id) },
+        data: {
+          is_active: false,
+        },
       });
 
       return SuccessResponse(200, "Department deleted successfully", deleted);

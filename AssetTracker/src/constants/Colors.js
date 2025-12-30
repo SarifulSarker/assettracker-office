@@ -4,7 +4,8 @@ const COLORS = {
   secondary: "#323236",
   tertiary: "#852424",
   accent: "#f48422",
-
+  
+  app_color : "#062855",
   primaryShades: [
     "#fff8e1",
     "#ffefcc",

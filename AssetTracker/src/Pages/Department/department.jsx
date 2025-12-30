@@ -104,11 +104,7 @@ const Department = () => {
   const tableHeaders = [
     { key: "sl", headerTitle: "SL", row: (v, r, i) => (page - 1) * PAGE_SIZE + i + 1 },
     { key: "name", headerTitle: "Department Name", row: (v, r) => r.name },
-    {
-      key: "status",
-      headerTitle: "Status",
-      row: (v, r) => (r.is_active ? "Active" : "Inactive"),
-    },
+  
     {
       key: "createdAt",
       headerTitle: "Created At",

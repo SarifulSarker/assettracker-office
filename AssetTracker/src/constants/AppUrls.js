@@ -9,10 +9,10 @@ export const DASHBOARD = "/dashboard";
 
 //assets
 export const ASSETS = "/assets";
-export const ASSET_CREATE = "asset/create";
-export const ASSET_EDIT = "asset/edit/:id";
+export const ASSET_CREATE = "assets/create";
+export const ASSET_EDIT = "assets/edit/:uid";
 export const ASSET_MAPPING = "asset/mapping";
-export const ASSET_LOG = "asset-log/:id";
+export const ASSET_LOG = "assets/asset-log/:uid";
 
 export const EMPLOYEE = "/employee";
 

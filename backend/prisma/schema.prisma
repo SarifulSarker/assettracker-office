@@ -8,8 +8,8 @@ generator client {
 }
 
 model User {
-  id        Int    @id @default(autoincrement())
-  uid       String @unique 
+  id  Int    @id @default(autoincrement())
+  uid String @unique
 
   firstName String
   lastName  String
@@ -25,11 +25,11 @@ model User {
 
 // -------------------- DEPARTMENT --------------------
 model Department {
-  id        Int    @id @default(autoincrement())
-  uid       String @unique 
+  id  Int    @id @default(autoincrement())
+  uid String @unique
 
-  name      String   @unique
-  is_active Boolean  @default(true)
+  name      String  @unique
+  is_active Boolean @default(true)
 
   employees                  Employee[]
   assetAssingmentDepartments AssetAssingmentDepartment[]
@@ -95,7 +95,7 @@ model Vendor {
   notes     String?
   is_active Boolean @default(true)
 
-  Assets    Asset[]
+  Assets Asset[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -132,8 +132,8 @@ model Category {
 
   is_active Boolean @default(true)
 
-  assetsAsCategory     Asset[] @relation("CategoryAssets")
-  assetsAsSubCategory  Asset[] @relation("SubCategoryAssets")
+  assetsAsCategory    Asset[] @relation("CategoryAssets")
+  assetsAsSubCategory Asset[] @relation("SubCategoryAssets")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -168,17 +168,34 @@ model Asset {
 
   assetAssingmentEmployees   AssetAssingmentEmployee[]
   assetAssingmentDepartments AssetAssingmentDepartment[]
-
+  assetLogs                  AssetLog[]
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("assets")
 }
 
+model AssetLog {
+  id       Int @id @default(autoincrement())
+  asset_id Int
+
+  context     String // CREATE | UPDATE | ASSIGN | UNASSIGN | etc
+  description String
+  issuer      String? // user / admin / system
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  asset Asset @relation(fields: [asset_id], references: [id])
+
+  @@index([asset_id])
+  @@map("asset_log")
+}
+
 // -------------------- ASSET ASSIGNMENT EMPLOYEE --------------------
 model AssetAssingmentEmployee {
-  id  Int    @id @default(autoincrement())
-  uid String @unique
+  id Int @id @default(autoincrement())
 
   assetId Int
   asset   Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
@@ -198,8 +215,7 @@ model AssetAssingmentEmployee {
 
 // -------------------- ASSET ASSIGNMENT DEPARTMENT --------------------
 model AssetAssingmentDepartment {
-  id  Int    @id @default(autoincrement())
-  uid String @unique
+  id Int @id @default(autoincrement())
 
   assetId      Int
   departmentId Int
