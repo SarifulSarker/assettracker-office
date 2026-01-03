@@ -123,17 +123,32 @@ class vendorService {
 
   // Delete vendor
   async deleteVendor(id) {
-    try {
-      const deletedVendor = await prisma.vendor.update({
-        where: { id: Number(id) },
-        data: {
-          is_active: false,
-        },
-      });
-      return { success: true, status: 200, data: deletedVendor };
-    } catch (error) {
-      return { success: false, status: 400, error: error.message };
+     try {
+    const vendor = await prisma.vendor.findUnique({
+      where: { id: Number(id) },
+      select: { is_active: true },
+    });
+
+    if (!vendor) {
+      return { success: false, status: 404, message: "Vendor not found" };
     }
+
+    const updatedVendor = await prisma.vendor.update({
+      where: { id: Number(id) },
+      data: {
+        is_active: !vendor.is_active,
+      },
+    });
+
+    return {
+      success: true,
+      status: 200,
+      data: updatedVendor,
+      message: `Vendor ${updatedVendor.is_active ? "activated" : "deactivated"} successfully`,
+    };
+  } catch (error) {
+    return { success: false, status: 400, error: error.message };
+  }
   }
 }
 

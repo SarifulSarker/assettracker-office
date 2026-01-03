@@ -152,104 +152,114 @@ class AssetService {
   }
 
   // UPDATE
-  async updateAsset(uid, data, issuer) {
-    try {
-      if (!uid) return ErrorResponse(400, "Asset ID is required");
+async updateAsset(uid, payload, issuer) {
+  try {
+    if (!uid) return ErrorResponse(400, "Asset UID is required");
 
-      // 1️⃣ Fetch old asset
-      const oldAsset = await prisma.asset.findUnique({
-        where: { uid },
-      });
-      if (!oldAsset) return ErrorResponse(404, "Asset not found");
+    /* ---------------- 1️⃣ Fetch old asset with all relations ---------------- */
+    const oldAsset = await prisma.asset.findUnique({
+      where: { uid },
+      include: {
+        brand: true,
+        category: true,
+        subCategory: true,
+        vendor: true,
+      },
+    });
 
-      const {
-        name,
-        specs,
-        status,
-        notes,
-        purchaseDate,
-        purchasePrice,
-        brandId,
-        categoryId,
-        subCategoryId,
-        vendorId,
-      } = data;
+    if (!oldAsset) return ErrorResponse(404, "Asset not found");
 
-      // 2️⃣ Prepare update payload
-      const updateData = {
-        name,
-        specs,
-        status,
-        notes,
-        purchaseDate:
-          purchaseDate && !isNaN(new Date(purchaseDate))
-            ? new Date(purchaseDate)
-            : null,
-        purchasePrice:
-          purchasePrice !== null && purchasePrice !== undefined
-            ? Number(purchasePrice)
-            : null,
-        brand: brandId ? { connect: { id: Number(brandId) } } : undefined,
-        category: categoryId
-          ? { connect: { id: Number(categoryId) } }
-          : undefined,
-        subCategory: subCategoryId
-          ? { connect: { id: Number(subCategoryId) } }
-          : undefined,
-        vendor: vendorId ? { connect: { id: Number(vendorId) } } : undefined,
-      };
+    /* ---------------- 2️⃣ Build updateData dynamically ---------------- */
+    const updateData = {};
+    const changedFields = {};
 
-      // 3️⃣ Compare old vs new to detect changes
-      const changedFields = {};
-      for (const key of Object.keys(updateData)) {
-        // skip undefined fields
-        if (updateData[key] === undefined) continue;
+    for (const [key, value] of Object.entries(payload)) {
+      if (value === undefined) continue;
 
-        // special handling for nested relations
-        if (["brand", "category", "subCategory", "vendor"].includes(key)) {
-          const oldId = oldAsset[key + "Id"];
-          const newId = updateData[key]?.connect?.id;
-          if (newId && newId !== oldId) {
-            changedFields[key] = { from: oldId, to: newId };
-          }
-          continue;
-        }
+      /* ---------- relation fields (xxxId) ---------- */
+      if (key.endsWith("Id")) {
+        const relationKey = key.replace("Id", "");
+        const oldRelation = oldAsset[relationKey];
+        const newId = Number(value);
 
-        if (updateData[key] !== oldAsset[key]) {
-          changedFields[key] = { from: oldAsset[key], to: updateData[key] };
-        }
+        if (!newId || oldRelation?.id === newId) continue;
+
+        const newEntity = await prisma[relationKey].findUnique({
+          where: { id: newId },
+          select: { name: true },
+        });
+
+        changedFields[relationKey] = {
+          from: oldRelation?.name || "N/A",
+          to: newEntity?.name || "N/A",
+        };
+
+        updateData[relationKey] = {
+          connect: { id: newId },
+        };
+
+        continue;
       }
 
-      // 4️⃣ Update asset
-      const updatedAsset = await prisma.asset.update({
-        where: { uid },
-        data: updateData,
-        include: {
-          brand: true,
-          category: true,
-          subCategory: true,
-          vendor: true,
+      /* ---------- date fields ---------- */
+      if (oldAsset[key] instanceof Date || key.toLowerCase().includes("date")) {
+        const oldDate = oldAsset[key]
+          ? new Date(oldAsset[key]).toISOString()
+          : null;
+
+        const newDate = value ? new Date(value).toISOString() : null;
+
+        if (oldDate !== newDate) {
+          changedFields[key] = {
+            from: oldAsset[key],
+            to: value,
+          };
+          updateData[key] = new Date(value);
+        }
+        continue;
+      }
+
+      /* ---------- scalar fields ---------- */
+      if (oldAsset[key] !== value) {
+        changedFields[key] = {
+          from: oldAsset[key],
+          to: value,
+        };
+        updateData[key] = value;
+      }
+    }
+
+    /* ---------------- 3️⃣ Update asset ---------------- */
+    const updatedAsset = await prisma.asset.update({
+      where: { uid },
+      data: updateData,
+      include: {
+        brand: true,
+        category: true,
+        subCategory: true,
+        vendor: true,
+      },
+    });
+
+    /* ---------------- 4️⃣ Save log ---------------- */
+    if (Object.keys(changedFields).length > 0) {
+      await prisma.assetLog.create({
+        data: {
+          asset_id: updatedAsset.id,
+          context: ASSET_LOG_CONTEXT.UPDATE,
+          description: `Updated fields: ${JSON.stringify(changedFields)}`,
+          issuer: issuer?.firstName || "system",
         },
       });
-
-      // 5️⃣ Log changes if any
-      if (Object.keys(changedFields).length > 0) {
-        await prisma.assetLog.create({
-          data: {
-            asset_id: updatedAsset.id,
-            context: ASSET_LOG_CONTEXT.UPDATE,
-            description: `Updated fields: ${JSON.stringify(changedFields)}`,
-            issuer: issuer?.firstName || "system",
-          },
-        });
-      }
-
-      return SuccessResponse(200, "Asset updated successfully", updatedAsset);
-    } catch (error) {
-      console.error("UPDATE ASSET ERROR:", error);
-      return ErrorResponse(500, error.message || "Server Error");
     }
+
+    return SuccessResponse(200, "Asset updated successfully", updatedAsset);
+  } catch (error) {
+    console.error("UPDATE ASSET ERROR:", error);
+    return ErrorResponse(500, error.message || "Server Error");
   }
+}
+
 
   // DELETE
   async deleteAsset(uid, issuer) {

@@ -9,7 +9,10 @@ import {
   Badge,
   Group,
   Select,
+  Loader,
+  Center,
 } from "@mantine/core";
+
 import {
   getEmployeesByAssetApi,
   getAssetLogsApi,
@@ -17,148 +20,126 @@ import {
 import { getAssetByIdApi } from "../../services/asset";
 import PageTop from "../../components/global/PageTop";
 import { ASSET_LOG_CONTEXT } from "../../utils/ASSET_LOG_CONTEXT";
-import AssetContextLogs from "../../components/Asset/AssetContextLogs"; // new component
+import AssetContextLogs from "../../components/Asset/AssetContextLogs";
 
 const AssetLog = () => {
   const { uid } = useParams();
-  const [context, setContext] = useState(""); // default: no context
+  const [context, setContext] = useState(null);
 
-  const { data: assetData } = useQuery({
+  /* ---------------- Asset Info ---------------- */
+  const { data: assetData, isLoading: assetLoading } = useQuery({
     queryKey: ["asset", uid],
     queryFn: () => getAssetByIdApi(uid),
-  });
-
-  const assetName = assetData?.data?.name || "no name";
-  const assetID = assetData?.data?.id;
-
-  // Logs API
-  const { data, isLoading, isError } = useQuery({
-    queryKey: context ? ["asset-logs", uid, context] : ["asset-logs", uid],
-    queryFn: () =>
-      context
-        ? getAssetLogsApi({ assetId: assetID, context }) // পুরো response পাঠানো হবে
-        : getEmployeesByAssetApi(uid),
     enabled: !!uid,
   });
 
-  let logs = [];
-  if (context) {
-    // getAssetLogsApi এর জন্য data?.data ব্যবহার
-    logs = data ?? [];
-  } else {
-    // getEmployeesByAssetApi এর জন্য আগের মতো
-    logs = data?.data ?? [];
-  }
+  const asset = assetData?.data;
+  const assetID = asset?.id;
+
+  /* ---------------- Logs ---------------- */
+  const {
+    data: logData,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["asset-logs", uid, context],
+    queryFn: () =>
+      context
+        ? getAssetLogsApi({ assetId: assetID, context })
+        : getEmployeesByAssetApi(uid),
+    enabled: !!assetID,
+  });
+
+  const logs = context ? logData ?? [] : logData?.data ?? [];
   const activeLog = logs.find((l) => !l.unassignedAt);
 
+  /* ---------------- UI ---------------- */
   return (
-    <Stack spacing="sm" px="md">
+    <Stack spacing="md" px="md">
       <PageTop PAGE_TITLE="Asset Logs" backBtn />
 
-      {/* Context Select */}
-      <Select
-        label="Select context to show logs"
-        placeholder="Pick value"
-        data={["", ...Object.values(ASSET_LOG_CONTEXT)]}
-        value={context}
-        onChange={setContext}
-        clearable
-        maxDropdownHeight={150}
-        style={{ width: 190 }}
-      />
+      {/* Filter */}
+      <Group justify="space-between">
+        <Select
+          label="Log Context"
+          placeholder="All logs"
+          data={Object.values(ASSET_LOG_CONTEXT)}
+          value={context}
+          onChange={setContext}
+          clearable
+          w={220}
+        />
+      </Group>
 
-      {/* If context is selected, show AssetContextLogs only */}
+      {/* Context based view */}
       {context ? (
         <AssetContextLogs logs={logs} context={context} />
       ) : (
         <>
-          {/* Asset Info */}
-          <Paper
-            withBorder
-            radius="md"
-            p="md"
-            shadow="sm"
-            style={{ background: "#fff" }}
-          >
-            <Group position="apart" align="flex-start">
-              <Stack spacing={2}>
-                <Text
-                  fw={700}
-                  size="md"
-                  style={{ userSelect: "text" }}
-                  component="div"
-                >
-                  Asset: {assetName}
-                </Text>
-                <Group align="flex">
-                  <Text size="sm" c="dimmed" component="div">
-                    Current Assignment Status
+          {/* Asset Summary */}
+          <Paper withBorder radius="md" p="md">
+            {assetLoading ? (
+              <Center>
+                <Loader size="sm" />
+              </Center>
+            ) : (
+              <Stack spacing={4}>
+                <Text fw={600}>Asset: {asset?.name || "N/A"}</Text>
+
+                <Group spacing="xs">
+                  <Text size="sm" c="dimmed">
+                    Current Status
                   </Text>
                   <Badge
-                    size="sm"
                     color={activeLog ? "green" : "gray"}
                     variant="light"
                   >
                     {activeLog ? "ASSIGNED" : "UNASSIGNED"}
                   </Badge>
                 </Group>
-              </Stack>
-            </Group>
 
-            {activeLog && (
-              <>
-                <Divider my="xs" />
-                <Text component="div" size="sm" style={{ userSelect: "text" }}>
-                  <b>Assigned To:</b>{" "}
-                  {activeLog.employee?.fullName || "Unknown"}{" "}
-                  <Badge
-                    size="xs"
-                    color="green"
-                    variant="light"
-                    style={{ marginLeft: 6 }}
-                  >
-                    Active
-                  </Badge>
-                </Text>
-                <Text component="div" size="sm" style={{ userSelect: "text" }}>
-                  <b>Assigned At:</b>{" "}
-                  {new Date(activeLog.createdAt).toLocaleString()}
-                </Text>
-              </>
+                {activeLog && (
+                  <>
+                    <Divider my="xs" />
+                    <Text size="sm">
+                      <b>Assigned To:</b>{" "}
+                      {activeLog.employee?.fullName || "Unknown"}
+                    </Text>
+                    <Text size="sm">
+                      <b>Assigned At:</b>{" "}
+                      {new Date(activeLog.createdAt).toLocaleString()}
+                    </Text>
+                  </>
+                )}
+              </Stack>
             )}
           </Paper>
 
           {/* Logs */}
-          <Stack spacing="xs">
-            {isLoading && <Text size="sm">Loading...</Text>}
+          <Stack spacing="sm">
+            {isLoading && (
+              <Center>
+                <Loader size="sm" />
+              </Center>
+            )}
+
             {isError && (
               <Text c="red" size="sm">
-                Failed to fetch logs
+                Failed to load logs
               </Text>
             )}
 
             {!isLoading && logs.length === 0 && (
-              <Text size="sm">No logs found</Text>
+              <Text size="sm" c="dimmed">
+                No logs found
+              </Text>
             )}
+
             {logs.map((log) => (
-              <Paper key={log.id} p="sm" radius="sm" withBorder shadow="xs">
-                <Group position="apart" spacing="sm" align="center">
-                  <Text
-                    component="div"
-                    size="sm"
-                    style={{ userSelect: "text" }}
-                  >
-                    <b>Assigned To:</b> {log.employee?.fullName || "Unknown"}{" "}
-                    {!log.unassignedAt && (
-                      <Badge
-                        size="xs"
-                        color="green"
-                        variant="light"
-                        style={{ marginLeft: 6 }}
-                      >
-                        Active
-                      </Badge>
-                    )}
+              <Paper key={log.id} withBorder radius="sm" p="sm">
+                <Group justify="space-between">
+                  <Text size="sm">
+                    <b>{log.employee?.fullName || "Unknown"}</b>
                   </Text>
                   <Badge
                     size="xs"
@@ -168,16 +149,15 @@ const AssetLog = () => {
                     {log.unassignedAt ? "Inactive" : "Active"}
                   </Badge>
                 </Group>
-                <Text component="div" size="sm" style={{ userSelect: "text" }}>
-                  Assigned At: {new Date(log.createdAt).toLocaleString()}
+
+                <Text size="xs" c="dimmed">
+                  Assigned: {new Date(log.createdAt).toLocaleString()}
                 </Text>
+
                 {log.unassignedAt && (
-                  <Text
-                    component="div"
-                    size="sm"
-                    style={{ userSelect: "text" }}
-                  >
-                    Unassigned At: {new Date(log.unassignedAt).toLocaleString()}
+                  <Text size="xs" c="dimmed">
+                    Unassigned:{" "}
+                    {new Date(log.unassignedAt).toLocaleString()}
                   </Text>
                 )}
               </Paper>

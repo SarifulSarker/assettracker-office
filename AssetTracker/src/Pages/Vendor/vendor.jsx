@@ -114,7 +114,7 @@ const Vendor = () => {
             </Button>
           </Tooltip>
 
-          <Tooltip label="Delete" withArrow>
+          <Tooltip label={statusBool ? "Delete" : "Activate"} withArrow>
             <Button
               size="xs"
               color="red"

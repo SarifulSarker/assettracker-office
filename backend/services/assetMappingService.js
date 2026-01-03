@@ -12,28 +12,58 @@ class AssetAssignmentService {
         return ErrorResponse(400, "Employee or assets missing");
       }
 
-      // Create all assignments in parallel
+      /* ---------------- 1️⃣ Fetch employee ---------------- */
+      const employee = await prisma.employee.findUnique({
+        where: { id: Number(employeeId) },
+        select: {
+          id: true,
+          fullName: true,
+          email: true,
+          department: true,
+          designation: true,
+        },
+      });
+
+      if (!employee) {
+        return ErrorResponse(404, "Employee not found");
+      }
+
+      /* ---------------- 2️⃣ Assign assets ---------------- */
       const assignments = await Promise.all(
         assetIds.map((assetId) =>
           prisma.assetAssingmentEmployee.create({
             data: {
               assetId,
-              employeeId,
+              employeeId: employee.id,
               assignedAt: new Date(),
               is_active: true,
             },
           })
         )
       );
+
+      /* ---------------- 3️⃣ Create logs ---------------- */
       await Promise.all(
         assetIds.map((assetId) =>
           prisma.assetLog.create({
             data: {
               asset_id: assetId,
               context: ASSET_LOG_CONTEXT.ASSIGN,
-              description: `Assigned to employee ID ${employeeId} by ${
-                issuer?.firstName || "system"
-              }`,
+              description: JSON.stringify({
+                action: "ASSIGN",
+                employee: {
+                  id: employee.id,
+                  name: employee.fullName,
+                  email:employee.email,
+                  department:employee.department,
+                  designation:employee.designation,
+
+                },
+                asset: {
+                  id: assetId,
+                },
+                assignedAt: new Date(),
+              }),
               issuer: issuer?.firstName || "system",
             },
           })
@@ -41,9 +71,9 @@ class AssetAssignmentService {
       );
 
       return SuccessResponse(200, "Assets assigned successfully", assignments);
-    } catch (err) {
-      console.error(err);
-      return ErrorResponse(500, "Server error", err);
+    } catch (error) {
+      console.error("ASSIGN ASSET ERROR:", error);
+      return ErrorResponse(500, "Server Error");
     }
   }
 
@@ -89,47 +119,44 @@ class AssetAssignmentService {
     }
   }
 
- async unassignAssetService(assignmentId, issuer) {
-  try {
-    if (!assignmentId) {
-      return ErrorResponse(400, "Assignment ID is required");
+  async unassignAssetService(assignmentId, issuer) {
+    try {
+      if (!assignmentId) {
+        return ErrorResponse(400, "Assignment ID is required");
+      }
+
+      // 1️⃣ Check active assignment
+      const assignment = await prisma.assetAssingmentEmployee.findFirst({
+        where: {
+          id: Number(assignmentId),
+          is_active: true,
+          unassignedAt: null,
+        },
+      });
+
+      if (!assignment) {
+        return ErrorResponse(404, "Active assignment not found");
+      }
+
+      // 2️⃣ Unassign asset
+      const updatedAssignment = await prisma.assetAssingmentEmployee.update({
+        where: { id: Number(assignmentId) },
+        data: {
+          is_active: false,
+          unassignedAt: new Date(),
+        },
+      });
+
+      return SuccessResponse(
+        200,
+        "Asset unassigned successfully",
+        updatedAssignment
+      );
+    } catch (error) {
+      console.error("UNASSIGN ASSET SERVICE ERROR:", error);
+      return ErrorResponse(500, error.message || "Server error");
     }
-
-    // 1️⃣ Check active assignment
-    const assignment = await prisma.assetAssingmentEmployee.findFirst({
-      where: {
-        id: Number(assignmentId),
-        is_active: true,
-        unassignedAt: null,
-      },
-    });
-
-    if (!assignment) {
-      return ErrorResponse(404, "Active assignment not found");
-    }
-
-    // 2️⃣ Unassign asset
-    const updatedAssignment = await prisma.assetAssingmentEmployee.update({
-      where: { id: Number(assignmentId) },
-      data: {
-        is_active: false,
-        unassignedAt: new Date(),
-      },
-    });
-
-  
-
-    return SuccessResponse(
-      200,
-      "Asset unassigned successfully",
-      updatedAssignment
-    );
-  } catch (error) {
-    console.error("UNASSIGN ASSET SERVICE ERROR:", error);
-    return ErrorResponse(500, error.message || "Server error");
   }
-}
-
 
   async getUnassignedAssetsService({ search }) {
     try {
@@ -173,7 +200,7 @@ class AssetAssignmentService {
     }
   }
 
-    async getLogsByAssetAndContext(assetId, context) {
+  async getLogsByAssetAndContext(assetId, context) {
     try {
       if (!assetId) {
         return ErrorResponse(400, "Asset ID is required");
