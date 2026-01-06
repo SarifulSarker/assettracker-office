@@ -155,18 +155,37 @@ class userService {
   // delete user by id
   async deleteUser(uid, req) {
     try {
-      const data = await prisma.user.update({
-        where: { uid: uid },
+      // 1️⃣ Find user first
+      const user = await prisma.user.findUnique({
+        where: { uid },
+        select: { is_active: true },
+      });
+
+      if (!user) {
+        return {
+          success: false,
+          status: 404,
+          message: "User not found",
+        };
+      }
+
+      // 2️⃣ Toggle is_active
+      const updatedUser = await prisma.user.update({
+        where: { uid },
         data: {
-          is_active: false,
+          is_active: !user.is_active,
         },
       });
 
-      
+      return {
+        success: true,
+        status: 200,
+        data: updatedUser,
+        message: `User ${
+          updatedUser.is_active ? "activated" : "deactivated"
+        } successfully`,
+      };
     } catch (error) {
-      if (error.code === "P2025") {
-        return null; // record not found
-      }
       return {
         success: false,
         status: 500,

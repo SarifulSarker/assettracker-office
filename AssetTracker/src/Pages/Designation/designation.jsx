@@ -122,7 +122,7 @@ const Designation = () => {
             </Button>
           </Tooltip>
 
-          <Tooltip label="Delete" withArrow>
+          <Tooltip label={statusBool ? "Delete" : "Activate"} withArrow>
             <Button size="xs" color="red" onClick={() => openDeleteModal(r.id)}>
               <IconTrash size={14} />
             </Button>

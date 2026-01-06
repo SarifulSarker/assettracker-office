@@ -28,6 +28,7 @@ const DepartmentFilters = ({
             { value: "active", label: "Active" },
             { value: "inactive", label: "Inactive" },
           ]}
+           allowDeselect={false}
         />
 
         <Button onClick={onRefresh}>

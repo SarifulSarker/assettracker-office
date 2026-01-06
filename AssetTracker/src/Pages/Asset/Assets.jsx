@@ -11,9 +11,10 @@ import TablePaperContent from "../../components/global/TablePaperContent.jsx";
 import CustomTable from "../../components/global/CustomTable.jsx";
 import CustomPagination from "../../components/global/CustomPagination.jsx";
 import AssetFilters from "../../components/Asset/AssetFilters.jsx";
+import { IconQrcode } from "@tabler/icons-react";
 
 import { getAllAssetsApi, deleteAssetApi } from "../../services/asset.js";
-
+import SpecsCell from "../../helpers/collaps.jsx";
 const PAGE_SIZE = 10;
 
 const Assets = () => {
@@ -40,15 +41,29 @@ const Assets = () => {
     setPage(1);
     queryClient.invalidateQueries(["assets"]);
   };
-
   const deleteMutation = useMutation({
     mutationFn: (id) => deleteAssetApi(id),
-    onSuccess: () => {
+    onSuccess: (response) => {
+      // response = backend theke return kora data
+      const msg = response?.message || "Operation successful!";
+
       queryClient.invalidateQueries(["assets", page, searchKey, status]);
       closeAllModals();
       notifications.show({
-        title: "Deleted",
-        message: "Asset deleted successfully!",
+        title: "Success",
+        message: msg, // backend message use kora hocche
+        position: "top-center",
+      });
+    },
+    onError: (error) => {
+      const msg =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Something went wrong!";
+      notifications.show({
+        title: "Error",
+        message: msg,
+        color: "red",
         position: "top-center",
       });
     },
@@ -99,8 +114,22 @@ const Assets = () => {
     {
       key: "specs",
       headerTitle: "Specs",
-      row: (v, row) => row.specs || "-",
-      rowStyle: { whiteSpace: "pre" },
+      row: (v, row) => (
+        <div
+          style={{
+            display: "-webkit-box",
+            WebkitLineClamp: 2, // Max 2 lines
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "pre", // pre-wrap নয়
+          }}
+          title={row.specs} // hover এ full text দেখাবে
+        >
+          {row.specs || "N/A"}
+        </div>
+      ),
+      rowStyle: {}, // optional
     },
 
     {
@@ -139,7 +168,7 @@ const Assets = () => {
             </Button>
           </Tooltip>
 
-          <Tooltip label="Delete Asset" color="red" withArrow>
+          <Tooltip label={statusBool ? "Delete" : "Activate"} withArrow>
             <Button
               size="xs"
               onClick={() => openDeleteModal(row.uid)}
@@ -156,6 +185,17 @@ const Assets = () => {
               style={{ backgroundColor: "#10b981", color: "#fff" }}
             >
               <IconHistory size={14} />
+            </Button>
+          </Tooltip>
+
+          {/* QR Code */}
+          <Tooltip label="Print QR Code" withArrow>
+            <Button
+              size="xs"
+              onClick={() => navigate(`/assets/qr/${row.uid}`)}
+              style={{ backgroundColor: "#6366f1", color: "#fff" }}
+            >
+              <IconQrcode size={14} />
             </Button>
           </Tooltip>
         </Group>

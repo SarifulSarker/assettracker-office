@@ -57,6 +57,7 @@ class AssetService {
       const dt = await prisma.assetLog.create({
         data: {
           asset_id: asset.id,
+          asset_uid:asset.uid,
           context: ASSET_LOG_CONTEXT.CREATE,
           description: `Asset created by ${issuer.firstName || "system"}`,
           issuer: issuer?.firstName || "system",
@@ -112,7 +113,7 @@ class AssetService {
         take: perpage,
       });
 
-      // console.log(`assets has been fetched by ${issuer.firstName}`);
+     
       return SuccessResponse(200, "Assets fetched successfully", {
         assets,
         total,
@@ -152,114 +153,117 @@ class AssetService {
   }
 
   // UPDATE
-async updateAsset(uid, payload, issuer) {
-  try {
-    if (!uid) return ErrorResponse(400, "Asset UID is required");
+  async updateAsset(uid, payload, issuer) {
+    try {
+      if (!uid) return ErrorResponse(400, "Asset UID is required");
 
-    /* ---------------- 1️⃣ Fetch old asset with all relations ---------------- */
-    const oldAsset = await prisma.asset.findUnique({
-      where: { uid },
-      include: {
-        brand: true,
-        category: true,
-        subCategory: true,
-        vendor: true,
-      },
-    });
+      /* ---------------- 1️⃣ Fetch old asset with all relations ---------------- */
+      const oldAsset = await prisma.asset.findUnique({
+        where: { uid },
+        include: {
+          brand: true,
+          category: true,
+          subCategory: true,
+          vendor: true,
+        },
+      });
 
-    if (!oldAsset) return ErrorResponse(404, "Asset not found");
+      if (!oldAsset) return ErrorResponse(404, "Asset not found");
 
-    /* ---------------- 2️⃣ Build updateData dynamically ---------------- */
-    const updateData = {};
-    const changedFields = {};
+      /* ---------------- 2️⃣ Build updateData dynamically ---------------- */
+      const updateData = {};
+      const changedFields = {};
 
-    for (const [key, value] of Object.entries(payload)) {
-      if (value === undefined) continue;
+      for (const [key, value] of Object.entries(payload)) {
+        if (value === undefined) continue;
 
-      /* ---------- relation fields (xxxId) ---------- */
-      if (key.endsWith("Id")) {
-        const relationKey = key.replace("Id", "");
-        const oldRelation = oldAsset[relationKey];
-        const newId = Number(value);
+        /* ---------- relation fields (xxxId) ---------- */
+        if (key.endsWith("Id")) {
+          const relationKey = key.replace("Id", "");
+          const oldRelation = oldAsset[relationKey];
+          const newId = Number(value);
 
-        if (!newId || oldRelation?.id === newId) continue;
+          if (!newId || oldRelation?.id === newId) continue;
 
-        const newEntity = await prisma[relationKey].findUnique({
-          where: { id: newId },
-          select: { name: true },
-        });
+          const newEntity = await prisma[relationKey].findUnique({
+            where: { id: newId },
+            select: { name: true },
+          });
 
-        changedFields[relationKey] = {
-          from: oldRelation?.name || "N/A",
-          to: newEntity?.name || "N/A",
-        };
+          changedFields[relationKey] = {
+            from: oldRelation?.name || "N/A",
+            to: newEntity?.name || "N/A",
+          };
 
-        updateData[relationKey] = {
-          connect: { id: newId },
-        };
+          updateData[relationKey] = {
+            connect: { id: newId },
+          };
 
-        continue;
-      }
+          continue;
+        }
 
-      /* ---------- date fields ---------- */
-      if (oldAsset[key] instanceof Date || key.toLowerCase().includes("date")) {
-        const oldDate = oldAsset[key]
-          ? new Date(oldAsset[key]).toISOString()
-          : null;
+        /* ---------- date fields ---------- */
+        if (
+          oldAsset[key] instanceof Date ||
+          key.toLowerCase().includes("date")
+        ) {
+          const oldDate = oldAsset[key]
+            ? new Date(oldAsset[key]).toISOString()
+            : null;
 
-        const newDate = value ? new Date(value).toISOString() : null;
+          const newDate = value ? new Date(value).toISOString() : null;
 
-        if (oldDate !== newDate) {
+          if (oldDate !== newDate) {
+            changedFields[key] = {
+              from: oldAsset[key],
+              to: value,
+            };
+            updateData[key] = new Date(value);
+          }
+          continue;
+        }
+
+        /* ---------- scalar fields ---------- */
+        if (oldAsset[key] !== value) {
           changedFields[key] = {
             from: oldAsset[key],
             to: value,
           };
-          updateData[key] = new Date(value);
+          updateData[key] = value;
         }
-        continue;
       }
 
-      /* ---------- scalar fields ---------- */
-      if (oldAsset[key] !== value) {
-        changedFields[key] = {
-          from: oldAsset[key],
-          to: value,
-        };
-        updateData[key] = value;
-      }
-    }
-
-    /* ---------------- 3️⃣ Update asset ---------------- */
-    const updatedAsset = await prisma.asset.update({
-      where: { uid },
-      data: updateData,
-      include: {
-        brand: true,
-        category: true,
-        subCategory: true,
-        vendor: true,
-      },
-    });
-
-    /* ---------------- 4️⃣ Save log ---------------- */
-    if (Object.keys(changedFields).length > 0) {
-      await prisma.assetLog.create({
-        data: {
-          asset_id: updatedAsset.id,
-          context: ASSET_LOG_CONTEXT.UPDATE,
-          description: `Updated fields: ${JSON.stringify(changedFields)}`,
-          issuer: issuer?.firstName || "system",
+      /* ---------------- 3️⃣ Update asset ---------------- */
+      const updatedAsset = await prisma.asset.update({
+        where: { uid },
+        data: updateData,
+        include: {
+          brand: true,
+          category: true,
+          subCategory: true,
+          vendor: true,
         },
       });
+
+      /* ---------------- 4️⃣ Save log ---------------- */
+      if (Object.keys(changedFields).length > 0) {
+        await prisma.assetLog.create({
+          data: {
+            asset_id: updatedAsset.id,
+            asset_uid:uid,
+            context: ASSET_LOG_CONTEXT.UPDATE,
+            description: `Updated fields: ${JSON.stringify(changedFields)}`,
+            issuer: issuer?.firstName || "system",
+          },
+        });
+      }
+
+      return SuccessResponse(200, "Asset updated successfully", updatedAsset);
+    } catch (error) {
+      console.error("UPDATE ASSET ERROR:", error);
+      return ErrorResponse(500, error.message || "Server Error");
     }
-
-    return SuccessResponse(200, "Asset updated successfully", updatedAsset);
-  } catch (error) {
-    console.error("UPDATE ASSET ERROR:", error);
-    return ErrorResponse(500, error.message || "Server Error");
   }
-}
-
 
   // DELETE
   async deleteAsset(uid, issuer) {
@@ -268,30 +272,38 @@ async updateAsset(uid, payload, issuer) {
 
       const asset = await prisma.asset.findFirst({
         where: { uid: uid },
+        select: { id: true, name: true, is_active: true , uid: true },
       });
       if (!asset) return ErrorResponse(404, "Asset not found");
 
       const updatedAsset = await prisma.asset.update({
         where: { uid: uid },
         data: {
-          is_active: false,
+          is_active: !asset.is_active,
         },
       });
 
-      // 3️⃣ Create log
-      const dt = await prisma.assetLog.create({
+      // Create log (same logic, just toggle-aware text)
+      await prisma.assetLog.create({
         data: {
           asset_id: updatedAsset.id,
-          context: ASSET_LOG_CONTEXT.DELETE, // or ASSET_LOG_CONTEXT.DEACTIVATE
-          description: `${updatedAsset.name} Asset Delete by ${
-            issuer?.firstName || "system"
-          }`,
+          asset_uid:asset.uid,
+          context: updatedAsset.is_active
+            ? ASSET_LOG_CONTEXT.ACTIVATE
+            : ASSET_LOG_CONTEXT.DELETE, // or DEACTIVATE
+          description: `${updatedAsset.name} Asset ${
+            updatedAsset.is_active ? "Activated" : "Deactivated"
+          } by ${issuer?.firstName || "system"}`,
           issuer: issuer?.firstName || "system",
         },
       });
-      console.log(dt);
 
-      return SuccessResponse(200, "Asset deleted successfully");
+      return SuccessResponse(
+        200,
+        `Asset ${
+          updatedAsset.is_active ? "activated" : "deactivated"
+        } successfully`
+      );
     } catch (error) {
       return ErrorResponse(500, error.message || "Server Error");
     }

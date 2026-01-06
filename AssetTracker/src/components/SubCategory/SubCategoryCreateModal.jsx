@@ -76,6 +76,7 @@ const categories = data?.data?.categories || []; // ✅
         <Stack>
           {/* Select Category */}
           <Select
+           allowDeselect={false}
             label="Select Category"
             placeholder="Choose category"
             data={categoryOptions}

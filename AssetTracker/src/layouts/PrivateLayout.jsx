@@ -31,7 +31,7 @@ const dispatch = useDispatch();
   const handleLogout = () => {
     
     dispatch(logout())
-    navigate("/signin");
+    navigate("/");
   };
 
   //logout modal open
@@ -74,7 +74,7 @@ const dispatch = useDispatch();
       {/* HEADER */}
       <AppShell.Header
         style={{
-          backgroundColor: "#062855",
+          backgroundColor: COLORS.nav_header,
           color: COLORS.background,
           boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
         }}
@@ -98,7 +98,7 @@ const dispatch = useDispatch();
           component="img"
           src={Logo}
           alt="Logo"
-          style={{ width: 60 ,marginLeft: 55,  }}
+          style={{ width: 50 ,marginLeft: 55,  }}
         />
       </Flex>
 
@@ -111,7 +111,7 @@ const dispatch = useDispatch();
       <AppShell.Navbar
         p="xs"
         style={{
-          backgroundColor:  "#062855",
+          backgroundColor: COLORS.nav_header,
           borderRight: "1px solid rgba(0,0,0,0.05)",
           display: "flex",
           flexDirection: "column",

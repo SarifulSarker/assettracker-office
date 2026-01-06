@@ -21,6 +21,7 @@ import { getAssetByIdApi, updateAssetApi } from "../../services/asset.js";
 import { getAllBrandsApi } from "../../services/brand.js";
 import { getAllVendorsApi } from "../../services/vendor.js";
 import { getAllCategoriesApi } from "../../services/category.js";
+import RichTextInput from "../../helpers/RichTextInput.jsx";
 
 const assetEdit = () => {
   const navigate = useNavigate();
@@ -182,7 +183,7 @@ const assetEdit = () => {
                 {...form.getInputProps("name")}
               />
               <Textarea
-              resize="vertical"
+                resize="vertical"
                 label="Specs"
                 withAsterisk
                 {...form.getInputProps("specs")}
@@ -241,9 +242,24 @@ const assetEdit = () => {
                 onChange={(v) => form.setFieldValue("purchaseDate", v)}
               />
 
-              <TextInput label="Status" {...form.getInputProps("status")} />
-
-              <TextInput label="Notes" {...form.getInputProps("notes")} />
+              <Select
+                allowDeselect={false}
+                label="Asset Status"
+                placeholder="Select status"
+                data={[
+                  { value: "active", label: "Active / Operating" },
+                  { value: "inactive", label: "Inactive / In Stock" },
+                  { value: "maintenance", label: "Maintenance / Repair" },
+                  { value: "damaged", label: "Damaged" },
+                ]}
+                {...form.getInputProps("status")}
+              />
+              <RichTextInput
+                label="Notes"
+                value={form.values.notes}
+                onChange={(val) => form.setFieldValue("notes", val)}
+                {...form.getInputProps("notes")}
+              />
 
               <Button type="submit" loading={updateMutation.isPending}>
                 Update Asset

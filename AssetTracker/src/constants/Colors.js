@@ -5,6 +5,8 @@ const COLORS = {
   tertiary: "#852424",
   accent: "#f48422",
   
+  nav_header:"#04244eff",
+
   app_color : "#062855",
   primaryShades: [
     "#fff8e1",

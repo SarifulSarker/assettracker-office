@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { SuccessResponse, ErrorResponse } from "../utils/return.js";
-import {generateUID} from "../utils/uuid.js"
+import { generateUID } from "../utils/uuid.js";
 const prisma = new PrismaClient();
 
 class EmployeeService {
@@ -166,21 +166,33 @@ class EmployeeService {
   // DELETE
   async deleteEmployee(uid) {
     try {
+      if (!uid) {
+        return ErrorResponse(400, "Employee UID is required");
+      }
+
       const employee = await prisma.employee.findUnique({
-        where: { uid: uid },
+        where: { uid },
+        select: { is_active: true },
       });
 
       if (!employee) {
         return ErrorResponse(404, "Employee not found");
       }
 
-      const data = await prisma.employee.update({
-        where: { uid: uid },
+      const updatedEmployee = await prisma.employee.update({
+        where: { uid },
         data: {
-          is_active: false,
+          is_active: !employee.is_active,
         },
       });
-      return SuccessResponse(200, "Employee deleted successfully");
+
+      return SuccessResponse(
+        200,
+        `Employee ${
+          updatedEmployee.is_active ? "activated" : "deactivated"
+        } successfully`,
+        updatedEmployee
+      );
     } catch (err) {
       return ErrorResponse(500, err.message || "Server Error");
     }

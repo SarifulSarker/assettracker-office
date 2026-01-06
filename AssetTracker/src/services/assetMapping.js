@@ -62,12 +62,13 @@ export const getUnassignedAssetsApi = async ({  search }) => {
   }
 };
 
-export const getAssetLogsApi = async ({ assetId, context }) => {
-  try {
-    if (!assetId) throw new Error("Asset ID is required");
-   
+//log by context
 
-    const { data } = await httpRequest.get(`/asset-mapping/${assetId}/${context}`);
+export const getAssetLogsByContextApi = async ({ assetUId, context }) => {
+  try {
+    if (!assetUId) throw new Error("Asset UID is required FS");
+  
+    const { data } = await httpRequest.get(`/asset-mapping/${assetUId}/${context}`);
     return data; // { success, message, data } from backend
   } catch (err) {
     throw new Error(err?.response?.data?.message || err.message || "API Error");

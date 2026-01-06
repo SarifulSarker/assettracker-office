@@ -66,7 +66,7 @@ class AuthService {
 
     // find user
     const user = await prisma.user.findUnique({ where: { email } });
-
+    
     if (!user) {
       return {
         success: false,
@@ -77,6 +77,7 @@ class AuthService {
 
     // password check
     const isMatch = await bcrypt.compare(password, user.password);
+    
     if (!isMatch) {
       return {
         success: false,
@@ -90,10 +91,14 @@ class AuthService {
       expiresIn: "1D",
     });
 
+
+    
     const updatedUser = await prisma.user.update({
       where: { id: user.id },
       data: { token },
     });
+
+   
 
     delete updatedUser.password;
     // Save token in Redis

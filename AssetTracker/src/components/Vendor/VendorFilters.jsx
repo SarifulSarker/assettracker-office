@@ -27,6 +27,7 @@ const VendorFilters = ({
             { value: "inactive", label: "Inactive" },
           ]}
           w={130}
+           allowDeselect={false}
         />
 
         <Button onClick={onRefresh}>

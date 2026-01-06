@@ -21,6 +21,7 @@ const UserFilters = ({ searchKey, onSearchChange, onRefresh, onCreate, status, o
             { value: "active", label: "Active" },
             { value: "inactive", label: "Inactive" },
           ]}
+           allowDeselect={false}
         />
 
         <Button onClick={onRefresh}>

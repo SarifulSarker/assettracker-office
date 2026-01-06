@@ -1,5 +1,13 @@
 import React from "react";
-import { Modal, Button, TextInput, Select, Stack, NumberInput, Textarea } from "@mantine/core";
+import {
+  Modal,
+  Button,
+  TextInput,
+  Select,
+  Stack,
+  NumberInput,
+  Textarea,
+} from "@mantine/core";
 import { useForm, yupResolver } from "@mantine/form";
 import * as Yup from "yup";
 import { notifications } from "@mantine/notifications";
@@ -51,7 +59,7 @@ const AssetCreateModal = ({ opened, onClose, onSuccess }) => {
       vendorId: null,
       purchasePrice: null,
       purchaseDate: null,
-      status: "in-stock",
+      status: null,
       notes: "",
     },
     validate: yupResolver(schema),
@@ -61,17 +69,29 @@ const AssetCreateModal = ({ opened, onClose, onSuccess }) => {
     mutationFn: (values) => createAssetApi(values),
     onSuccess: (res) => {
       if (res?.success) {
-        notifications.show({ title: "Success", message: res.message || "Asset created", position: "top-center" });
+        notifications.show({
+          title: "Success",
+          message: res.message || "Asset created",
+          position: "top-center",
+        });
         form.reset();
         onClose();
         queryClient.invalidateQueries(["assets"]);
         onSuccess?.();
       } else {
-        notifications.show({ title: "Failed", message: res?.message || "Create failed", position: "top-center" });
+        notifications.show({
+          title: "Failed",
+          message: res?.message || "Create failed",
+          position: "top-center",
+        });
       }
     },
     onError: (err) => {
-      notifications.show({ title: "Error", message: err?.message || "Something went wrong", position: "top-center" });
+      notifications.show({
+        title: "Error",
+        message: err?.message || "Something went wrong",
+        position: "top-center",
+      });
     },
   });
 
@@ -81,19 +101,58 @@ const AssetCreateModal = ({ opened, onClose, onSuccess }) => {
     <Modal opened={opened} onClose={onClose} title="Create Asset" centered>
       <form onSubmit={form.onSubmit(handleSubmit)}>
         <Stack>
-          <TextInput label="Asset Name" withAsterisk {...form.getInputProps("name")} />
-
-          <Select label="Category" placeholder="Select Category" data={categories.map(c => ({ value: c.id.toString(), label: c.name }))} {...form.getInputProps("categoryId")} />
-
-          <Select label="Brand" placeholder="Select Brand" data={brands.map(b => ({ value: b.id.toString(), label: b.name }))} {...form.getInputProps("brandId")} />
-
-          <Select label="Vendor" placeholder="Select Vendor" data={vendors.map(v => ({ value: v.id.toString(), label: v.name }))} {...form.getInputProps("vendorId")} />
-
-          <NumberInput label="Purchase Price" {...form.getInputProps("purchasePrice")} min={0} />
-
-          <DatePicker label="Purchase Date" {...form.getInputProps("purchaseDate")} />
+          <TextInput
+            label="Asset Name"
+            withAsterisk
+            {...form.getInputProps("name")}
+          />
 
           <Select
+            allowDeselect={false}
+            label="Category"
+            placeholder="Select Category"
+            data={categories.map((c) => ({
+              value: c.id.toString(),
+              label: c.name,
+            }))}
+            {...form.getInputProps("categoryId")}
+          />
+
+          <Select
+            allowDeselect={false}
+            label="Brand"
+            placeholder="Select Brand"
+            data={brands.map((b) => ({
+              value: b.id.toString(),
+              label: b.name,
+            }))}
+            {...form.getInputProps("brandId")}
+          />
+
+          <Select
+            allowDeselect={false}
+            label="Vendor"
+            placeholder="Select Vendor"
+            data={vendors.map((v) => ({
+              value: v.id.toString(),
+              label: v.name,
+            }))}
+            {...form.getInputProps("vendorId")}
+          />
+
+          <NumberInput
+            label="Purchase Price"
+            {...form.getInputProps("purchasePrice")}
+            min={0}
+          />
+
+          <DatePicker
+            label="Purchase Date"
+            {...form.getInputProps("purchaseDate")}
+          />
+
+          <Select
+            allowDeselect={false}
             label="Status"
             placeholder="Select status"
             data={[
@@ -106,7 +165,9 @@ const AssetCreateModal = ({ opened, onClose, onSuccess }) => {
 
           <Textarea label="Notes" {...form.getInputProps("notes")} />
 
-          <Button type="submit" loading={mutation.isPending}>{mutation.isPending ? "Creating..." : "Create"}</Button>
+          <Button type="submit" loading={mutation.isPending}>
+            {mutation.isPending ? "Creating..." : "Create"}
+          </Button>
         </Stack>
       </form>
     </Modal>

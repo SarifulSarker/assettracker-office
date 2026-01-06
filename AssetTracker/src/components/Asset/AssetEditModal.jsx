@@ -58,7 +58,7 @@ const AssetEditModal = ({ opened, onClose, asset, onSuccess }) => {
       vendorId: null,
       purchasePrice: null,
       purchaseDate: null,
-      status: "in-stock",
+      status: null,
       notes: "",
     },
     validate: yupResolver(schema),
@@ -127,6 +127,7 @@ const AssetEditModal = ({ opened, onClose, asset, onSuccess }) => {
           />
 
           <Select
+            allowDeselect={false}
             label="Category"
             placeholder="Select Category"
             data={categories.map((c) => ({
@@ -137,6 +138,7 @@ const AssetEditModal = ({ opened, onClose, asset, onSuccess }) => {
           />
 
           <Select
+            allowDeselect={false}
             label="Brand"
             placeholder="Select Brand"
             data={brands.map((b) => ({
@@ -147,6 +149,7 @@ const AssetEditModal = ({ opened, onClose, asset, onSuccess }) => {
           />
 
           <Select
+            allowDeselect={false}
             label="Vendor"
             placeholder="Select Vendor"
             data={vendors.map((v) => ({
@@ -173,6 +176,7 @@ const AssetEditModal = ({ opened, onClose, asset, onSuccess }) => {
           />
 
           <Select
+            allowDeselect={false}
             label="Status"
             placeholder="Select status"
             data={[

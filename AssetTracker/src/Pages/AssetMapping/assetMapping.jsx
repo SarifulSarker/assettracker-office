@@ -56,6 +56,7 @@ const AssetMapping = () => {
         title: "Success",
         message: "Assets assigned",
         color: "green",
+        position: "top-center",
       });
 
       setItems((prev) => prev.filter((i) => !vars.assetIds.includes(i.id)));
@@ -70,7 +71,6 @@ const AssetMapping = () => {
     (a) => !a.unassignedAt
   );
 
-  console.log(employeeAssets);
   /* ------------ ---- INIT ASSETS ---------------- */
 
   useEffect(() => {
@@ -199,14 +199,39 @@ const AssetMapping = () => {
         <Button
           size="md"
           radius="md"
-          onClick={() =>
+          onClick={() => {
+            // 1️⃣ employee selected কিনা
+            if (!selectedEmployeeId) {
+              notifications.show({
+                title: "Employee not selected",
+                message: "Please select an employee first",
+                color: "red",
+                position: "top-center",
+              });
+              return;
+            }
+
+            // 2️⃣ dragged assets আছে কিনা
+            const selectedAssets = items.filter(
+              (i) => i.column === COLUMN_NAMES.EMPLOYEE
+            );
+
+            if (selectedAssets.length === 0) {
+              notifications.show({
+                title: "No assets selected",
+                message: "Please drag at least one asset to assign",
+                color: "orange",
+                position: "top-center",
+              });
+              return;
+            }
+
+            // 3️⃣ valid → mutation call
             mutation.mutate({
               employeeId: Number(selectedEmployeeId),
-              assetIds: items
-                .filter((i) => i.column === COLUMN_NAMES.EMPLOYEE)
-                .map((i) => i.id),
-            })
-          }
+              assetIds: selectedAssets.map((i) => i.id),
+            });
+          }}
         >
           Assign Assets
         </Button>

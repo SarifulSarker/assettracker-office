@@ -138,7 +138,7 @@ const Employee = () => {
       headerTitle: "Department",
       row: (v, row) => row.department?.name || "-",
     },
-    
+
     {
       key: "action",
       headerTitle: "Actions",
@@ -154,7 +154,11 @@ const Employee = () => {
             </Button>
           </Tooltip>
 
-          <Tooltip label="Delete" withArrow position="top">
+          <Tooltip
+            label={statusBool ? "Delete" : "Activate"}
+            withArrow
+            position="top"
+          >
             <Button
               size="xs"
               onClick={() => openDeleteModal(row.uid)}

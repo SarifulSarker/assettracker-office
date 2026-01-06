@@ -19,8 +19,12 @@ class CategoryController {
       const page = parseInt(req.query.page) || 1;
       const perpage = parseInt(req.query.perpage) || 20;
       const search = req.query.search || "";
+       let status = req.query.status;
 
-      const result = await categoryService.getAllCategories({ page, perpage, search });
+       if (status !== undefined) {
+        status = status === "true"; // query string is always string
+      }
+      const result = await categoryService.getAllCategories({ page, perpage, search ,status });
 
       return res.status(result.responseCode).json(result); // ✅ use responseCode
     } catch (error) {

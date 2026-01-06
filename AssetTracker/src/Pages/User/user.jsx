@@ -109,7 +109,6 @@ const User = () => {
             <Button
               size="xs"
               onClick={() => {
-               
                 navigate(`/user/edit/${row.uid}`);
               }}
               style={{ backgroundColor: "#3b82f6", color: "#fff" }}
@@ -117,7 +116,11 @@ const User = () => {
               <IconEdit size={14} />
             </Button>
           </Tooltip>
-          <Tooltip label="Delete user" withArrow position="top">
+          <Tooltip
+            label={statusBool ? "Delete" : "Activate"}
+            withArrow
+            position="top"
+          >
             <Button
               size="xs"
               onClick={() => openDeleteModal(row.uid)}

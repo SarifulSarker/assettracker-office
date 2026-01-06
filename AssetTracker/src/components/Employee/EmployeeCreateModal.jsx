@@ -99,6 +99,7 @@ const EmployeeCreateModal = ({ opened, onClose, onSuccess }) => {
           <TextInput label="Email" {...form.getInputProps("email")} />
           <TextInput label="Phone" {...form.getInputProps("phone")} />
           <Select
+           allowDeselect={false}
             label="Designation"
             placeholder="Select Designation"
             data={designations.map((d) => ({
@@ -109,6 +110,7 @@ const EmployeeCreateModal = ({ opened, onClose, onSuccess }) => {
           />
 
           <Select
+           allowDeselect={false}
             label="Department"
             placeholder="Select Department"
             data={departments.map((d) => ({

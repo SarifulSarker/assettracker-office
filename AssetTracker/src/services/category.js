@@ -3,11 +3,12 @@ import httpRequest from "../helpers/httpRequest.js";
 
 // GET ALL CATEGORIES
 // category.js
-export const getAllCategoriesApi = async ({ page, perpage, search }) => {
+export const getAllCategoriesApi = async ({ page, perpage, search ,status}) => {
   return httpRequest.get("/category/get-all-category", {
     page,
     perpage,
     search,
+    status,
   });
 };
 

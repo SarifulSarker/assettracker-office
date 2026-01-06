@@ -12,7 +12,7 @@ class AssetAssignmentService {
         return ErrorResponse(400, "Employee or assets missing");
       }
 
-      /* ---------------- 1️⃣ Fetch employee ---------------- */
+      // 1️⃣ Fetch employee
       const employee = await prisma.employee.findUnique({
         where: { id: Number(employeeId) },
         select: {
@@ -28,7 +28,15 @@ class AssetAssignmentService {
         return ErrorResponse(404, "Employee not found");
       }
 
-      /* ---------------- 2️⃣ Assign assets ---------------- */
+      // 2️⃣ Fetch all assets to get their UIDs
+      const assets = await prisma.asset.findMany({
+        where: { id: { in: assetIds.map(Number) } },
+        select: { id: true, uid: true },
+      });
+
+      const assetMap = new Map(assets.map((a) => [a.id, a.uid]));
+
+      // 3️⃣ Assign assets
       const assignments = await Promise.all(
         assetIds.map((assetId) =>
           prisma.assetAssingmentEmployee.create({
@@ -42,26 +50,24 @@ class AssetAssignmentService {
         )
       );
 
-      /* ---------------- 3️⃣ Create logs ---------------- */
+      // 4️⃣ Create logs with asset_uid
       await Promise.all(
         assetIds.map((assetId) =>
           prisma.assetLog.create({
             data: {
               asset_id: assetId,
+              asset_uid: assetMap.get(assetId), // <-- ADD THIS
               context: ASSET_LOG_CONTEXT.ASSIGN,
               description: JSON.stringify({
                 action: "ASSIGN",
                 employee: {
                   id: employee.id,
                   name: employee.fullName,
-                  email:employee.email,
-                  department:employee.department,
-                  designation:employee.designation,
-
+                  email: employee.email,
+                  department: employee.department,
+                  designation: employee.designation,
                 },
-                asset: {
-                  id: assetId,
-                },
+                asset: { id: assetId },
                 assignedAt: new Date(),
               }),
               issuer: issuer?.firstName || "system",
@@ -200,13 +206,14 @@ class AssetAssignmentService {
     }
   }
 
-  async getLogsByAssetAndContext(assetId, context) {
+  //asset log by context
+  async getLogsByAssetAndContext(assetUId, context) {
     try {
-      if (!assetId) {
-        return ErrorResponse(400, "Asset ID is required");
+      if (!assetUId) {
+        return ErrorResponse(400, "Asset UID is required");
       }
 
-      const whereClause = { asset_id: assetId };
+      const whereClause = { asset_uid: assetUId };
       if (context && context !== "ALL") {
         whereClause.context = context;
       }

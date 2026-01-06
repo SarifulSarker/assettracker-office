@@ -108,24 +108,41 @@ class departmentService {
     }
   }
 
-  // Delete department
-  async deleteDepartment(id) {
-    try {
-      const deleted = await prisma.department.update({
-        where: { id: Number(id) },
-        data: {
-          is_active: false,
-        },
-      });
-
-      return SuccessResponse(200, "Department deleted successfully", deleted);
-    } catch (error) {
-      if (error.code === "P2025") {
-        return ErrorResponse(404, "Department not found");
-      }
-      return ErrorResponse(500, error.message || "Server error");
+ // Toggle department (activate / deactivate)
+async deleteDepartment(id) {
+  try {
+    if (!id) {
+      return ErrorResponse(400, "Department ID is required");
     }
+
+    const department = await prisma.department.findUnique({
+      where: { id: Number(id) },
+      select: { is_active: true },
+    });
+
+    if (!department) {
+      return ErrorResponse(404, "Department not found");
+    }
+
+    const updatedDepartment = await prisma.department.update({
+      where: { id: Number(id) },
+      data: {
+        is_active: !department.is_active,
+      },
+    });
+
+    return SuccessResponse(
+      200,
+      `Department ${
+        updatedDepartment.is_active ? "activated" : "deactivated"
+      } successfully`,
+      updatedDepartment
+    );
+  } catch (error) {
+    return ErrorResponse(500, error.message || "Server error");
   }
+}
+
 }
 
 export default new departmentService();

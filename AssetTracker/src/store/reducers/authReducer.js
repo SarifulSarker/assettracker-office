@@ -22,9 +22,7 @@ const authSlice = createSlice({
 
       // Save token & user in cookies
       setCookie("token", token, "1d");
-
-      //    console.log("from authreducer", getCookie("token"));
-      // setCookie("user", JSON.stringify(user), "1d");
+      console.log(token);
 
       // Remember email and password
       if (remember) {
@@ -37,7 +35,7 @@ const authSlice = createSlice({
     },
 
     logout: (state) => {
-      console.log("On reducer logout");
+   
       state.user = null;
       state.isLoggedIn = false;
       // state.email = "";

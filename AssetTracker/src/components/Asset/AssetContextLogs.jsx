@@ -3,16 +3,30 @@ import { Stack, Paper, Text, Badge, Group, Divider } from "@mantine/core";
 import { ASSET_LOG_CONTEXT } from "../../utils/ASSET_LOG_CONTEXT";
 
 /* ---------------- helpers ---------------- */
+const stripHtml = (html = "") => {
+  return html.replace(/<[^>]*>/g, "").trim();
+};
 
-// UPDATE log parser
+// UPDATE log parser (JSON only)
 const extractChanges = (description = "") => {
+  if (!description) return null;
+
   try {
-    if (description.startsWith("{")) {
-      return JSON.parse(description);
-    }
-    const jsonPart = description.replace("Updated fields:", "").trim();
-    return JSON.parse(jsonPart);
-  } catch {
+    // 1. HTML remove
+    const plainText = stripHtml(description);
+
+    // 2. "Updated fields:" থাকলে remove
+    const cleanedText = plainText.includes("Updated fields:")
+      ? plainText.replace("Updated fields:", "").trim()
+      : plainText;
+
+    // 3. JSON object extract ( { ... } )
+    const match = cleanedText.match(/{[\s\S]*}/);
+    if (!match) return null;
+
+    return JSON.parse(match[0]);
+  } catch (e) {
+    console.error("Failed to parse update log", e);
     return null;
   }
 };
@@ -42,13 +56,13 @@ const extractAssignInfo = (description = "") => {
   }
 };
 
-// Value formatter
+// SAFE value formatter
 const formatValue = (value) => {
   if (value === null || value === undefined) return "N/A";
 
-  const date = new Date(value);
-  if (!isNaN(date.getTime()) && typeof value !== "number") {
-    return date.toLocaleDateString();
+  // only ISO date string → date
+  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}T/.test(value)) {
+    return new Date(value).toLocaleString();
   }
 
   return String(value);
@@ -57,7 +71,7 @@ const formatValue = (value) => {
 /* ---------------- component ---------------- */
 
 const AssetContextLogs = ({ logs, context }) => {
-  if (!logs.length) {
+  if (!logs?.length) {
     return (
       <Text size="sm" c="dimmed">
         No context logs found
@@ -77,8 +91,6 @@ const AssetContextLogs = ({ logs, context }) => {
           context === ASSET_LOG_CONTEXT.ASSIGN
             ? extractAssignInfo(log.description)
             : null;
-
-        console.log(assignInfo);
 
         return (
           <Paper key={log.id} withBorder radius="md" p="md">
@@ -104,16 +116,16 @@ const AssetContextLogs = ({ logs, context }) => {
                 <Divider my="xs" />
                 <Stack spacing={6}>
                   {Object.entries(updateChanges).map(([field, value]) => (
-                    <Group key={field} spacing="xs" align="flex-start">
+                    <Group key={field} spacing="xs" align="center">
                       <Text size="sm" fw={500}>
                         {field}:
                       </Text>
                       <Text size="sm" c="dimmed">
-                        {formatValue(value.from)}
+                        {formatValue(value?.from)}
                       </Text>
                       <Text size="sm">→</Text>
                       <Text size="sm" fw={500}>
-                        {formatValue(value.to)}
+                        {formatValue(value?.to)}
                       </Text>
                     </Group>
                   ))}
@@ -126,17 +138,13 @@ const AssetContextLogs = ({ logs, context }) => {
               <>
                 <Divider my="xs" />
                 <Stack spacing={4}>
-                  {assignInfo && (
-                    <Stack spacing={4}>
-                      <Text>Assign To:</Text>
-                      <Text>Name: {assignInfo.name}</Text>
-                      <Text size="sm" c="dimmed">
-                       email: {assignInfo.email}
-                      </Text>
-                      <Text size="sm">Department: {assignInfo.department}</Text>
-                      <Text size="sm">Designation: {assignInfo.designation}</Text>
-                    </Stack>
-                  )}
+                  <Text fw={500}>Assigned To</Text>
+                  <Text size="sm">Name: {assignInfo.name}</Text>
+                  <Text size="sm" c="dimmed">
+                    Email: {assignInfo.email}
+                  </Text>
+                  <Text size="sm">Department: {assignInfo.department}</Text>
+                  <Text size="sm">Designation: {assignInfo.designation}</Text>
 
                   {assignInfo.assignedAt && (
                     <Text size="xs" c="dimmed">

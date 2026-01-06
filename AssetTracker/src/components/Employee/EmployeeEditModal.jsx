@@ -119,6 +119,7 @@ const EmployeeEditModal = ({ opened, onClose, employee, onSuccess }) => {
           <TextInput label="Designation" {...form.getInputProps("designation")} />
 
           <Select
+           allowDeselect={false}
             label="Department"
             placeholder="Select department"
             data={departments.map((d) => ({

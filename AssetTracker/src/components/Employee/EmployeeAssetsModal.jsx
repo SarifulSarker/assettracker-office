@@ -98,15 +98,21 @@ const EmployeeAssetsModal = ({ opened, onClose, employee }) => {
                   </Tooltip>
                 </Group>
               </Group>
-
               <Divider my="xs" />
 
-              <Text style={{ whiteSpace: "pre" }} size="sm" color="dimmed">
-                <b>Specs:</b> {a.asset?.specs ?? "No specs available"}
-              </Text>
-
-              <Text size="sm" color="dimmed">
-                <b>Status:</b> {a.asset?.status}
+              <Text
+                size="sm"
+                style={{ whiteSpace: "pre-wrap", lineHeight: 1.5 }}
+              >
+                <b>Specs:</b>{" "}
+                {a.asset?.specs
+                  ? a.asset?.specs
+                      .split("\n")
+                      .map((line, index) =>
+                        index === 0 ? line : "             " + line
+                      )
+                      .join("\n")
+                  : "N/A"}
               </Text>
             </Paper>
           ))}

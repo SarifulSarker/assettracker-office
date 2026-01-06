@@ -69,15 +69,29 @@ const Brand = () => {
   };
 
   const deleteMutation = useMutation({
-    mutationFn: deleteBrandApi,
-    onSuccess: () => {
+    mutationFn: (id) => deleteBrandApi(id),
+    onSuccess: (response) => {
+      // response = backend theke return kora data
+      const msg = response?.message || "Operation successful!";
+
       queryClient.invalidateQueries(["brands"]);
       closeAllModals();
       notifications.show({
-        title: "Deleted",
-        message: "Brand deleted successfully!",
+        title: "Success",
+        message: msg, // backend message use kora hocche
         position: "top-center",
-        color: "green",
+      });
+    },
+    onError: (error) => {
+      const msg =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Something went wrong!";
+      notifications.show({
+        title: "Error",
+        message: msg,
+        color: "red",
+        position: "top-center",
       });
     },
   });
@@ -124,7 +138,7 @@ const Brand = () => {
             </Button>
           </Tooltip>
 
-          <Tooltip label="Delete" withArrow>
+          <Tooltip label={statusBool ? "Delete" : "Activate"} withArrow>
             <Button
               size="xs"
               onClick={() => openDeleteModal(row.id)}

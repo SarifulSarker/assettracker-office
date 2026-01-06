@@ -22,7 +22,7 @@ class BrandService {
         }));
       }
 
-      // ✅ Status filter (same as asset)
+      // ✅ Status filter 
       if (status !== undefined) {
         filters.is_active = status;
       } else {
@@ -88,18 +88,39 @@ class BrandService {
 
   async deleteBrand(id) {
     try {
-      if (!id) return ErrorResponse(400, "Brand ID is required");
+      if (!id) {
+        return { success: false, status: 400, message: "Brand ID is required" };
+      }
 
-      await prisma.brand.update({
+      const brand = await prisma.brand.findUnique({
+        where: { id: Number(id) },
+        select: { is_active: true },
+      });
+
+      if (!brand) {
+        return { success: false, status: 404, message: "Brand not found" };
+      }
+
+      const updatedBrand = await prisma.brand.update({
         where: { id: Number(id) },
         data: {
-          is_active: false,
+          is_active: !brand.is_active,
         },
       });
 
-      return SuccessResponse(200, "Brand deleted successfully");
+      return SuccessResponse(
+        200,
+        `Brand ${
+          updatedBrand.is_active ? "activated" : "deactivated"
+        } successfully`,
+        updatedBrand
+      );
     } catch (error) {
-      return ErrorResponse(500, error.message || "Server Error");
+      return {
+        success: false,
+        status: 400,
+        error: error.message || "Server Error",
+      };
     }
   }
 

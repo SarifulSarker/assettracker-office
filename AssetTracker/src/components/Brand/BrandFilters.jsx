@@ -20,6 +20,7 @@ const BrandFilters = ({
         />
 
         <Select
+         allowDeselect={false}
           w={130}
           value={status}
           onChange={onStatusChange}

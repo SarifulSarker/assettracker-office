@@ -14,6 +14,7 @@ const AssetFilters = ({ searchKey, onSearchChange, status, onStatusChange, onRef
         />
 
         <Select
+         allowDeselect={false}
           placeholder="Select Status"
           value={status}
           onChange={onStatusChange}

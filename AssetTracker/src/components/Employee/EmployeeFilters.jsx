@@ -21,6 +21,7 @@ const EmployeeFilters = ({
         />
 
         <Select
+         allowDeselect={false}
           placeholder="Select Status"
           value={status}
           onChange={onStatusChange}

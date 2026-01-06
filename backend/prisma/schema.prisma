@@ -49,7 +49,7 @@ model Employee {
   email    String  @unique
   phone    String?
   status   String  @default("active")
-  
+
   departmentId Int?
   department   Department? @relation(fields: [departmentId], references: [id])
 
@@ -59,7 +59,7 @@ model Employee {
   is_active Boolean @default(true)
 
   assetAssingmentEmployees AssetAssingmentEmployee[]
-   
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -165,11 +165,11 @@ model Asset {
   vendorId  Int?
   vendor    Vendor? @relation(fields: [vendorId], references: [id])
   is_active Boolean @default(true)
-  
+
   assetAssingmentEmployees   AssetAssingmentEmployee[]
   assetAssingmentDepartments AssetAssingmentDepartment[]
   assetLogs                  AssetLog[]
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -177,9 +177,9 @@ model Asset {
 }
 
 model AssetLog {
-  id       Int @id @default(autoincrement())
-  asset_id Int
-
+  id          Int     @id @default(autoincrement())
+  asset_id    Int
+  asset_uid   String
   context     String // CREATE | UPDATE | ASSIGN | UNASSIGN | etc
   description String
   issuer      String? // user / admin / system

@@ -146,7 +146,6 @@ class DesignationService {
         data: {
           name: data.name,
           description: data.description,
-         
         },
       });
 
@@ -163,23 +162,33 @@ class DesignationService {
   // DELETE
   async deleteDesignation(id) {
     try {
+      if (!id) {
+        return ErrorResponse(400, "Designation ID is required");
+      }
+
       const designation = await prisma.designation.findUnique({
         where: { id: Number(id) },
+        select: { is_active: true },
       });
 
       if (!designation) {
         return ErrorResponse(404, "Designation not found");
       }
 
-      // hard delete
-      await prisma.designation.update({
+      const updatedDesignation = await prisma.designation.update({
         where: { id: Number(id) },
         data: {
-          is_active: false,
+          is_active: !designation.is_active,
         },
       });
 
-      return SuccessResponse(200, "Designation deleted successfully");
+      return SuccessResponse(
+        200,
+        `Designation ${
+          updatedDesignation.is_active ? "activated" : "deactivated"
+        } successfully`,
+        updatedDesignation
+      );
     } catch (err) {
       return ErrorResponse(500, err.message || "Server Error");
     }

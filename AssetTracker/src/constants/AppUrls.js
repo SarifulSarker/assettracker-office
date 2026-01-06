@@ -13,6 +13,8 @@ export const ASSET_CREATE = "assets/create";
 export const ASSET_EDIT = "assets/edit/:uid";
 export const ASSET_MAPPING = "asset/mapping";
 export const ASSET_LOG = "assets/asset-log/:uid";
+// qr code
+export const QR_CODE = "assets/qr/:uid";
 
 export const EMPLOYEE = "/employee";
 
@@ -33,4 +35,3 @@ export const VENDOR = "/vendor";
 
 export const DESIGNATION = "/designation";
 
-//

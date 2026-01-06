@@ -150,6 +150,8 @@ class vendorService {
     return { success: false, status: 400, error: error.message };
   }
   }
+
+  
 }
 
 export default new vendorService();

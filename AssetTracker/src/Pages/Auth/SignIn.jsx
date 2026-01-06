@@ -45,6 +45,7 @@ const SignIn = () => {
   /* ================== API ================== */
   const mutation = useMutation({
     mutationFn: async (values) => {
+      console.log({ values });
       const res = await axios.post(
         "http://localhost:3000/api/v1/auth/signin",
         values
@@ -114,7 +115,7 @@ const SignIn = () => {
             <Title order={3} ta="center">
               Login
             </Title>
-               <div>sariful@gmail.com || 111111</div>
+            <div>sariful@gmail.com || 111111</div>
             <Text ta="center" c={COLORS.dimmed}>
               Distribution Portal
             </Text>
@@ -156,7 +157,7 @@ const SignIn = () => {
                 color: COLORS.secondary,
               }}
             >
-              Login
+              Login 
             </Button>
 
             {/* ===== Sign Up Link ===== */}

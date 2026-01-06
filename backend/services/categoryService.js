@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { SuccessResponse, ErrorResponse } from "../utils/return.js";
-import {generateUID} from "../utils/uuid.js"
+import { generateUID } from "../utils/uuid.js";
 const prisma = new PrismaClient();
 
 class CategoryService {
@@ -24,34 +24,45 @@ class CategoryService {
   }
 
   // GET ALL
-  async getAllCategories({ page, perpage, search }) {
+  // GET ALL
+  async getAllCategories({ page, perpage, search, status }) {
     try {
       if (!page || !perpage)
         return ErrorResponse(400, "Page and perpage are required");
 
-      const allCategories = await prisma.category.findMany({
+      // Fetch all parents
+      const parentCategories = await prisma.category.findMany({
+        where: {
+          parentId: null,
+          ...(search
+            ? { name: { contains: search, mode: "insensitive" } }
+            : {}),
+        },
+        include: {
+          children: true, // fetch all children first
+        },
         orderBy: { id: "desc" },
       });
 
-      let parentCategories = allCategories.filter((c) => c.parentId === null);
-
-      parentCategories = parentCategories.map((parent) => ({
-        ...parent,
-        children: allCategories.filter((c) => c.parentId === parent.id),
-      }));
-
-      if (search) {
-        const terms = search.trim().split(/\s+/);
-        parentCategories = parentCategories.filter((parent) =>
-          terms.every((term) =>
-            parent.name.toLowerCase().includes(term.toLowerCase())
-          )
+      // Filter parent and children by status in JS
+      const filteredCategories = parentCategories
+        .map((parent) => ({
+          ...parent,
+          children: parent.children.filter((child) =>
+            status !== undefined ? child.is_active === status : true
+          ),
+        }))
+        .filter((parent) =>
+          status !== undefined
+            ? parent.is_active === status || parent.children.length > 0
+            : true
         );
-      }
 
-      const total = parentCategories.length;
+      const total = filteredCategories.length;
+
+      // Pagination
       const start = (page - 1) * perpage;
-      const paginatedCategories = parentCategories.slice(
+      const paginatedCategories = filteredCategories.slice(
         start,
         start + perpage
       );
@@ -63,6 +74,7 @@ class CategoryService {
         perpage,
       });
     } catch (error) {
+      console.error(error);
       return ErrorResponse(500, error.message || "Server Error");
     }
   }
@@ -115,27 +127,48 @@ class CategoryService {
 
       const category = await prisma.category.findUnique({
         where: { id: categoryId },
+        select: { id: true, parentId: true, is_active: true, name: true },
       });
 
       if (!category)
         return ErrorResponse(404, "Category or Subcategory not found");
 
       if (category.parentId === null) {
-        // delete parent + children
-        await prisma.category.deleteMany({ where: { parentId: categoryId } });
-        await prisma.category.delete({ where: { id: categoryId } });
+        // parent category toggle + children toggle
+        // toggle parent
+        const updatedParent = await prisma.category.update({
+          where: { id: categoryId },
+          data: { is_active: !category.is_active },
+        });
+
+        // toggle all children to the same status as parent
+        await prisma.category.updateMany({
+          where: { parentId: categoryId },
+          data: { is_active: updatedParent.is_active },
+        });
 
         return SuccessResponse(
           200,
-          "Category and all subcategories deleted successfully"
+          `Category and all subcategories ${
+            updatedParent.is_active ? "activated" : "deactivated"
+          } successfully`
         );
       } else {
-        // delete subcategory
-        await prisma.category.delete({ where: { id: categoryId } });
-        return SuccessResponse(200, "Subcategory deleted successfully");
+        // toggle subcategory
+        const updatedSub = await prisma.category.update({
+          where: { id: categoryId },
+          data: { is_active: !category.is_active },
+        });
+
+        return SuccessResponse(
+          200,
+          `Subcategory ${
+            updatedSub.is_active ? "activated" : "deactivated"
+          } successfully`
+        );
       }
     } catch (error) {
-      return ErrorResponse(500, error.message || "Failed to delete category");
+      return ErrorResponse(500, error.message || "Failed to toggle category");
     }
   }
 }

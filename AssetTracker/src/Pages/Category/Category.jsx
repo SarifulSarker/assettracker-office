@@ -35,17 +35,21 @@ const CategoryPage = () => {
   const [CreateSubCategoryOpened, setCreateSubCategoryOpened] = useState(false);
   const [editModalOpened, setEditModalOpened] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
-
+  const [status, setStatus] = useState("active"); // ✅ default active
   const debouncedSearch = useDebounce(searchKey, 2000); // 2 sec
+  const statusBool =
+    status === "active" ? true : status === "inactive" ? false : undefined;
 
   // fetch categories
   const { data, isPending, isLoading, isRefetching } = useQuery({
-    queryKey: ["categories", page, debouncedSearch],
+    queryKey: ["brands", page, debouncedSearch, status], // ✅ status included
+
     queryFn: () =>
       getAllCategoriesApi({
         page,
         perpage: PAGE_SIZE,
         search: debouncedSearch,
+        status: statusBool,
       }),
     keepPreviousData: true,
   });
@@ -58,22 +62,18 @@ const CategoryPage = () => {
     setSearchKey(e.currentTarget.value);
     setPage(1); // search e page reset
   };
+  const handleStatusChange = (value) => {
+    setStatus(value);
+    setPage(1);
+  };
 
   // Table data
   const tableData = categories.flatMap((c) => {
-    const mainCategory = {
-      id: c.id,
-      name: c.name,
-      type: "category",
-      category: null,
-      createdAt: c.createdAt,
-    };
+    const mainCategory = { ...c, type: "category" };
     const subCategories = c.children.map((sc) => ({
-      id: sc.id,
-      name: sc.name,
+      ...sc,
       type: "subcategory",
       category: c.name,
-      createdAt: sc.createdAt,
     }));
     return [mainCategory, ...subCategories];
   });
@@ -125,7 +125,11 @@ const CategoryPage = () => {
 
   // Table headers
   const tableHeaders = [
-    { key: "sl", headerTitle: "SL", row: (v, r, i) => (page - 1) * PAGE_SIZE + i + 1 },
+    {
+      key: "sl",
+      headerTitle: "SL",
+      row: (v, r, i) => (page - 1) * PAGE_SIZE + i + 1,
+    },
     { key: "name", headerTitle: "Name" },
     selectedType === "subcategory"
       ? { key: "category", headerTitle: "Category" }
@@ -150,7 +154,7 @@ const CategoryPage = () => {
             </Button>
           </Tooltip>
 
-          <Tooltip label="Delete" position="top" withArrow>
+          <Tooltip label={statusBool ? "Delete" : "Activate"} position="top" withArrow>
             <Button
               size="xs"
               onClick={() => openDeleteModal(row.id)}
@@ -183,6 +187,8 @@ const CategoryPage = () => {
             searchKey={searchKey}
             onSearch={handleSearch} // ✅ add this
             selectedType={selectedType}
+            status={status}
+            onStatusChange={handleStatusChange}
             setSelectedType={setSelectedType}
             onRefresh={handleRefresh}
             onCreateCategory={() => setCreateModalOpened(true)}

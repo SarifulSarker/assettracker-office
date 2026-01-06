@@ -93,13 +93,13 @@ class AssetAssignmentController {
   }
 
 
-
+// log by context
    async getLogsByAsset(req, res) {
     try {
-      const assetId = parseInt(req.params.assetId);
+      const assetUId = req.params.assetUId;
       const context = req.params.context; // from dropdown selection
-
-      const result = await AssetAssignmentService.getLogsByAssetAndContext(assetId, context);
+      
+      const result = await AssetAssignmentService.getLogsByAssetAndContext(assetUId, context);
       return res.status(result.statusCode || 200).json(result);
     } catch (error) {
       console.error("AssetLogController Error:", error);

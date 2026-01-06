@@ -13,10 +13,10 @@ export const GetUserApi = async ({ page, pageSize, search, status }) => {
 export const createUserApi = async (data) => {
   try {
     const response =  httpRequest.post(`user/create-user`, data);
-console.log("fron yservice");
+
     return response;
   } catch (e) {
-  
+      console.log(e)
   }
 };
 // Update user
@@ -30,7 +30,7 @@ export const updateUserApi = async ({ uid, data }) => {
   } catch (error) {
     console.error("Update User API Error:", error);
 
-    // যদি axios use করো
+   
     const message =
       error.response?.data?.message || error.message || "Unknown error";
 

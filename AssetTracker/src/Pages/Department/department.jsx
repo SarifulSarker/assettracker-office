@@ -37,7 +37,7 @@ const Department = () => {
   // Convert status string to boolean
   const statusBool =
     status === "active" ? true : status === "inactive" ? false : undefined;
-   console.log(statusBool)
+  console.log(statusBool);
   // fetch departments
   const { data, isLoading, isRefetching, isPending } = useQuery({
     queryKey: ["departments", page, debouncedSearch, status],
@@ -73,13 +73,28 @@ const Department = () => {
   };
 
   const deleteMutation = useMutation({
-    mutationFn: deleteDepartmentApi,
-    onSuccess: () => {
+    mutationFn: (id) => deleteDepartmentApi(id),
+    onSuccess: (response) => {
+      // response = backend theke return kora data
+      const msg = response?.message || "Operation successful!";
+
       queryClient.invalidateQueries(["departments"]);
       closeAllModals();
       notifications.show({
-        title: "Deleted",
-        message: "Department deleted successfully!",
+        title: "Success",
+        message: msg, // backend message use kora hocche
+        position: "top-center",
+      });
+    },
+    onError: (error) => {
+      const msg =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Something went wrong!";
+      notifications.show({
+        title: "Error",
+        message: msg,
+        color: "red",
         position: "top-center",
       });
     },
@@ -102,9 +117,13 @@ const Department = () => {
 
   // Table headers
   const tableHeaders = [
-    { key: "sl", headerTitle: "SL", row: (v, r, i) => (page - 1) * PAGE_SIZE + i + 1 },
+    {
+      key: "sl",
+      headerTitle: "SL",
+      row: (v, r, i) => (page - 1) * PAGE_SIZE + i + 1,
+    },
     { key: "name", headerTitle: "Department Name", row: (v, r) => r.name },
-  
+
     {
       key: "createdAt",
       headerTitle: "Created At",
@@ -116,13 +135,21 @@ const Department = () => {
       row: (v, r) => (
         <Group spacing="xs">
           <Tooltip label="Edit" withArrow>
-            <Button size="xs" onClick={() => openEditModal(r)} style={{ backgroundColor: "#3b82f6", color: "#fff" }}>
+            <Button
+              size="xs"
+              onClick={() => openEditModal(r)}
+              style={{ backgroundColor: "#3b82f6", color: "#fff" }}
+            >
               <IconEdit size={14} />
             </Button>
           </Tooltip>
 
-          <Tooltip label="Delete" withArrow>
-            <Button size="xs" onClick={() => openDeleteModal(r.id)} style={{ backgroundColor: "#ef4444", color: "#fff" }}>
+          <Tooltip label={statusBool ? "Delete" : "Activate"} withArrow>
+            <Button
+              size="xs"
+              onClick={() => openDeleteModal(r.id)}
+              style={{ backgroundColor: "#ef4444", color: "#fff" }}
+            >
               <IconTrash size={14} />
             </Button>
           </Tooltip>
@@ -149,10 +176,21 @@ const Department = () => {
         filterBadges={null}
         exportAndPagination={
           <Flex justify="flex-end" align="center">
-            <CustomPagination page={page} setPage={setPage} total={total} pageSize={PAGE_SIZE} />
+            <CustomPagination
+              page={page}
+              setPage={setPage}
+              total={total}
+              pageSize={PAGE_SIZE}
+            />
           </Flex>
         }
-        table={<CustomTable tableHeaders={tableHeaders} data={departments} isFetching={isPending || isLoading || isRefetching} />}
+        table={
+          <CustomTable
+            tableHeaders={tableHeaders}
+            data={departments}
+            isFetching={isPending || isLoading || isRefetching}
+          />
+        }
       />
 
       <DepartmentCreateModal

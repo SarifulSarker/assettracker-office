@@ -7,12 +7,13 @@ const CategoryFilters = ({
   searchKey,
   onSearch, // ✅ receive onSearch instead of setSearchKey
   selectedType,
+  status,
+  onStatusChange,
   setSelectedType,
   onRefresh,
   onCreateCategory,
   onCreateSubCategory,
 }) => {
-
   return (
     <Flex justify="space-between" align="center" mb="s">
       {/* Left: Search + Refresh */}
@@ -22,8 +23,18 @@ const CategoryFilters = ({
           value={searchKey}
           onChange={onSearch} // ✅ use onSearch here
         />
-       
+
+        <Select
         
+          w={130}
+          value={status}
+          onChange={onStatusChange}
+          data={[
+            { value: "active", label: "Active" },
+            { value: "inactive", label: "Inactive" },
+          ]}
+          allowDeselect={false}
+        />
 
         <Button onClick={onRefresh}>
           <IconRefresh size={16} />
@@ -33,6 +44,7 @@ const CategoryFilters = ({
       {/* Right: Type filter + create buttons */}
       <Flex gap="sm" align="center">
         <Select
+          allowDeselect={false}
           placeholder="Pick type"
           value={selectedType}
           onChange={setSelectedType}
