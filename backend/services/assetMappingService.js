@@ -232,6 +232,73 @@ class AssetAssignmentService {
       return ErrorResponse(500, "Server error", err);
     }
   }
+
+   async getAssetDetails(uid, context) {
+    try {
+      if (!uid) {
+        return ErrorResponse(400, "Asset UID is required");
+      }
+
+      /* ---------------- Asset Info ---------------- */
+      const asset = await prisma.asset.findUnique({
+        where: { uid },
+        include: {
+          vendor: true,
+          brand: true,
+          category: true,
+          subCategory: true,
+        },
+      });
+
+      if (!asset) {
+        return ErrorResponse(404, "Asset not found");
+      }
+
+      /* ---------------- Employees (Assignment) ---------------- */
+      const employees = await prisma.assetAssingmentEmployee.findMany({
+        where: {
+          asset: {
+            uid: uid,
+          },
+        },
+        include: {
+          employee: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      /* ---------------- Logs ---------------- */
+      const logWhere = {
+        asset_uid: uid,
+      };
+
+      if (context && context !== "ALL") {
+        logWhere.context = context;
+      }
+
+      const logs = await prisma.assetLog.findMany({
+        where: logWhere,
+        include: {
+          employee: true,
+          asset: false, // asset already fetched
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      return SuccessResponse(200, "Asset details fetched successfully", {
+        asset,
+        employees,
+        logs,
+      });
+    } catch (err) {
+      console.error("AssetService Error:", err);
+      return ErrorResponse(500, "Server error", err);
+    }
+  }
 }
 
 export default new AssetAssignmentService();

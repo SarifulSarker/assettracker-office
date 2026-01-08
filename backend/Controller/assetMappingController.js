@@ -7,7 +7,7 @@ class AssetAssignmentController {
       const result = await AssetAssignmentService.assignAssetsToEmployee(
         employeeId,
         assetIds,
-        req.user,
+        req.user
       );
 
       // use statusCode from service response
@@ -59,7 +59,7 @@ class AssetAssignmentController {
       const { assignmentId } = req.params;
       const response = await AssetAssignmentService.unassignAssetService(
         assignmentId,
-        req.user,
+        req.user
       );
 
       return res.status(response.statusCode || 200).json(response);
@@ -92,14 +92,16 @@ class AssetAssignmentController {
     }
   }
 
-
-// log by context
-   async getLogsByAsset(req, res) {
+  // log by context
+  async getLogsByAsset(req, res) {
     try {
       const assetUId = req.params.assetUId;
       const context = req.params.context; // from dropdown selection
-      
-      const result = await AssetAssignmentService.getLogsByAssetAndContext(assetUId, context);
+
+      const result = await AssetAssignmentService.getLogsByAssetAndContext(
+        assetUId,
+        context
+      );
       return res.status(result.statusCode || 200).json(result);
     } catch (error) {
       console.error("AssetLogController Error:", error);
@@ -111,6 +113,26 @@ class AssetAssignmentController {
     }
   }
 
+  async getAssetDetails(req, res) {
+    try {
+      const { uid } = req.params;
+
+      const { context = "ALL" } = req.query;
+
+      const response = await AssetAssignmentService.getAssetDetails(
+        uid,
+        context
+      );
+
+      return res.status(response.statusCode || 200).json(response);
+    } catch (err) {
+      console.error("AssetController Error:", err);
+      return res.status(500).json({
+        success: false,
+        message: "Server error",
+      });
+    }
+  }
 }
 
 export default new AssetAssignmentController();

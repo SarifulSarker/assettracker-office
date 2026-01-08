@@ -13,7 +13,7 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     loginSuccess: (state, action) => {
-      const { user, remember, email, password, token } = action.payload;
+      const { user, remember, email, token } = action.payload;
 
       // Update Redux state
       state.user = user;
@@ -22,20 +22,16 @@ const authSlice = createSlice({
 
       // Save token & user in cookies
       setCookie("token", token, "1d");
-      console.log(token);
-
+     
       // Remember email and password
       if (remember) {
         setCookie("email", email, "7d");
-        setCookie("password", password, "7d"); // ✅ save password
       } else {
         setCookie("email", "", "-1");
-        setCookie("password", "", "-1"); // ✅ clear password
       }
     },
 
     logout: (state) => {
-   
       state.user = null;
       state.isLoggedIn = false;
       // state.email = "";

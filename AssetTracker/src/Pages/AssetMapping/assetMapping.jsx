@@ -103,7 +103,11 @@ const AssetMapping = () => {
 
   const handleDropToColumn = (item, column) => {
     if (column === COLUMN_NAMES.EMPLOYEE && !selectedEmployeeId) {
-      notifications.show({ message: "Select employee first", color: "red" });
+      notifications.show({
+        message: "Select employee first",
+        color: "red",
+        position: "top-center",
+      });
       return;
     }
 
@@ -133,6 +137,10 @@ const AssetMapping = () => {
         />
       ));
 
+  const selectedEmployee = employees.find(
+    (e) => String(e.id) === String(selectedEmployeeId)
+  );
+ 
   /* ---------------- UI ---------------- */
 
   return (
@@ -170,7 +178,28 @@ const AssetMapping = () => {
         </Column>
 
         {/* EMPLOYEE ASSETS */}
-        <Column title="Employee Assets">
+        <Column title="Employee Info">
+          {/* 🔥 Employee Info Header */}
+          {selectedEmployee && (
+            <div
+              style={{
+                padding: "12px",
+                marginBottom: "12px",
+                borderRadius: "8px",
+                background: "#f8f9fa",
+                border: "1px solid #e9ecef",
+              }}
+            >
+              <div style={{ fontWeight: 600 }}>Name:{selectedEmployee.fullName}</div>
+              <div style={{ fontSize: 13,  }}>
+               Designation: {selectedEmployee.designation.name}
+              </div>
+              <div style={{ fontSize: 13,  }}>
+               Deparment: {selectedEmployee.department.name}
+              </div>
+            </div>
+          )}
+
           {!selectedEmployeeId && (
             <div style={emptyBox}>Please select an employee</div>
           )}
@@ -195,7 +224,7 @@ const AssetMapping = () => {
         </Column>
       </div>
 
-      <div style={{ display: "flex", justifyContent: "center", marginTop: 16 }}>
+      <div style={{ display: "flex", justifyContent: "center", marginTop: 0 }}>
         <Button
           size="md"
           radius="md"

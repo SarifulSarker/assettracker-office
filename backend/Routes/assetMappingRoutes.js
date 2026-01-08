@@ -18,4 +18,5 @@ router.get("/unassigned-asset", AssetAssignmentController.getUnassignedAssets);
 
 router.get("/:assetUId/:context", AssetAssignmentController.getLogsByAsset);
 
+router.get("/log/:uid/details", AssetAssignmentController.getAssetDetails);
 export default router;

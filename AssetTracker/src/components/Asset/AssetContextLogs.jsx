@@ -114,8 +114,60 @@ const AssetContextLogs = ({ logs, context }) => {
             {updateChanges && (
               <>
                 <Divider my="xs" />
-                <Stack spacing={6}>
-                  {Object.entries(updateChanges).map(([field, value]) => (
+                {Object.entries(updateChanges).map(([field, value]) => {
+                  // 🔹 SPECS: old → new (multiline, Group only)
+                  if (field === "specs") {
+                    const formatSpecs = (text) =>
+                      text
+                        ? text
+                            .split("\n")
+                            .map((line, i) =>
+                              i === 0 ? line : "            " + line
+                            )
+                            .join("\n")
+                        : "N/A";
+
+                    return (
+                      <Group key={field} align="flex-start" spacing="sm">
+                        <Text size="sm" fw={500} style={{ minWidth: 60 }}>
+                          Specs:
+                        </Text>
+
+                        <Text
+                          size="sm"
+                          component="div"
+                          c="dimmed"
+                          style={{
+                            whiteSpace: "pre-wrap",
+                            lineHeight: 1.5,
+                            flex: 1,
+                          }}
+                        >
+                          {formatSpecs(value?.from)}
+                        </Text>
+
+                        <Text size="sm" fw={500}>
+                          →
+                        </Text>
+
+                        <Text
+                          size="sm"
+                          component="div"
+                          fw={500}
+                          style={{
+                            whiteSpace: "pre-wrap",
+                            lineHeight: 1.5,
+                            flex: 1,
+                          }}
+                        >
+                          {formatSpecs(value?.to)}
+                        </Text>
+                      </Group>
+                    );
+                  }
+
+                  // 🔹 DEFAULT: normal fields
+                  return (
                     <Group key={field} spacing="xs" align="center">
                       <Text size="sm" fw={500}>
                         {field}:
@@ -128,8 +180,8 @@ const AssetContextLogs = ({ logs, context }) => {
                         {formatValue(value?.to)}
                       </Text>
                     </Group>
-                  ))}
-                </Stack>
+                  );
+                })}
               </>
             )}
 

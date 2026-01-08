@@ -45,7 +45,7 @@ const Signup = () => {
         autoClose: 3000,
       });
       form.reset();
-      navigate("/signin");
+      navigate("/");
     },
     onError: (err) => {
       notifications.show({
@@ -125,7 +125,7 @@ const Signup = () => {
 
             <Text align="center" mt="sm">
               Already have an account?{" "}
-              <Anchor color={COLORS.accent} style={{ cursor: "pointer" }} onClick={() => navigate("/signin")}>
+              <Anchor color={COLORS.accent} style={{ cursor: "pointer" }} onClick={() => navigate("/")}>
                 Sign In
               </Anchor>
             </Text>

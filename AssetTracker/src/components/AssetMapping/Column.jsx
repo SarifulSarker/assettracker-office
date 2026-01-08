@@ -26,7 +26,7 @@ const Column = ({ title, children, onDropItem, isActive, style }) => {
       radius="md"
       withBorder
       style={{
-        height: 600,
+        height: 750,
         backgroundColor: getBg(),
         overflowY: "auto",
         ...style, // allow flex / maxWidth overrides

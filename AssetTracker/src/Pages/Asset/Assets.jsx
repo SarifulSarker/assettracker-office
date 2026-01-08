@@ -100,6 +100,7 @@ const Assets = () => {
   const assets = data?.data?.assets || [];
   const total = data?.data?.total || 0;
 
+  console.log(assets);
   const tableHeaders = [
     {
       key: "sl",
@@ -110,6 +111,14 @@ const Assets = () => {
       key: "name",
       headerTitle: "Asset Name",
       row: (v, row) => row.name || "-",
+    },
+    {
+      key: "employees",
+      headerTitle: "Assigned Employees",
+      row: (v, row) =>
+        row.assetAssingmentEmployees?.length > 0
+          ? row.assetAssingmentEmployees.map((emp) => emp.id).join(", ")
+          : "-", // if no employees assigned
     },
     {
       key: "specs",

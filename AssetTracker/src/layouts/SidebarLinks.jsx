@@ -1,22 +1,24 @@
-// SidebarLinks.jsx
-import { Stack } from "@mantine/core";
+import { Flex, ScrollArea, rem } from "@mantine/core";
 import SidebarItems from "../constants/SidebarItems";
 import SidebarLink from "./SidebarLink";
 
-const SidebarLinks = ({ onclick }) => {
+const Sidebar = ({ onClickMobile }) => {
   return (
-    <Stack spacing="xs">
-      {SidebarItems.map((item, idx) => (
-        <SidebarLink
-          key={idx}
-          icon={item.icon}
-          label={item.label}
-          link={item.link}
-          onClick={onclick} // Pass down the close function
-        />
-      ))}
-    </Stack>
+    <ScrollArea style={{ flex: 1 }}>
+      <Flex direction="column" gap="sm" p="md" style={{ width: rem(210) }}>
+        {SidebarItems.map((item) => (
+          <SidebarLink
+            key={item.label}
+            icon={item.icon}
+            label={item.label}
+            link={item.link}
+            links={item.links} // pass child links if present
+            onClickMobile={onClickMobile}
+          />
+        ))}
+      </Flex>
+    </ScrollArea>
   );
 };
 
-export default SidebarLinks;
+export default Sidebar;

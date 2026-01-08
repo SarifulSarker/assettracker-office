@@ -16,7 +16,7 @@ class AuthMiddleware {
       }
 
       const token = authHeader.split(" ")[1];
-
+     
       // 3. Verify JWT
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 

@@ -37,7 +37,7 @@ const SignIn = () => {
   const form = useForm({
     initialValues: {
       email: getCookie("email") || "",
-      password: getCookie("password") || "",
+      password: "", // ✅ MUST
     },
     validate: yupResolver(schema),
   });
@@ -45,7 +45,6 @@ const SignIn = () => {
   /* ================== API ================== */
   const mutation = useMutation({
     mutationFn: async (values) => {
-      console.log({ values });
       const res = await axios.post(
         "http://localhost:3000/api/v1/auth/signin",
         values
@@ -59,6 +58,7 @@ const SignIn = () => {
           title: "Error",
           message: data.error || "Login failed",
           color: "red",
+          position: "top-center",
         });
         return;
       }
@@ -69,17 +69,17 @@ const SignIn = () => {
           token: data.token,
           remember,
           email: form.values.email,
-          password: form.values.password,
         })
       );
 
       notifications.show({
         title: "Success",
-        message: "Login successful! Redirecting...",
+        message: "Login successful",
         color: "green",
+        position: "top-center",
       });
 
-      navigate("/dashboard");
+      navigate("/user");
     },
 
     onError: (error) => {
@@ -94,10 +94,8 @@ const SignIn = () => {
   /* ================== Remember Me ================== */
   useEffect(() => {
     const email = getCookie("email");
-    const password = getCookie("password");
 
     if (email) form.setFieldValue("email", email);
-    if (password) form.setFieldValue("password", password);
   }, []);
 
   return (
@@ -157,7 +155,7 @@ const SignIn = () => {
                 color: COLORS.secondary,
               }}
             >
-              Login 
+              Login
             </Button>
 
             {/* ===== Sign Up Link ===== */}

@@ -55,7 +55,7 @@ const form = useForm({
           message: "Password has been reset successfully",
           color: "green",
         });
-        navigate("/signin");
+        navigate("/");
       } else {
         notifications.show({
           title: "Error",

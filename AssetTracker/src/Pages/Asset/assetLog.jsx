@@ -114,7 +114,7 @@ const AssetLog = () => {
                   {asset?.specs
                     ? asset.specs
                         .split("\n")
-                        .map((line, index) => (index === 0 ? line : " " + line))
+                        .map((line, index) => (index === 0 ? line : "            " + line))
                         .join("\n")
                     : "N/A"}
                 </Text>
@@ -217,7 +217,7 @@ const AssetLog = () => {
             )}
             {logs.map((log) => (
               <Paper key={log.id} withBorder radius="sm" p="sm">
-                <Group justify="space-between">
+                <Group >
                   <Text size="sm" component="div">
                     <b>{log.employee?.fullName || "Unknown"}</b>
                   </Text>

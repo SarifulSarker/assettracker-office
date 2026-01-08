@@ -20,6 +20,7 @@ import CategoryEditModal from "../../components/Category/CategoryEditModal";
 import { IconEdit, IconTrash } from "@tabler/icons-react";
 import SubCategoryCreateModal from "../../components/SubCategory/SubCategoryCreateModal.jsx";
 import useDebounce from "../../hooks/useDebounce.js";
+import SubCategoryEditModal from "../../components/Category/SubCategoryEditModal.jsx";
 
 const PAGE_SIZE = 10;
 
@@ -39,6 +40,7 @@ const CategoryPage = () => {
   const debouncedSearch = useDebounce(searchKey, 2000); // 2 sec
   const statusBool =
     status === "active" ? true : status === "inactive" ? false : undefined;
+  const [editSubCategoryOpened, setEditSubCategoryOpened] = useState(false);
 
   // fetch categories
   const { data, isPending, isLoading, isRefetching } = useQuery({
@@ -87,9 +89,14 @@ const CategoryPage = () => {
     );
 
   // Open edit modal
-  const openEditModal = (category) => {
-    setSelectedCategory(category);
-    setEditModalOpened(true);
+  const openEditModal = (row) => {
+    setSelectedCategory(row);
+
+    if (row.type === "subcategory") {
+      setEditSubCategoryOpened(true);
+    } else {
+      setEditModalOpened(true);
+    }
   };
 
   // Delete category
@@ -154,7 +161,11 @@ const CategoryPage = () => {
             </Button>
           </Tooltip>
 
-          <Tooltip label={statusBool ? "Delete" : "Activate"} position="top" withArrow>
+          <Tooltip
+            label={statusBool ? "Delete" : "Activate"}
+            position="top"
+            withArrow
+          >
             <Button
               size="xs"
               onClick={() => openDeleteModal(row.id)}
@@ -233,6 +244,12 @@ const CategoryPage = () => {
         onClose={() => setCreateSubCategoryOpened(false)}
         categories={categories} // ✅ পাঠাতে পারো যদি চাই
         onSuccess={() => queryClient.invalidateQueries(["categories"])}
+      />
+      <SubCategoryEditModal
+        opened={editSubCategoryOpened}
+        onClose={() => setEditSubCategoryOpened(false)}
+        subcategory={selectedCategory}
+        categories={categories}
       />
     </div>
   );
