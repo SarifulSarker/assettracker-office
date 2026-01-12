@@ -11,10 +11,12 @@ import { getAllDesignationsApi } from "../../services/designation.js";
 const schema = Yup.object().shape({
   fullName: Yup.string().required("Full name is required"),
   email: Yup.string().email("Invalid email").required("Email is required"),
-  phone: Yup.string(),
-  designation: Yup.string(),
+  phone: Yup.string().required("Phone number is required"),
+
+  designationId: Yup.string().required("Designation is required"),
+  departmentId: Yup.string().required("Department is required"),
+
   status: Yup.string().required("Status is required"),
-  departmentId: Yup.string().nullable(),
 });
 
 const EmployeeCreateModal = ({ opened, onClose, onSuccess }) => {
@@ -99,7 +101,7 @@ const EmployeeCreateModal = ({ opened, onClose, onSuccess }) => {
           <TextInput label="Email" {...form.getInputProps("email")} />
           <TextInput label="Phone" {...form.getInputProps("phone")} />
           <Select
-           allowDeselect={false}
+            allowDeselect={false}
             label="Designation"
             placeholder="Select Designation"
             data={designations.map((d) => ({
@@ -110,7 +112,7 @@ const EmployeeCreateModal = ({ opened, onClose, onSuccess }) => {
           />
 
           <Select
-           allowDeselect={false}
+            allowDeselect={false}
             label="Department"
             placeholder="Select Department"
             data={departments.map((d) => ({

@@ -37,10 +37,17 @@ export const getEmployeesByAssetApi = async (uid) => {
 };
 
 // Unassign an asset
-export const unassignAssetApi = async (assignmentId) => {
+export const unassignAssetApi = async (assignmentIds) => {
   try {
-    if (!assignmentId) throw new Error("Assignment ID is required");
-    const data = httpRequest.put(`/asset-mapping/unassign/${assignmentId}`);
+    if (!assignmentIds || !assignmentIds.length) {
+      throw new Error("No assignment IDs provided");
+    }
+
+    // Send the array in the request body
+    const { data } = await httpRequest.put("/asset-mapping/unassign-assets", {
+      assignmentIds, // ✅ this is key
+    });
+
     return data;
   } catch (err) {
     throw new Error(err?.response?.data?.message || err.message || "API Error");
@@ -48,14 +55,14 @@ export const unassignAssetApi = async (assignmentId) => {
 };
 
 //get unassign asset
-export const getUnassignedAssetsApi = async ({  search }) => {
+export const getUnassignedAssetsApi = async ({ search }) => {
   try {
-  //  if (!page || !perpage) throw new Error(" Service Page and perpage are required");
+    //  if (!page || !perpage) throw new Error(" Service Page and perpage are required");
 
-    const data = httpRequest.get("/asset-mapping/unassigned-asset", {
-      search ,
+    const data = httpRequest.get("/asset-mapping/getunassigned-asset", {
+      search,
     });
-  
+
     return data;
   } catch (err) {
     throw new Error(err?.response?.data?.message || err.message || "API Error");
@@ -67,8 +74,10 @@ export const getUnassignedAssetsApi = async ({  search }) => {
 export const getAssetLogsByContextApi = async ({ assetUId, context }) => {
   try {
     if (!assetUId) throw new Error("Asset UID is required FS");
-  
-    const { data } = await httpRequest.get(`/asset-mapping/${assetUId}/${context}`);
+
+    const { data } = await httpRequest.get(
+      `/asset-mapping/${assetUId}/${context}`
+    );
     return data; // { success, message, data } from backend
   } catch (err) {
     throw new Error(err?.response?.data?.message || err.message || "API Error");

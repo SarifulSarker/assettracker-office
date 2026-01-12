@@ -87,8 +87,16 @@ class AssetAssignmentService {
     try {
       const assets = await prisma.assetAssingmentEmployee.findMany({
         where: { employeeId },
-        include: { asset: true },
+        include: {
+          asset: {
+            include: {
+              category: true,
+              subCategory: true,
+            },
+          },
+        },
       });
+
       //  console.log("form api",assets)
 
       return SuccessResponse(
@@ -125,38 +133,41 @@ class AssetAssignmentService {
     }
   }
 
-  async unassignAssetService(assignmentId, issuer) {
+  async unassignAssetService(assignmentIds) {
     try {
-      if (!assignmentId) {
-        return ErrorResponse(400, "Assignment ID is required");
+      if (!assignmentIds || !assignmentIds.length) {
+        return ErrorResponse(400, "Assignment IDs are required");
       }
 
-      // 1️⃣ Check active assignment
-      const assignment = await prisma.assetAssingmentEmployee.findFirst({
+      // 1️⃣ Find active assignments
+      const assignments = await prisma.assetAssingmentEmployee.findMany({
         where: {
-          id: Number(assignmentId),
+          id: { in: assignmentIds.map(Number) }, // ✅ use `in` for array
           is_active: true,
           unassignedAt: null,
         },
       });
 
-      if (!assignment) {
-        return ErrorResponse(404, "Active assignment not found");
+      if (!assignments.length) {
+        return ErrorResponse(404, "No active assignments found");
       }
 
-      // 2️⃣ Unassign asset
-      const updatedAssignment = await prisma.assetAssingmentEmployee.update({
-        where: { id: Number(assignmentId) },
-        data: {
-          is_active: false,
-          unassignedAt: new Date(),
-        },
-      });
+      // 2️⃣ Bulk update
+      const updatedAssignments =
+        await prisma.assetAssingmentEmployee.updateMany({
+          where: {
+            id: { in: assignments.map((a) => a.id) },
+          },
+          data: {
+            is_active: false,
+            unassignedAt: new Date(),
+          },
+        });
 
       return SuccessResponse(
         200,
-        "Asset unassigned successfully",
-        updatedAssignment
+        "Assets unassigned successfully",
+        updatedAssignments
       );
     } catch (error) {
       console.error("UNASSIGN ASSET SERVICE ERROR:", error);
@@ -233,7 +244,7 @@ class AssetAssignmentService {
     }
   }
 
-   async getAssetDetails(uid, context) {
+  async getAssetDetails(uid, context) {
     try {
       if (!uid) {
         return ErrorResponse(400, "Asset UID is required");

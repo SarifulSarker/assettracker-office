@@ -54,17 +54,31 @@ class AssetAssignmentController {
     }
   }
 
-  async unassingAssets(req, res) {
+  // Controller: unassign multiple assets
+  async unassignAssets(req, res) {
     try {
-      const { assignmentId } = req.params;
+      // Expect an array of assignment IDs in the body
+      const { assignmentIds } = req.body;
+     
+      if (
+        !assignmentIds ||
+        !Array.isArray(assignmentIds) ||
+        assignmentIds.length === 0
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "assignmentIds array is required",
+        });
+      }
+
+      // Call the updated service for bulk unassign
       const response = await AssetAssignmentService.unassignAssetService(
-        assignmentId,
-        req.user
+        assignmentIds
       );
 
       return res.status(response.statusCode || 200).json(response);
     } catch (error) {
-      console.error("Unassign Asset Controller Error:", error);
+      console.error("Unassign Assets Controller Error:", error);
       return res.status(500).json({
         success: false,
         message: "Internal server error",

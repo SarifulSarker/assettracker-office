@@ -12,9 +12,9 @@ router.get("/employee/:id", (req, res) =>
 router.get("/asset/:uid", (req, res) =>
   AssetAssignmentController.getEmployeesByAsset(req, res)
 );
-router.put("/unassign/:assignmentId", AssetAssignmentController.unassingAssets);
+router.put("/unassign-assets", AssetAssignmentController.unassignAssets);
 
-router.get("/unassigned-asset", AssetAssignmentController.getUnassignedAssets);
+router.get("/getunassigned-asset", AssetAssignmentController.getUnassignedAssets);
 
 router.get("/:assetUId/:context", AssetAssignmentController.getLogsByAsset);
 

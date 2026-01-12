@@ -4,7 +4,12 @@ import { Button, Group, Text, Flex, Tooltip } from "@mantine/core";
 import { useNavigate } from "react-router-dom";
 import { closeAllModals, modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
-import { IconEdit, IconTrash, IconHistory } from "@tabler/icons-react";
+import {
+  IconEdit,
+  IconTrash,
+  IconHistory,
+  IconCheck,
+} from "@tabler/icons-react";
 
 import PageTop from "../../components/global/PageTop.jsx";
 import TablePaperContent from "../../components/global/TablePaperContent.jsx";
@@ -72,7 +77,13 @@ const Assets = () => {
   const openDeleteModal = (id) => {
     modals.openConfirmModal({
       title: "Are you sure?",
-      children: <Text size="sm">Do you want to delete this asset?</Text>,
+      children: (
+        <Text size="sm">
+          {statusBool
+            ? "Do you want to delete this asset?"
+            : "Do you want to activate this asset?"}
+        </Text>
+      ),
       labels: { confirm: "Confirm", cancel: "Cancel" },
       confirmProps: { color: "red" },
       onConfirm: () => deleteMutation.mutate(id),
@@ -100,7 +111,7 @@ const Assets = () => {
   const assets = data?.data?.assets || [];
   const total = data?.data?.total || 0;
 
-  console.log(assets);
+  //console.log(assets);
   const tableHeaders = [
     {
       key: "sl",
@@ -114,12 +125,13 @@ const Assets = () => {
     },
     {
       key: "employees",
-      headerTitle: "Assigned Employees",
-      row: (v, row) =>
-        row.assetAssingmentEmployees?.length > 0
-          ? row.assetAssingmentEmployees.map((emp) => emp.id).join(", ")
-          : "-", // if no employees assigned
+      headerTitle: "Assigned Employee",
+      row: (v, row) => {
+        const activeLog = row.assetAssingmentEmployees?.[0];
+        return activeLog?.employee?.fullName || "Not Assigned";
+      },
     },
+
     {
       key: "specs",
       headerTitle: "Specs",
@@ -177,17 +189,24 @@ const Assets = () => {
             </Button>
           </Tooltip>
 
-          <Tooltip label={statusBool ? "Delete" : "Activate"} withArrow>
+          <Tooltip
+            label={statusBool ? "Delete" : "Activate"}
+            withArrow
+            position="top"
+          >
             <Button
               size="xs"
               onClick={() => openDeleteModal(row.uid)}
-              style={{ backgroundColor: "#ef4444", color: "#fff" }}
+              style={{
+                backgroundColor: statusBool ? "#ef4444" : "#10b981", // red if active, green if inactive
+                color: "#fff",
+              }}
             >
-              <IconTrash size={14} />
+              {statusBool ? <IconTrash size={14} /> : <IconCheck size={14} />}
             </Button>
           </Tooltip>
 
-          <Tooltip label="Asset History" withArrow>
+          <Tooltip label="Asset Details" withArrow>
             <Button
               size="xs"
               onClick={() => navigate(`/assets/asset-log/${row.uid}`)}

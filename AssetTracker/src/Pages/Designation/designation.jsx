@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button, Group, Text, Flex, Tooltip } from "@mantine/core";
 import { modals, closeAllModals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
-import { IconEdit, IconTrash } from "@tabler/icons-react";
+import { IconCheck, IconEdit, IconTrash } from "@tabler/icons-react";
 
 import PageTop from "../../components/global/PageTop.jsx";
 import TablePaperContent from "../../components/global/TablePaperContent.jsx";
@@ -56,12 +56,24 @@ const Designation = () => {
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: deleteDesignationApi,
-    onSuccess: () => {
+    onSuccess: (e) => {
       queryClient.invalidateQueries(["designations"]);
       closeAllModals();
       notifications.show({
-        title: "Deleted",
-        message: "Designation deleted successfully",
+        title: statusBool ? "Delete" : "Activate",
+        message: e.message || "Designation deleted successfully",
+        position: "top-center",
+      });
+    },
+    onError: (error) => {
+      const msg =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Something went wrong!";
+      notifications.show({
+        title: "Error",
+        message: msg,
+        color: "red",
         position: "top-center",
       });
     },
@@ -70,7 +82,13 @@ const Designation = () => {
   const openDeleteModal = (id) => {
     modals.openConfirmModal({
       title: "Are you sure?",
-      children: <Text size="sm">Delete this designation?</Text>,
+      children: (
+        <Text size="sm">
+          {statusBool
+            ? "Do you want to delete this designation?"
+            : "Do you want to activate this designation?"}
+        </Text>
+      ),
       labels: { confirm: "Confirm", cancel: "Cancel" },
       confirmProps: { color: "red" },
       onConfirm: () => deleteMutation.mutate(id),
@@ -122,9 +140,20 @@ const Designation = () => {
             </Button>
           </Tooltip>
 
-          <Tooltip label={statusBool ? "Delete" : "Activate"} withArrow>
-            <Button size="xs" color="red" onClick={() => openDeleteModal(r.id)}>
-              <IconTrash size={14} />
+          <Tooltip
+            label={statusBool ? "Delete" : "Activate"}
+            withArrow
+            position="top"
+          >
+            <Button
+              size="xs"
+              onClick={() => openDeleteModal(r.id)}
+              style={{
+                backgroundColor: statusBool ? "#ef4444" : "#10b981", // red if active, green if inactive
+                color: "#fff",
+              }}
+            >
+              {statusBool ? <IconTrash size={14} /> : <IconCheck size={14} />}
             </Button>
           </Tooltip>
         </Group>

@@ -17,7 +17,7 @@ import {
 import { notifications } from "@mantine/notifications";
 import CategoryCreateModal from "../../components/Category/CategoryCreateModal";
 import CategoryEditModal from "../../components/Category/CategoryEditModal";
-import { IconEdit, IconTrash } from "@tabler/icons-react";
+import { IconCheck, IconEdit, IconTrash } from "@tabler/icons-react";
 import SubCategoryCreateModal from "../../components/SubCategory/SubCategoryCreateModal.jsx";
 import useDebounce from "../../hooks/useDebounce.js";
 import SubCategoryEditModal from "../../components/Category/SubCategoryEditModal.jsx";
@@ -37,7 +37,7 @@ const CategoryPage = () => {
   const [editModalOpened, setEditModalOpened] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [status, setStatus] = useState("active"); // ✅ default active
-  const debouncedSearch = useDebounce(searchKey, 2000); // 2 sec
+  const debouncedSearch = useDebounce(searchKey, 1000); // 2 sec
   const statusBool =
     status === "active" ? true : status === "inactive" ? false : undefined;
   const [editSubCategoryOpened, setEditSubCategoryOpened] = useState(false);
@@ -102,10 +102,10 @@ const CategoryPage = () => {
   // Delete category
   const deleteMutation = useMutation({
     mutationFn: (id) => deleteCategoryApi(id),
-    onSuccess: () => {
+    onSuccess: (e) => {
       notifications.show({
         title: "Deleted",
-        message: "Deleted successfully",
+        message: e.message || "Deleted successfully",
         position: "top-center",
       });
       queryClient.invalidateQueries(["categories"]);
@@ -123,7 +123,11 @@ const CategoryPage = () => {
   const openDeleteModal = (id) => {
     modals.openConfirmModal({
       title: "Are you sure?",
-      children: <Text size="sm">Do you want to delete this item?</Text>,
+      children:     <Text size="sm">
+                {statusBool
+                  ? "Do you want to delete this items?"
+                  : "Do you want to activate this items?"}
+              </Text>,
       labels: { confirm: "Confirm", cancel: "Cancel" },
       confirmProps: { color: "red" },
       onConfirm: () => deleteMutation.mutate(id),
@@ -163,15 +167,18 @@ const CategoryPage = () => {
 
           <Tooltip
             label={statusBool ? "Delete" : "Activate"}
-            position="top"
             withArrow
+            position="top"
           >
             <Button
               size="xs"
               onClick={() => openDeleteModal(row.id)}
-              style={{ backgroundColor: "#ef4444", color: "#fff" }}
+              style={{
+                backgroundColor: statusBool ? "#ef4444" : "#10b981", // red if active, green if inactive
+                color: "#fff",
+              }}
             >
-              <IconTrash size={14} />
+              {statusBool ? <IconTrash size={14} /> : <IconCheck size={14} />}
             </Button>
           </Tooltip>
         </Group>

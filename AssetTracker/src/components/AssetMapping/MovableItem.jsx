@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 import { useDrag, useDrop } from "react-dnd";
-import { Paper, Stack, Text, Badge, Group } from "@mantine/core";
+import { Paper, Stack, Text, Badge, Group, Flex } from "@mantine/core";
 import { COLUMN_NAMES } from "../../Pages/AssetMapping/data";
 
 const ITEM_TYPE = "TASK";
@@ -11,12 +11,12 @@ const MovableItem = ({
   index,
   column,
   moveCardHandler,
-  specs,
+  category,
+  subCategory,
   isReadOnly = false,
 }) => {
   const ref = useRef(null);
 
-  // DROP (reorder)
   const [, drop] = useDrop({
     accept: ITEM_TYPE,
     canDrop: () => !isReadOnly,
@@ -31,16 +31,13 @@ const MovableItem = ({
     },
   });
 
-  // DRAG
   const [{ isDragging }, drag] = useDrag({
     type: ITEM_TYPE,
     item: isReadOnly ? {} : { id, index, column },
     canDrag: !isReadOnly,
   });
 
-  if (!isReadOnly) {
-    drag(drop(ref));
-  }
+  if (!isReadOnly) drag(drop(ref));
 
   return (
     <Paper
@@ -61,17 +58,30 @@ const MovableItem = ({
       }}
     >
       <Stack spacing={6}>
-        <Text fw={600} fz="sm" lineClamp={1}>
-          {name}
-        </Text>
+        {/* 🔥 Name + Category + SubCategory */}
+        <Flex
+          justify="space-between"
+          align="center"
+          wrap="wrap"
+          gap={6}
+        >
+          <Text fw={600} fz="sm" lineClamp={1}>
+            {name}
+          </Text>
 
-        {/* {specs && (
-          <Group spacing={4}>
-            <Badge size="xs" variant="light">
-              Specs: {specs}
-            </Badge>
+          <Group spacing={6}>
+            {category && (
+              <Badge size="xs" variant="light" color="blue">
+                {category}
+              </Badge>
+            )}
+            {subCategory && (
+              <Badge size="xs" variant="light" color="gray">
+                {subCategory}
+              </Badge>
+            )}
           </Group>
-        )} */}
+        </Flex>
       </Stack>
     </Paper>
   );

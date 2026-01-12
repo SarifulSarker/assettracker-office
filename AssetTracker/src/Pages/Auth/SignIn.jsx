@@ -63,6 +63,9 @@ const SignIn = () => {
         return;
       }
 
+      const user = data.data;
+      const userName = `${user.firstName} ${user.lastName}`;
+     
       dispatch(
         loginSuccess({
           user: data.data,
@@ -73,8 +76,7 @@ const SignIn = () => {
       );
 
       notifications.show({
-        title: "Success",
-        message: "Login successful",
+        message: `🎉Welcome back ${userName}`,
         color: "green",
         position: "top-center",
       });

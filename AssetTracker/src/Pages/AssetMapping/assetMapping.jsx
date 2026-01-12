@@ -72,13 +72,13 @@ const AssetMapping = () => {
   );
 
   /* ------------ ---- INIT ASSETS ---------------- */
-
   useEffect(() => {
     setItems(
       assets.map((a) => ({
         id: a.id,
         name: a.name,
-        specs: a.specs,
+        category: a.category?.name || null,
+        subCategory: a.subCategory?.name || null, // ✅ exact key
         column: COLUMN_NAMES.ASSET,
         employeeId: null,
       }))
@@ -140,7 +140,7 @@ const AssetMapping = () => {
   const selectedEmployee = employees.find(
     (e) => String(e.id) === String(selectedEmployeeId)
   );
- 
+
   /* ---------------- UI ---------------- */
 
   return (
@@ -190,22 +190,21 @@ const AssetMapping = () => {
                 border: "1px solid #e9ecef",
               }}
             >
-              <div style={{ fontWeight: 600 }}>Name:{selectedEmployee.fullName}</div>
-              <div style={{ fontSize: 13,  }}>
-               Designation: {selectedEmployee.designation.name}
+              <div style={{ fontWeight: 600 }}>
+                Name:{selectedEmployee.fullName}
               </div>
-              <div style={{ fontSize: 13,  }}>
-               Deparment: {selectedEmployee.department.name}
+              <div style={{ fontSize: 13 }}>
+                Designation: {selectedEmployee.designation.name}
+              </div>
+              <div style={{ fontSize: 13 }}>
+                Deparment: {selectedEmployee.department.name}
               </div>
             </div>
           )}
-
           {!selectedEmployeeId && (
             <div style={emptyBox}>Please select an employee</div>
           )}
-
           {isLoading && <div style={emptyBox}>Loading employee assets...</div>}
-
           {!isLoading && selectedEmployeeId && employeeAssets.length === 0 && (
             <div style={emptyBox}>
               This employee does not have any assigned assets
@@ -214,9 +213,11 @@ const AssetMapping = () => {
 
           {employeeAssets.map((a) => (
             <MovableItem
-              key={a.asset?.id}
-              id={a.asset?.id}
-              name={a.asset?.name}
+              key={a.asset.id}
+              id={a.asset.id}
+              name={a.asset.name}
+              category={a.asset.category?.name}
+              subCategory={a.asset.subCategory?.name}
               column={COLUMN_NAMES.EMPLOYEE_ASSETS}
               isReadOnly
             />

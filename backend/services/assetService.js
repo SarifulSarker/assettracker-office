@@ -57,7 +57,7 @@ class AssetService {
       const dt = await prisma.assetLog.create({
         data: {
           asset_id: asset.id,
-          asset_uid:asset.uid,
+          asset_uid: asset.uid,
           context: ASSET_LOG_CONTEXT.CREATE,
           description: `Asset created by ${issuer.firstName || "system"}`,
           issuer: issuer?.firstName || "system",
@@ -102,7 +102,19 @@ class AssetService {
       const assets = await prisma.asset.findMany({
         where: filters,
         include: {
-          assetAssingmentEmployees: true,
+          assetAssingmentEmployees: {
+            where: {
+              unassignedAt: null, // ✅ only current assigned employee
+            },
+            include: {
+              employee: {
+                select: {
+                  id: true,
+                  fullName: true,
+                },
+              },
+            },
+          },
           brand: true,
           category: true,
           subCategory: true,
@@ -113,7 +125,6 @@ class AssetService {
         take: perpage,
       });
 
-     
       return SuccessResponse(200, "Assets fetched successfully", {
         assets,
         total,
@@ -250,7 +261,7 @@ class AssetService {
         await prisma.assetLog.create({
           data: {
             asset_id: updatedAsset.id,
-            asset_uid:uid,
+            asset_uid: uid,
             context: ASSET_LOG_CONTEXT.UPDATE,
             description: `Updated fields: ${JSON.stringify(changedFields)}`,
             issuer: issuer?.firstName || "system",
@@ -272,7 +283,7 @@ class AssetService {
 
       const asset = await prisma.asset.findFirst({
         where: { uid: uid },
-        select: { id: true, name: true, is_active: true , uid: true },
+        select: { id: true, name: true, is_active: true, uid: true },
       });
       if (!asset) return ErrorResponse(404, "Asset not found");
 
@@ -287,7 +298,7 @@ class AssetService {
       await prisma.assetLog.create({
         data: {
           asset_id: updatedAsset.id,
-          asset_uid:asset.uid,
+          asset_uid: asset.uid,
           context: updatedAsset.is_active
             ? ASSET_LOG_CONTEXT.ACTIVATE
             : ASSET_LOG_CONTEXT.DELETE, // or DEACTIVATE

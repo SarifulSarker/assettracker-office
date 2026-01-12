@@ -66,7 +66,7 @@ class AuthService {
 
     // find user
     const user = await prisma.user.findUnique({ where: { email } });
-    
+
     if (!user) {
       return {
         success: false,
@@ -90,17 +90,10 @@ class AuthService {
     const token = jwt.sign({ userId: user.id, ...user }, JWT_SECRET, {
       expiresIn: "1D",
     });
+     
+  
 
-
-    
-    const updatedUser = await prisma.user.update({
-      where: { id: user.id },
-      data: { token },
-    });
-
-   
-
-    delete updatedUser.password;
+    delete user.password;
     // Save token in Redis
 
     const tokenKey = generateTokenKey(user.id); // unique key
@@ -118,7 +111,7 @@ class AuthService {
       status: 200,
       message: "Login successful",
       token,
-      data: updatedUser,
+      data: user,
     };
   }
 

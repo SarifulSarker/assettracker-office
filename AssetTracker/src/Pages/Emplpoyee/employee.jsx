@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button, Group, Text, Flex, Tooltip } from "@mantine/core";
 import { closeAllModals, modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
-import { IconEdit, IconTrash, IconEye } from "@tabler/icons-react";
+import { IconEdit, IconTrash, IconEye, IconCheck } from "@tabler/icons-react";
 
 import PageTop from "../../components/global/PageTop.jsx";
 import TablePaperContent from "../../components/global/TablePaperContent.jsx";
@@ -79,7 +79,7 @@ const Employee = () => {
 
   const deleteMutation = useMutation({
     mutationFn: (uid) => deleteEmployeeApi(uid),
-    onSuccess: () => {
+    onSuccess: (e) => {
       queryClient.invalidateQueries([
         "employees",
         page,
@@ -88,8 +88,21 @@ const Employee = () => {
       ]);
       closeAllModals();
       notifications.show({
-        title: "Deleted",
-        message: "Employee deleted successfully!",
+        title: statusBool ? "Delete" : "Activate",
+
+        message: e.message || "Employee deleted successfully ",
+        position: "top-center",
+      });
+    },
+    onError: (error) => {
+      const msg =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Something went wrong!";
+      notifications.show({
+        title: "Error",
+        message: msg,
+        color: "red",
         position: "top-center",
       });
     },
@@ -98,7 +111,13 @@ const Employee = () => {
   const openDeleteModal = (uid) => {
     modals.openConfirmModal({
       title: "Are you sure?",
-      children: <Text size="sm">Do you want to delete this employee?</Text>,
+      children: (
+        <Text size="sm">
+          {statusBool
+            ? "Do you want to delete this employee?"
+            : "Do you want to activate this employee?"}
+        </Text>
+      ),
       labels: { confirm: "Confirm", cancel: "Cancel" },
       confirmProps: { color: "red" },
       onConfirm: () => deleteMutation.mutate(uid),
@@ -162,9 +181,12 @@ const Employee = () => {
             <Button
               size="xs"
               onClick={() => openDeleteModal(row.uid)}
-              style={{ backgroundColor: "#ef4444", color: "#fff" }}
+              style={{
+                backgroundColor: statusBool ? "#ef4444" : "#10b981", // red if active, green if inactive
+                color: "#fff",
+              }}
             >
-              <IconTrash size={14} />
+              {statusBool ? <IconTrash size={14} /> : <IconCheck size={14} />}
             </Button>
           </Tooltip>
 

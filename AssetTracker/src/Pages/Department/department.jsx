@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button, Group, Text, Flex, Tooltip } from "@mantine/core";
 import { closeAllModals, modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
-import { IconEdit, IconTrash } from "@tabler/icons-react";
+import { IconCheck, IconEdit, IconTrash } from "@tabler/icons-react";
 
 import PageTop from "../../components/global/PageTop.jsx";
 import TablePaperContent from "../../components/global/TablePaperContent";
@@ -37,7 +37,7 @@ const Department = () => {
   // Convert status string to boolean
   const statusBool =
     status === "active" ? true : status === "inactive" ? false : undefined;
-  console.log(statusBool);
+
   // fetch departments
   const { data, isLoading, isRefetching, isPending } = useQuery({
     queryKey: ["departments", page, debouncedSearch, status],
@@ -81,7 +81,7 @@ const Department = () => {
       queryClient.invalidateQueries(["departments"]);
       closeAllModals();
       notifications.show({
-        title: "Success",
+        title: statusBool ? "Delete" : "Activate",
         message: msg, // backend message use kora hocche
         position: "top-center",
       });
@@ -103,7 +103,13 @@ const Department = () => {
   const openDeleteModal = (id) => {
     modals.openConfirmModal({
       title: "Are you sure?",
-      children: <Text size="sm">Do you want to delete this department?</Text>,
+      children: (
+        <Text size="sm">
+          {statusBool
+            ? "Do you want to delete this department?"
+            : "Do you want to activate this department?"}
+        </Text>
+      ),
       labels: { confirm: "Confirm", cancel: "Cancel" },
       confirmProps: { color: "red" },
       onConfirm: () => deleteMutation.mutate(id),
@@ -144,13 +150,20 @@ const Department = () => {
             </Button>
           </Tooltip>
 
-          <Tooltip label={statusBool ? "Delete" : "Activate"} withArrow>
+          <Tooltip
+            label={statusBool ? "Delete" : "Activate"}
+            withArrow
+            position="top"
+          >
             <Button
               size="xs"
               onClick={() => openDeleteModal(r.id)}
-              style={{ backgroundColor: "#ef4444", color: "#fff" }}
+              style={{
+                backgroundColor: statusBool ? "#ef4444" : "#10b981", // red if active, green if inactive
+                color: "#fff",
+              }}
             >
-              <IconTrash size={14} />
+              {statusBool ? <IconTrash size={14} /> : <IconCheck size={14} />}
             </Button>
           </Tooltip>
         </Group>
