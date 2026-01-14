@@ -123,7 +123,7 @@ const EmployeeCreateModal = ({ opened, onClose, onSuccess }) => {
           />
 
           <Button type="submit" loading={mutation.isPending}>
-            {mutation.isPending ? "Creating..." : "Creating"}
+            {mutation.isPending ? "Creating..." : "Create"}
           </Button>
         </Stack>
       </form>

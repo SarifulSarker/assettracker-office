@@ -1,67 +1,21 @@
-import Redis from 'ioredis';
+// redis-client.js
+import dotenv from "dotenv";
+dotenv.config();
+import Redis from "ioredis";
 
-import env from 'dotenv'; // ✅
-
-//import logger from '../loaders/logger';
-//import { createAdapter } from 'socket.io-redis';
-
-const redisClient = new Redis({
-  host: env.REDIS_HOST,
-  port: env.REDIS_PORT,
-  family: env.REDIS_FAMILY,
-  db: env.REDIS_DB,
-  password: env.REDIS_PASS,
-});
-
-redisClient.on('error', function (err) {
-  //logger.error(err);
-  console.log(err)
-});
-
-redisClient.on('connect', function () {
-  //logger.info('Connected to the Redis Server');
-  console.log('Connected to the Redis Server')
-});
-
-redisClient.on('ready', async function () {
-  //logger.info('Redis Instance is Ready!');
-   console.log('Redis Instance is Ready!')
-});
-
-// const pubClient = new Redis({
-//   host: env().REDIS_HOST,
-//   port: env().REDIS_PORT,
-//   family: env().REDIS_FAMILY,
-//   db: env().REDIS_DB,
-//   password: env().REDIS_PASS,
-// });
-
-// // New Redis client instance for subscribing (subClient)
-// const subClient = new Redis({
-//   host: env().REDIS_HOST,
-//   port: env().REDIS_PORT,
-//   family: env().REDIS_FAMILY,
-//   db: env().REDIS_DB,
-//   password: env().REDIS_PASS,
-// });
-
-// const redisAdapter = createAdapter({
-//   pubClient: pubClient,
-//   subClient: subClient,
-// });
-
-// Set the adapter for socket.io
-// Make sure you pass the `io` object to this function wherever it's created
-
-function setSocketAdapter(io) {
-  io.adapter(redisAdapter);
+if (!process.env.REDIS_HOST) {
+  throw new Error("REDIS_HOST is not defined");
 }
 
+export const redisClient = new Redis({
+  host: process.env.REDIS_HOST,
+  port: Number(process.env.REDIS_PORT),
+  db: Number(process.env.REDIS_DB),
+  family: Number(process.env.REDIS_FAMILY),
+});
+
+redisClient.on("connect", () => console.log("Connected to Redis Server"));
+redisClient.on("ready", () => console.log("Redis Instance is Ready!"));
+redisClient.on("error", (err) => console.error("Redis Error:", err));
+
 export default redisClient;
-
-
-//await redisClient.set(`${prefix}-${tokenId}`, token, 'EX', expiry);
-//const token = await redisClient.get(`${prefix}-${tokenID}`);
-
-
-//sudo docker run --name ast-redis -p 6379:6379 -d redis

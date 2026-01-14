@@ -6,12 +6,13 @@ import { notifications } from "@mantine/notifications";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { updateEmployeeApi } from "../../services/employee.js";
 import { getAllDepartmentsApi } from "../../services/department.js";
+import { getAllDesignationsApi } from "../../services/designation.js";
 
 const schema = Yup.object().shape({
   fullName: Yup.string().required("Full name is required"),
   email: Yup.string().email("Invalid email").nullable(),
   phone: Yup.string().nullable(),
-  designation: Yup.string().nullable(),
+  designationId: Yup.string().nullable(),
   departmentId: Yup.string().nullable(),
 });
 
@@ -28,7 +29,17 @@ const EmployeeEditModal = ({ opened, onClose, employee, onSuccess }) => {
         search: "",
       }),
   });
+  const { data: designationData } = useQuery({
+    queryKey: ["designations", 1],
+    queryFn: () =>
+      getAllDesignationsApi({
+        page: 1,
+        pageSize: 1000,
+        search: "",
+      }),
+  });
 
+  const designations = designationData?.data?.designations || [];
   const departments = deptData?.data?.departments || [];
 
   // Form setup
@@ -37,7 +48,8 @@ const EmployeeEditModal = ({ opened, onClose, employee, onSuccess }) => {
       fullName: "",
       email: "",
       phone: "",
-      designation: "",
+      designationId: null,
+
       departmentId: null,
     },
     validate: yupResolver(schema),
@@ -50,14 +62,15 @@ const EmployeeEditModal = ({ opened, onClose, employee, onSuccess }) => {
         fullName: employee.fullName || "",
         email: employee.email || "",
         phone: employee.phone || "",
-        designation: employee.designation || "",
+        designationId: employee.designationId
+          ? employee.designationId.toString()
+          : null,
         departmentId: employee.departmentId
           ? employee.departmentId.toString()
           : null,
       });
     }
   }, [employee]);
-
   // Mutation
   const mutation = useMutation({
     mutationFn: (values) =>
@@ -65,6 +78,9 @@ const EmployeeEditModal = ({ opened, onClose, employee, onSuccess }) => {
         id: employee.id,
         data: {
           ...values,
+          designationId: values.designationId
+            ? Number(values.designationId)
+            : null,
           departmentId: values.departmentId
             ? Number(values.departmentId)
             : null,
@@ -116,10 +132,19 @@ const EmployeeEditModal = ({ opened, onClose, employee, onSuccess }) => {
 
           <TextInput label="Phone" {...form.getInputProps("phone")} />
 
-          <TextInput label="Designation" {...form.getInputProps("designation")} />
+          <Select
+            allowDeselect={false}
+            label="Designation"
+            placeholder="Select designation"
+            data={designations.map((d) => ({
+              value: d.id.toString(),
+              label: d.name,
+            }))}
+            {...form.getInputProps("designationId")}
+          />
 
           <Select
-           allowDeselect={false}
+            allowDeselect={false}
             label="Department"
             placeholder="Select department"
             data={departments.map((d) => ({

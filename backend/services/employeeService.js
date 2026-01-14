@@ -127,10 +127,10 @@ class EmployeeService {
   }
 
   // UPDATE
-  async updateEmployee(uid, data) {
+  async updateEmployee(id, data) {
     try {
       const exists = await prisma.employee.findUnique({
-        where: { uid: uid },
+        where: { id: Number(id) },
       });
 
       if (!exists) {
@@ -138,7 +138,7 @@ class EmployeeService {
       }
 
       const updatedEmployee = await prisma.employee.update({
-        where: { uid: uid },
+        where: { id: Number(id) },
         data: {
           fullName: data.fullName,
           phone: data.phone,

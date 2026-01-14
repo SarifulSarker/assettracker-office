@@ -23,6 +23,7 @@ import assetEdit from "../Pages/Asset/assetEdit";
 import assetMapping from "../Pages/AssetMapping/assetMapping";
 import assetLog from "../Pages/Asset/assetLog";
 import assetQR_code from "../Pages/Asset/assetQR_code";
+import PlaygroundScreen from "../Pages/Playground/PlaygroundScreen";
 
 const appRoutes = [
   // {
@@ -158,6 +159,13 @@ const appRoutes = [
   {
     path: urls.DESIGNATION,
     Element: designation,
+    isIndexUrl: false,
+    isProtected: true,
+  },
+
+  {
+    path: urls.PLAGROUND,
+    Element: PlaygroundScreen,
     isIndexUrl: false,
     isProtected: true,
   },
