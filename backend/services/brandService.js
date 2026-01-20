@@ -22,7 +22,7 @@ class BrandService {
         }));
       }
 
-      // ✅ Status filter 
+      // ✅ Status filter
       if (status !== undefined) {
         filters.is_active = status;
       } else {
@@ -113,7 +113,7 @@ class BrandService {
         `Brand ${
           updatedBrand.is_active ? "activated" : "deactivated"
         } successfully`,
-        updatedBrand
+        updatedBrand,
       );
     } catch (error) {
       return {

@@ -6,7 +6,8 @@ import { useDispatch } from "react-redux";
 import { setTempData } from "../../store/reducers/authReducer";
 import { notifications } from "@mantine/notifications";
 import * as Yup from "yup";
-import axios from "axios";
+
+import { checkEmailApi } from "../../services/auth.js";
 
 // Validation
 const passwordResetIdentifier = Yup.object().shape({
@@ -22,18 +23,12 @@ const IdentifierInput = ({ setforgotPasswordActiveStage }) => {
   });
 
   const { mutate: sendOtpMutate, isLoading: issendOtpIn } = useMutation({
-    mutationFn: async ({ identifier }) => {
-      const response = await axios.post(
-        "http://localhost:3000/api/v1/auth/check-email",
-        { email: identifier },
-        { withCredentials: true } // যদি cookie/pass credentials লাগে
-      );
-      return response.data;
-    },
-    onSuccess: (data, identifier) => {
-      if (data.exists) { // ধরে নিচ্ছি API response এ boolean আছে
-       dispatch(setTempData(identifier));
+    mutationFn: ({ identifier }) => checkEmailApi(identifier),
 
+    onSuccess: (data, identifier) => {
+     
+      if (data.exists) {
+        dispatch(setTempData(identifier));
 
         notifications.show({
           success: true,
@@ -54,6 +49,7 @@ const IdentifierInput = ({ setforgotPasswordActiveStage }) => {
         });
       }
     },
+
     onError: (error) => {
       notifications.show({
         success: false,
@@ -73,6 +69,7 @@ const IdentifierInput = ({ setforgotPasswordActiveStage }) => {
           type="text"
           {...form.getInputProps("identifier")}
         />
+
         <Button
           type="submit"
           loading={issendOtpIn}

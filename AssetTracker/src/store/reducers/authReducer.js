@@ -19,10 +19,10 @@ const authSlice = createSlice({
       state.user = user;
       state.isLoggedIn = true;
       state.email = remember ? email : "";
-
+     
       // Save token & user in cookies
       setCookie("token", token, "1d");
-     
+   
       // Remember email and password
       if (remember) {
         setCookie("email", email, "7d");

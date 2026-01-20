@@ -136,7 +136,7 @@ const User = () => {
 
   return (
     <div>
-      <PageTop PAGE_TITLE="User Management" backBtn={false} />
+      <PageTop PAGE_TITLE="User " backBtn={false} />
 
       <TablePaperContent
         filters={

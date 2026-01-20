@@ -1,22 +1,32 @@
 import React from "react";
-import { TextInput, PasswordInput, Button, Paper, Title, Stack, Text, Anchor } from "@mantine/core";
+import {
+  TextInput,
+  PasswordInput,
+  Button,
+  Paper,
+  Title,
+  Stack,
+  Text,
+  Anchor,
+} from "@mantine/core";
 import { useForm, yupResolver } from "@mantine/form";
 import * as Yup from "yup";
 import { useMutation } from "@tanstack/react-query";
-import { notifications } from '@mantine/notifications';
+import { notifications } from "@mantine/notifications";
 import { useNavigate } from "react-router-dom";
-import axios from 'axios';
+import axios from "axios";
 import COLORS from "../../constants/Colors"; // Make sure you have a COLORS file
+import { signUpApi } from "../../services/auth.js";
 
 // -------------------- Validation Schema --------------------
 const schema = Yup.object().shape({
   first_name: Yup.string().required("First name is required"),
   last_name: Yup.string().required("Last name is required"),
   phone: Yup.string().required("Phone number is required"),
-  email: Yup.string().email("Invalid email format").required("Email is required"),
-  password: Yup.string()
-    .required("Password is required"),
-    
+  email: Yup.string()
+    .email("Invalid email format")
+    .required("Email is required"),
+  password: Yup.string().required("Password is required"),
 });
 
 const Signup = () => {
@@ -33,32 +43,31 @@ const Signup = () => {
   });
 
   const signupMutation = useMutation({
-    mutationFn: async (formData) => {
-      const res = await axios.post("http://localhost:3000/api/v1/auth/signup", formData);
-      return res.data;
-    },
+    mutationFn: (values) => signUpApi(values),
     onSuccess: (data) => {
       notifications.show({
-        title: 'Success',
-        message: data.message || 'Account created successfully!',
-        color: 'green',
+        title: "Success",
+        message: data.message || "Account created successfully!",
+        color: "green",
         autoClose: 3000,
+        position: "top-center",
       });
       form.reset();
       navigate("/");
     },
     onError: (err) => {
       notifications.show({
-        title: 'Error',
-        message: err.response?.data?.error || 'Signup failed. Try again!',
-        color: 'red',
+        title: "Error",
+        message: err.response?.data?.error || "Signup failed. Try again!",
+        color: "red",
         autoClose: 3000,
+        position: "top-center",
       });
-    }
+    },
   });
 
   const handleSubmit = () => {
-    signupMutation.mutate(form.values);
+    signupMutation.mutate(form.values); // <-- pass form data here
   };
 
   return (
@@ -71,7 +80,12 @@ const Signup = () => {
       }}
     >
       {/* Signup Card */}
-      <Paper p="xl" radius="md" shadow="xl" style={{ minWidth: 320, maxWidth: 400, width: "100%" }}>
+      <Paper
+        p="xl"
+        radius="md"
+        shadow="xl"
+        style={{ minWidth: 320, maxWidth: 400, width: "100%" }}
+      >
         <Title order={2} align="center" mb="md">
           Create an Account
         </Title>
@@ -117,15 +131,22 @@ const Signup = () => {
               fullWidth
               size="md"
               radius="md"
-              loading={signupMutation.isLoading}
-              style={{ background: `linear-gradient(90deg, ${COLORS.primary}, ${COLORS.accent})`, color: COLORS.secondary }}
+              loading={signupMutation.isPending}
+              style={{
+                background: `linear-gradient(90deg, ${COLORS.primary}, ${COLORS.accent})`,
+                color: COLORS.secondary,
+              }}
             >
               Sign Up
             </Button>
 
             <Text align="center" mt="sm">
               Already have an account?{" "}
-              <Anchor color={COLORS.accent} style={{ cursor: "pointer" }} onClick={() => navigate("/")}>
+              <Anchor
+                color={COLORS.accent}
+                style={{ cursor: "pointer" }}
+                onClick={() => navigate("/")}
+              >
                 Sign In
               </Anchor>
             </Text>

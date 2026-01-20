@@ -1,0 +1,57 @@
+version: "3.9"
+name: ${CONTAINER_NAME}
+
+services:
+  backend:
+    container_name: ${CONTAINER_NAME}
+    build:
+      dockerfile: ${BACKEND_DOCKERFILE:-Dockerfile}
+    ports:
+      - "${BACKEND_PORT}:${BACKEND_PORT}"
+    env_file:
+      - ${BACKEND_ENV_FILE}
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - .:/app
+
+    command: >
+      sh -c "
+        echo 'Starting backend...'
+        echo 'Database host: $DATABASE_HOST, port: $DATABASE_PORT'
+        if [ \"$RUN_MIGRATE\" = \"true\" ]; then
+          echo 'Running database migrations...'
+          npx prisma migrate deploy
+        else
+          echo 'Skipping database migrations'
+        fi
+        if [ \"$APP_ENV\" = \"stage\" ]; then
+          npm run stage
+        else
+          npm run dev
+        fi
+      "
+
+  db:
+    image: postgres:16
+    container_name: ${DB_CONTAINER_NAME}
+    restart: always
+    environment:
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5434:5432"
+
+  redis:
+    image: redis:7
+    container_name: ${REDIS_CONTAINER_NAME}
+    command: redis-server --port ${REDIS_PORT}
+    ports:
+      - "${REDIS_PORT}:${REDIS_PORT}"
+
+volumes:
+  postgres_data:

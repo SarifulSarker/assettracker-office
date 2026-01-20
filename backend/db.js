@@ -6,11 +6,11 @@ const { Pool } = pkg;
 
 // PostgreSQL connection configuration
 const dbConfig = {
-  user: process.env.DATABASE_USER || "postgress", // DB username
-  host: process.env.DATABASE_HOST || "127.0.0.1", // DB host
-  database: process.env.DATABASE_NAME || "Demo", // Database name
-  password: process.env.DATABASE_PASSWORD || "shariful", // DB password
-  port: Number(process.env.DATABASE_PORT || 5433), // Default PostgreSQL port
+  user: process.env.DATABASE_USER , // DB username
+  host: process.env.DATABASE_HOST , // DB host
+  database: process.env.DATABASE_NAME , // Database name
+  password: process.env.DATABASE_PASSWORD , // DB password
+  port: Number(process.env.DATABASE_PORT), // Default PostgreSQL port
 };
 const pool = new Pool(dbConfig);
 

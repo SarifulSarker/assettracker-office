@@ -10,43 +10,38 @@ import { useNavigate } from "react-router-dom";
 import * as Yup from "yup";
 import COLORS from "../../constants/Colors";
 import { useMutation } from "@tanstack/react-query";
-import axios from "axios";
 import { notifications } from "@mantine/notifications";
 import { useSelector } from "react-redux";
+
+import { resetPasswordApi } from "../../services/auth.js";
 
 const NewPasswordInput = () => {
   const [visible1, { toggle: toggle1 }] = useDisclosure(false);
   const [visible2, { toggle: toggle2 }] = useDisclosure(false);
 
   const navigate = useNavigate();
+  const email = useSelector((state) => state.auth.tempData);
 
-const email = useSelector((state) => state.auth.tempData);
+  const schema = Yup.object().shape({
+    NewPassword: Yup.string()
+      .required("Password is required")
+      .min(6, "Password must be at least 6 characters"),
+    confirmNewPassword: Yup.string()
+      .oneOf([Yup.ref("NewPassword")], "Passwords must match")
+      .required("Confirm password is required"),
+  });
 
-const schema = Yup.object().shape({
-  NewPassword: Yup.string()
-    .required("Password is required")
-    .min(6, "Password must be at least 6 characters"),
-  confirmNewPassword: Yup.string()
-    .oneOf([Yup.ref("NewPassword")], "Passwords must match")
-    .required("Confirm password is required"),
-});
-
-const form = useForm({
-  initialValues: { NewPassword: "", confirmNewPassword: "" },
-  validate: yupResolver(schema),
-});
-
+  const form = useForm({
+    initialValues: { NewPassword: "", confirmNewPassword: "" },
+    validate: yupResolver(schema),
+  });
 
   const { mutate: resetPasswordMutate, isLoading: isResetting } = useMutation({
     mutationFn: async (values) => {
-      const response = await axios.post(
-        "http://localhost:3000/api/v1/auth/reset-password",
-        {
-          email,
-          newPassword: values.NewPassword,
-        }
-      );
-      return response.data;
+      return await resetPasswordApi({
+        email,
+        newPassword: values.NewPassword,
+      });
     },
     onSuccess: (data) => {
       if (data.success) {
@@ -76,16 +71,15 @@ const form = useForm({
   return (
     <form onSubmit={form.onSubmit((values) => resetPasswordMutate(values))}>
       <Stack>
-     
         <PasswordInput
           {...form.getInputProps("NewPassword")}
-          placeholder="Your Password"
+          placeholder="New Password"
           visible={visible1}
           onVisibilityChange={toggle1}
         />
         <PasswordInput
           {...form.getInputProps("confirmNewPassword")}
-          placeholder="Confirm Password"
+          placeholder="Confirm New Password"
           visible={visible2}
           onVisibilityChange={toggle2}
         />

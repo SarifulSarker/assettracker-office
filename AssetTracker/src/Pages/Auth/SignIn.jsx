@@ -12,14 +12,14 @@ import { useForm, yupResolver } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { dataTagErrorSymbol, useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import * as Yup from "yup";
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "../../store/reducers/authReducer.js";
 import { getCookie } from "../../helpers/Cookie.js";
 import COLORS from "../../constants/Colors.js";
-
+import { signInApi } from "../../services/auth.js";
 /* ================== Validation ================== */
 const schema = Yup.object().shape({
   email: Yup.string()
@@ -44,39 +44,33 @@ const SignIn = () => {
 
   /* ================== API ================== */
   const mutation = useMutation({
-    mutationFn: async (values) => {
-      const res = await axios.post(
-        "http://localhost:3000/api/v1/auth/signin",
-        values
-      );
-      return res.data;
-    },
+    mutationFn: (values) => signInApi(values),
 
-    onSuccess: (data) => {
-      if (!data.success) {
+    onSuccess: (response, values) => {
+      if (!response.success) {
         notifications.show({
           title: "Error",
-          message: data.error || "Login failed",
+          message:  "Login failed",
           color: "red",
           position: "top-center",
         });
         return;
       }
 
-      const user = data.data;
+      const { data: user, token, message } = response;
       const userName = `${user.firstName} ${user.lastName}`;
-     
+
       dispatch(
         loginSuccess({
-          user: data.data,
-          token: data.token,
-          remember,
-          email: form.values.email,
-        })
+          user,
+          token,
+          remember: remember,
+          email: response.data.email,
+        }),
       );
 
       notifications.show({
-        message: `🎉Welcome back ${userName}`,
+        message: `🎉 ${message} Welcome back ${userName}`,
         color: "green",
         position: "top-center",
       });
@@ -87,8 +81,12 @@ const SignIn = () => {
     onError: (error) => {
       notifications.show({
         title: "Error",
-        message: error.response?.data?.error || "Something went wrong",
+        message:
+          error.response?.data?.message ||
+          error.message ||
+          "Something went wrong",
         color: "red",
+        position: "top-center",
       });
     },
   });

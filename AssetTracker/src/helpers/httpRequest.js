@@ -3,13 +3,14 @@ import { getCookie } from "../helpers/Cookie";
 import store from "../store";
 import { logout } from "../store/reducers/authReducer";
 
+// Read env values once
 const accessToken = import.meta.env.VITE_ACCESS_TOKEN;
-
 if (!accessToken) throw new Error("Access token not found in process env!");
 
-const apiBaseUrl = "http://localhost:3000/api/v1";
+const apiBaseUrl = import.meta.env.VITE_APP_BACKEND_BASE_URL;
 if (!apiBaseUrl) throw new Error("API Base Url not found in process env!");
 
+// ✅ Create single axios instance
 const axiosInstance = axios.create({
   baseURL: apiBaseUrl,
   timeout: 10000,
@@ -17,46 +18,28 @@ const axiosInstance = axios.create({
 
 // Request interceptor
 axiosInstance.interceptors.request.use(
-  function (config) {
+  (config) => {
     const token = getCookie(accessToken);
     config.headers.Authorization = `Bearer ${token}`;
     return config;
   },
-  function (error) {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error),
 );
 
+// Response interceptor
 axiosInstance.interceptors.response.use(
-  (respose) => {
-    return respose;
-  },
+  (response) => response,
   async (error) => {
     if (error?.response?.status === 401) {
       store.dispatch(logout());
       console.log("Auth error", error?.response);
     }
     return Promise.reject(error);
-  }
+  },
 );
 
-// Handle HTTP response
 const responseBody = (response) => response.data;
-
-// Handle HTTP error
-const errorResponseBody = (error) => {
-  // console.log({ error });
-  // console.log({ error: error.response.data });
-
-  return error.response.data;
-  // if (error.response) {
-  //   return error.response.data;
-  // } else if (error.request) {
-  //   throw new Error("Error: axios " + error.request);
-  // } else {
-  //   throw new Error("Error: axios " + error.message);
-  // }
-};
+const errorResponseBody = (error) => error.response?.data;
 
 // HTTP request methods
 const httpRequest = {
@@ -64,33 +47,20 @@ const httpRequest = {
     axiosInstance
       .get(url, { params })
       .then(responseBody)
-      .catch((e) => {
-        return errorResponseBody(e);
-      }),
-
+      .catch(errorResponseBody),
   post: (url = "", body = {}, config = {}) =>
     axiosInstance
       .post(url, body, config)
       .then(responseBody)
-      .catch((e) => {
-        return errorResponseBody(e);
-      }),
-
+      .catch(errorResponseBody),
   put: (url = "", body = {}) =>
-    axiosInstance
-      .put(url, body, {})
-      .then(responseBody)
-      .catch((e) => {
-        return errorResponseBody(e);
-      }),
-
+    axiosInstance.put(url, body).then(responseBody).catch(errorResponseBody),
   delete: (url = "", params = {}, body = {}) =>
     axiosInstance
       .delete(url, { data: body, params })
       .then(responseBody)
-      .catch((e) => {
-        return errorResponseBody(e);
-      }),
+      .catch(errorResponseBody),
 };
 
+// ✅ default export
 export default httpRequest;

@@ -46,8 +46,8 @@ class AssetAssignmentService {
               assignedAt: new Date(),
               is_active: true,
             },
-          })
-        )
+          }),
+        ),
       );
 
       // 4️⃣ Create logs with asset_uid
@@ -72,8 +72,8 @@ class AssetAssignmentService {
               }),
               issuer: issuer?.firstName || "system",
             },
-          })
-        )
+          }),
+        ),
       );
 
       return SuccessResponse(200, "Assets assigned successfully", assignments);
@@ -102,7 +102,7 @@ class AssetAssignmentService {
       return SuccessResponse(
         200,
         "Get Assets By Employee fetched successfully",
-        assets
+        assets,
       );
     } catch (err) {
       console.error(err);
@@ -125,7 +125,7 @@ class AssetAssignmentService {
       return SuccessResponse(
         200,
         "Get Employees by asset fetched successfully",
-        employees
+        employees,
       );
     } catch (err) {
       console.error(err);
@@ -167,7 +167,7 @@ class AssetAssignmentService {
       return SuccessResponse(
         200,
         "Assets unassigned successfully",
-        updatedAssignments
+        updatedAssignments,
       );
     } catch (error) {
       console.error("UNASSIGN ASSET SERVICE ERROR:", error);

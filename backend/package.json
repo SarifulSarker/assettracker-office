@@ -5,7 +5,11 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js",
+    "stage": "dotenv -e ./configs/.env.stage -- node index.js",
+    "dev": "dotenv -e ./configs/.env.dev -- nodemon index.js",
+    "migrate:dev": "dotenv -e ./configs/.env.dev -- npx prisma migrate deploy",
+    "migrate:stage": "dotenv -e ./configs/.env.stage -- npx prisma migrate deploy",
+    "prisma:generate": "npx prisma generate",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

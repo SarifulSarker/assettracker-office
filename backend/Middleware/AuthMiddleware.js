@@ -1,7 +1,9 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import redisClient from "../redis-client.js";
 import jwt from "jsonwebtoken";
 
-import env from "dotenv"; // ✅
 import { generateTokenKey } from "../utils/tokenKeyGenerator.js";
 
 class AuthMiddleware {
@@ -16,7 +18,7 @@ class AuthMiddleware {
       }
 
       const token = authHeader.split(" ")[1];
-     
+
       // 3. Verify JWT
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
@@ -26,7 +28,7 @@ class AuthMiddleware {
       const redisToken = await redisClient.get(tokenKey);
 
       if (!redisToken) {
-        return res.status(401).json({ message: "Invalid token" });
+        return res.status(401).json({ message: "Redis Invalid token" });
       }
       if (redisToken !== token) {
         return res.status(401).json({ message: "Token not match" });
@@ -35,7 +37,7 @@ class AuthMiddleware {
       // 4. Attach user info to request
       req.user = {
         id: decoded.userId,
-        superAdmin: decoded.userId == 36 ? true : false,
+        // superAdmin: decoded.userId == 36 ? true : false,
         ...decoded,
       };
 
@@ -47,7 +49,7 @@ class AuthMiddleware {
         return res.status(401).json({ message: "Token expired" });
       }
 
-      return res.status(401).json({ message: "Invalid token" });
+      return res.status(401).json({ message: "Middleware Invalid token" });
     }
   }
 }

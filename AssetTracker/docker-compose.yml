@@ -1,0 +1,16 @@
+name: ${CONTAINER_NAME}
+
+services:
+  frontend:
+    container_name: ${CONTAINER_NAME}
+    build:
+      context: .
+      dockerfile: ${FRONTEND_DOCKERFILE}
+    ports:
+      - "${VITE_PORT}:${VITE_PORT}"
+    env_file:
+      - "${FRONTEND_ENV_FILE:-./configs/.env.dev}"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: ["npm", "run", "dev", "--", "--host"]
