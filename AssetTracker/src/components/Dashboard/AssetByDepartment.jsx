@@ -91,7 +91,7 @@ const AssetByDepartment = () => {
       ],
 
       dataLabels: {
-        enabled: false,
+        enabled: true,
       },
 
       tooltip: {
