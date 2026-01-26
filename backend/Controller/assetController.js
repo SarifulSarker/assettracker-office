@@ -57,7 +57,7 @@ class AssetController {
   async updateAsset(req, res) {
     try {
       const result = await assetService.updateAsset(req.params.uid, req.body, req.user);
-      console.log(req.body);
+     
       res.status(result.responseCode).json(result);
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });

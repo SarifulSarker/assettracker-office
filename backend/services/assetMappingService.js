@@ -37,17 +37,27 @@ class AssetAssignmentService {
       const assetMap = new Map(assets.map((a) => [a.id, a.uid]));
 
       // 3️⃣ Assign assets
+     
       const assignments = await Promise.all(
-        assetIds.map((assetId) =>
-          prisma.assetAssingmentEmployee.create({
+        assetIds.map(async (assetId) => {
+          // 3a. Create assignment
+          const assignment = await prisma.assetAssingmentEmployee.create({
             data: {
               assetId,
               employeeId: employee.id,
               assignedAt: new Date(),
               is_active: true,
             },
-          }),
-        ),
+          });
+
+          // 3b. Update asset status to "inuse"
+          await prisma.asset.update({
+            where: { id: assetId },
+            data: { status: "inuse" }, // <-- your need
+          });
+
+          return assignment;
+        }),
       );
 
       // 4️⃣ Create logs with asset_uid

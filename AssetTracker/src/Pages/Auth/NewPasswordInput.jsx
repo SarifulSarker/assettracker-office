@@ -1,8 +1,4 @@
-import {
-  Button,
-  Stack,
-  PasswordInput,
-} from "@mantine/core";
+import { Button, Stack, PasswordInput } from "@mantine/core";
 import { useForm, yupResolver } from "@mantine/form";
 import { useDisclosure } from "@mantine/hooks";
 import React from "react";
@@ -49,6 +45,7 @@ const NewPasswordInput = () => {
           title: "Success",
           message: "Password has been reset successfully",
           color: "green",
+          position: "top-center",
         });
         navigate("/");
       } else {
@@ -56,6 +53,7 @@ const NewPasswordInput = () => {
           title: "Error",
           message: data.message || "Failed to reset password",
           color: "red",
+          position: "top-center",
         });
       }
     },
@@ -64,6 +62,7 @@ const NewPasswordInput = () => {
         title: "Error",
         message: "Something went wrong",
         color: "red",
+        position: "top-center",
       });
     },
   });

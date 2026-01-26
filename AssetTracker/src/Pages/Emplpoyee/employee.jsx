@@ -35,7 +35,7 @@ const Employee = () => {
   const [assetsModalOpened, setAssetsModalOpened] = useState(false);
   const [employeeForAssets, setEmployeeForAssets] = useState(null);
 
-  const debouncedSearch = useDebounce(searchKey, 2000);
+  const debouncedSearch = useDebounce(searchKey, 1000);
 
   // Convert status string to boolean before sending to API
   const statusBool =

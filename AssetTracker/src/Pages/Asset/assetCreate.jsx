@@ -196,10 +196,11 @@ const AssetCreate = () => {
                 label="Asset Status"
                 placeholder="Select status"
                 data={[
-                  { value: "active", label: "Active / Operating" },
-                  { value: "inactive", label: "Inactive / In Stock" },
-                  { value: "maintenance", label: "Maintenance / Repair" },
+                  { value: "inuse", label: "In Use " },
+                  { value: "instock", label: "In Stock" },
+                  { value: "maintenance", label: "Maintenance" },
                   { value: "damaged", label: "Damaged" },
+                  { value: "lost", label: "Lost" },
                 ]}
                 {...form.getInputProps("status")}
               />
@@ -207,7 +208,7 @@ const AssetCreate = () => {
                 label="Notes"
                 value={form.values.notes}
                 onChange={(val) => form.setFieldValue("notes", val)}
-                 {...form.getInputProps("notes")}
+                {...form.getInputProps("notes")}
               />
               <Button type="submit" loading={createMutation.isPending}>
                 Create Asset

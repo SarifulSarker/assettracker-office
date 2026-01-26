@@ -1,4 +1,5 @@
 // src/constants/SidebarItems.js
+
 import {
   IconUser,
   IconDeviceLaptop,
@@ -8,13 +9,19 @@ import {
   IconDeviceTabletShare,
   IconBuildingStore,
   IconListTree,
-  IconBrandAngularFilled,
+  IconBrandAngular,
   IconBusinessplan,
+  IconLayoutDashboard,
 } from "@tabler/icons-react";
 
 import * as urls from "./AppUrls";
 
 const SidebarItems = [
+  {
+    label: "DashBoard",
+    icon: IconLayoutDashboard,
+    link: urls.DASHBOARD,
+  },
   {
     label: "User",
     icon: IconUser,
@@ -55,14 +62,14 @@ const SidebarItems = [
         link: urls.CATEGORIES,
       },
       {
-        label: "Brand",
-        icon: IconBrandAngularFilled,
-        link: urls.BRAND,
-      },
-      {
         label: "Vendor",
         icon: IconBusinessplan,
         link: urls.VENDOR,
+      },
+      {
+        label: "Brand",
+        icon: IconBrandAngular,
+        link: urls.BRAND,
       },
     ],
   },

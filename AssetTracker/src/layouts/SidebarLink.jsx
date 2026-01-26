@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Flex, rem, UnstyledButton, Text, Collapse } from "@mantine/core";
 import { Link, useLocation } from "react-router-dom";
 import COLORS from "../constants/Colors";
+import { IconCaretDown } from "@tabler/icons-react";
 
 const SidebarLink = ({
   icon: Icon,
@@ -49,7 +50,7 @@ const SidebarLink = ({
           style={{
             display: "flex",
             alignItems: "center",
-            width: "100%",
+            width: "114%",
             height: rem(50),
             padding: "0 12px",
             borderRadius: rem(8),
@@ -80,8 +81,14 @@ const SidebarLink = ({
             </Flex>
 
             {links && (
-              <Text size="sm" color={COLORS.white}>
-                {openDropdown ? "▾" : "▸"}
+              <Text size="sm" color={active ? COLORS.app_color : COLORS.white}>
+                <IconCaretDown
+                  size={14}
+                  style={{
+                    transform: openDropdown ? "rotate(180deg)" : "rotate(0deg)",
+                    transition: "0.2s",
+                  }}
+                />
               </Text>
             )}
           </Flex>

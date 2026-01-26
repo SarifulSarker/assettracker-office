@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button, Group, Text, Flex, Tooltip } from "@mantine/core";
+import { Button, Group, Text, Flex, Tooltip, ActionIcon } from "@mantine/core";
 import { useNavigate } from "react-router-dom";
 import { closeAllModals, modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
@@ -9,7 +9,10 @@ import {
   IconTrash,
   IconHistory,
   IconCheck,
+  IconDownload,
 } from "@tabler/icons-react";
+import COLORS from "../../constants/Colors";
+import dayjs from "dayjs";
 
 import PageTop from "../../components/global/PageTop.jsx";
 import TablePaperContent from "../../components/global/TablePaperContent.jsx";
@@ -17,7 +20,7 @@ import CustomTable from "../../components/global/CustomTable.jsx";
 import CustomPagination from "../../components/global/CustomPagination.jsx";
 import AssetFilters from "../../components/Asset/AssetFilters.jsx";
 import { IconQrcode } from "@tabler/icons-react";
-
+import downloadAssetsCSV from "../../helpers/downloadAssetsCSV.js";
 import { getAllAssetsApi, deleteAssetApi } from "../../services/asset.js";
 import SpecsCell from "../../helpers/collaps.jsx";
 const PAGE_SIZE = 10;
@@ -29,6 +32,7 @@ const Assets = () => {
   const [page, setPage] = useState(1);
   const [searchKey, setSearchKey] = useState("");
   const [status, setStatus] = useState("active"); // default active
+  const [isExporting, setIsExporting] = useState(false);
 
   const handleSearchChange = (e) => {
     setSearchKey(e.currentTarget.value);
@@ -111,6 +115,18 @@ const Assets = () => {
   const assets = data?.data?.assets || [];
   const total = data?.data?.total || 0;
 
+  const handleDownloadCSV = async () => {
+    try {
+      setIsExporting(true);
+      await downloadAssetsCSV({
+        searchKey,
+        statusBool,
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   //console.log(assets);
   const tableHeaders = [
     {
@@ -173,7 +189,12 @@ const Assets = () => {
       headerTitle: "Vendor",
       row: (v, row) => row.vendor?.name || "-",
     },
-
+    {
+      key: "purchaseDate",
+      headerTitle: "Purchase Date",
+      row: (v, row) =>
+        row.purchaseDate ? dayjs(row.purchaseDate).format("DD-MM-YYYY") : "-",
+    },
     {
       key: "actions",
       headerTitle: "Actions",
@@ -248,7 +269,24 @@ const Assets = () => {
         }
         filterBadges={null}
         exportAndPagination={
-          <Flex justify="flex-end" align="center">
+          <Flex justify="space-between" align="center">
+            {/* LEFT: Download icon */}
+            <Tooltip label="Download CSV" withArrow>
+              <ActionIcon
+                variant="filled"
+                color="blue"
+                loading={isExporting}
+                disabled={isExporting}
+                onClick={handleDownloadCSV}
+                style={{
+                  backgroundColor: COLORS.secondary,
+                }}
+              >
+                <IconDownload size={18} />
+              </ActionIcon>
+            </Tooltip>
+
+            {/* RIGHT: Pagination */}
             <CustomPagination
               page={page}
               setPage={setPage}

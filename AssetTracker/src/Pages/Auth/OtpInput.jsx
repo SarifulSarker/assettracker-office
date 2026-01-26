@@ -86,6 +86,7 @@ const OtpInput = ({
               title: "Success",
               message: "OTP verified! Set your new password",
               color: "green",
+              position: "top-center",
             });
             setforgotPasswordActiveStage({
               identifierInput: false,
@@ -97,6 +98,7 @@ const OtpInput = ({
               title: "Error",
               message: "Invalid OTP",
               color: "red",
+              position: "top-center",
             });
           }
         }
@@ -106,6 +108,7 @@ const OtpInput = ({
           title: "Error",
           message: "Something went wrong",
           color: "red",
+          position: "top-center",
         });
         console.error(error);
       },
@@ -122,6 +125,7 @@ const OtpInput = ({
           title: "OTP Resent",
           message: "A new OTP has been sent",
           color: "green",
+          position: "top-center",
         });
         setOtpStartTime(Date.now());
         setResendOtpBtnPressed(true);
@@ -131,6 +135,7 @@ const OtpInput = ({
           title: "Error",
           message: "Failed to resend OTP",
           color: "red",
+          position: "top-center",
         });
         console.error(error);
       },
@@ -159,6 +164,7 @@ const OtpInput = ({
             title: "OTP Expired",
             message: "Please resend OTP",
             color: "red",
+            position: "top-center",
           });
         }}
         date={new Date(otpStartTime + 1000 * 60 * 5)}

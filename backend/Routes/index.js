@@ -11,7 +11,7 @@ import assetRoutes from "./assetRoutes.js";
 import designationRoutes from "./designationRoutes.js";
 import assetMappingRoutes from "./assetMappingRoutes.js"
 import authMiddleware from "../Middleware/AuthMiddleware.js";
-
+import dashboardRoutes from "../Routes/dashboardRoutes.js"
 const router = Router();
 
 /* ---------- PUBLIC ROUTES ---------- */
@@ -31,6 +31,7 @@ const protectedRoutes = [
   { path: "/asset", route: assetRoutes },
   { path: "/designation", route: designationRoutes },
   {path:"/asset-mapping", route:assetMappingRoutes},
+  {path:"/dashboard", route:dashboardRoutes}
 ];
 
 protectedRoutes.forEach((item) => {

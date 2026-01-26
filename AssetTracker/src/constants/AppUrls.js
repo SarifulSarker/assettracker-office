@@ -35,5 +35,3 @@ export const VENDOR = "/vendor";
 
 export const DESIGNATION = "/designation";
 
-export const PLAGROUND = "/playground";
-

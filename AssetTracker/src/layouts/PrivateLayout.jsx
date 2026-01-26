@@ -20,40 +20,34 @@ import { useDispatch } from "react-redux";
 import { logout } from "../store/reducers/authReducer";
 import { modals } from "@mantine/modals";
 import HeaderContent from "../components/HeaderContent";
-import Logo from "../assets/manushTech.ico"
+import Logo from "../assets/Logo SVG.svg";
 
 const PrivateLayout = () => {
   const [opened, { toggle, close }] = useDisclosure(false);
   const navigate = useNavigate();
-const dispatch = useDispatch();
+  const dispatch = useDispatch();
 
- 
   const handleLogout = () => {
-    
-    dispatch(logout())
+    dispatch(logout());
     navigate("/");
   };
 
   //logout modal open
-   const handleLogoutModal = () => {
-     modals.openConfirmModal({
-      title: 'Are you sure?',
-        centered: true,
-      children: (
-        <Text size="sm">
-          Are You Sure You Want To Logout??
-        </Text>
-      ),
-      
-      labels: { confirm: 'Confirm', cancel: 'Cancel' },
-       confirmProps: { color: 'red' },
+  const handleLogoutModal = () => {
+    modals.openConfirmModal({
+      title: "Are you sure?",
+      centered: true,
+      children: <Text size="sm">Are You Sure You Want To Logout??</Text>,
+
+      labels: { confirm: "Confirm", cancel: "Cancel" },
+      confirmProps: { color: "red" },
       //onCancel: () => console.log('Cancel'),
       onConfirm: () => {
-       handleLogout()
-       // closeAllModals();
+        handleLogout();
+        // closeAllModals();
       },
     });
-    };
+  };
 
   return (
     <AppShell
@@ -65,10 +59,7 @@ const dispatch = useDispatch();
       }}
       header={{ height: { base: 75 } }}
       styles={{
-        main: {
-         
-      
-        },
+        main: {},
       }}
     >
       {/* HEADER */}
@@ -79,32 +70,32 @@ const dispatch = useDispatch();
           boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
         }}
       >
-    <Flex
-      align="center"          // vertically center everything
-      justify="space-between" // push first child left, second child right
-      h="100%"
-      px="lg"
-    >
-      {/* Left side: burger + logo */}
-      <Flex align="center" gap="md">
-        <Burger
-          opened={opened}
-          onClick={toggle}
-          hiddenFrom="md"
-          size="sm"
-          color={COLORS.secondary}
-        />
-        <Box
-          component="img"
-          src={Logo}
-          alt="Logo"
-          style={{ width: 50 ,marginLeft: 55,  }}
-        />
-      </Flex>
+        <Flex
+          align="center" // vertically center everything
+          justify="space-between" // push first child left, second child right
+          h="100%"
+          px="lg"
+        >
+          {/* Left side: burger + logo */}
+          <Flex align="center" gap="md">
+            <Burger
+              opened={opened}
+              onClick={toggle}
+              hiddenFrom="md"
+              size="sm"
+              color={COLORS.secondary}
+            />
+            <Box
+              component="img"
+              src={Logo}
+              alt="Logo"
+              style={{ width: "auto", marginLeft: -44, height: 57 }}
+            />
+          </Flex>
 
-      {/* Right side: user info */}
-      <HeaderContent />
-    </Flex>
+          {/* Right side: user info */}
+          <HeaderContent />
+        </Flex>
       </AppShell.Header>
 
       {/* SIDEBAR */}
@@ -121,23 +112,23 @@ const dispatch = useDispatch();
         <ScrollArea style={{ flex: 1, marginBottom: 10 }}>
           <SidebarLinks onClickMobile={close} />
         </ScrollArea>
-
         <Button
-          leftSection={<IconLogout size={16} />}
+          leftSection={<IconLogout size={20} />} // icon একটু বড়
           onClick={handleLogoutModal}
           fullWidth
           variant="light"
           color="red"
           style={{
-            padding: "10px 12px",
-            borderRadius: 12,
+          
+            borderRadius: 14,
             fontWeight: 600,
             justifyContent: "center",
+            marginBottom: 16, // ⭐ down margin
+            fontSize: 16, // text একটু বড়
           }}
         >
           Logout
         </Button>
-
       </AppShell.Navbar>
 
       {/* MAIN CONTENT */}

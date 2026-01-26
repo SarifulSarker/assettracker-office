@@ -12,6 +12,7 @@ import {
   Select,
   Loader,
   Center,
+  Flex,
 } from "@mantine/core";
 import {
   getEmployeesByAssetApi,
@@ -21,6 +22,7 @@ import { getAssetByIdApi } from "../../services/asset";
 import PageTop from "../../components/global/PageTop";
 import { ASSET_LOG_CONTEXT } from "../../utils/ASSET_LOG_CONTEXT";
 import AssetContextLogs from "../../components/Asset/AssetContextLogs";
+import { IconCurrencyTaka } from "@tabler/icons-react";
 
 const AssetLog = () => {
   const { uid } = useParams();
@@ -50,7 +52,7 @@ const AssetLog = () => {
     enabled: !!assetUID,
   });
 
-  const logs = context ? AssignlogData ?? [] : AssignlogData?.data ?? [];
+  const logs = context ? (AssignlogData ?? []) : (AssignlogData?.data ?? []);
   const activeLog = logs.find((l) => !l.unassignedAt);
 
   /* ---------------- UI ---------------- */
@@ -114,7 +116,9 @@ const AssetLog = () => {
                   {asset?.specs
                     ? asset.specs
                         .split("\n")
-                        .map((line, index) => (index === 0 ? line : "            " + line))
+                        .map((line, index) =>
+                          index === 0 ? line : "            " + line,
+                        )
                         .join("\n")
                     : "N/A"}
                 </Text>
@@ -154,8 +158,8 @@ const AssetLog = () => {
                 {/* Subcategory */}
                 {asset?.subCategory && (
                   <Text size="sm" component="div">
-                    <b>Subcategory:</b> {asset.subCategory.name} (
-                    {asset.subCategory.is_active ? "Active" : "Inactive"})
+                    <b>Subcategory:</b> {asset.subCategory.name} 
+                   
                   </Text>
                 )}
 
@@ -167,10 +171,15 @@ const AssetLog = () => {
                     : "N/A"}
                 </Text>
 
-                <Text size="sm" component="div">
-                  <b>Purchase Price:</b> ${asset?.purchasePrice || "N/A"}
-                </Text>
+                <Flex align="center" gap={4}>
+                  <Text size="sm">
+                    <b>Purchase Price:</b>
+                  </Text>
 
+                  <IconCurrencyTaka size={16} />
+
+                  <Text size="sm">{asset?.purchasePrice ?? "N/A"}</Text>
+                </Flex>
                 {/* Assignment */}
                 <Group spacing="xs">
                   <Text size="sm" c="dimmed" component="div">
@@ -217,7 +226,7 @@ const AssetLog = () => {
             )}
             {logs.map((log) => (
               <Paper key={log.id} withBorder radius="sm" p="sm">
-                <Group >
+                <Group>
                   <Text size="sm" component="div">
                     <b>{log.employee?.fullName || "Unknown"}</b>
                   </Text>

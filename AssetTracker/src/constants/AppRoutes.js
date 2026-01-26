@@ -2,7 +2,7 @@
 import Home from "../Pages/Home";
 import SignIn from "../Pages/Auth/SignIn";
 import Signup from "../Pages/Auth/Signup";
-import Dashboard from "../Pages/Dashboard";
+import Dashboard from "../Pages/Dashboard/Dashboard";
 
 import * as urls from "./AppUrls";
 import Assets from "../Pages/Asset/Assets";
@@ -23,7 +23,6 @@ import assetEdit from "../Pages/Asset/assetEdit";
 import assetMapping from "../Pages/AssetMapping/assetMapping";
 import assetLog from "../Pages/Asset/assetLog";
 import assetQR_code from "../Pages/Asset/assetQR_code";
-import PlaygroundScreen from "../Pages/Playground/PlaygroundScreen";
 
 const appRoutes = [
   // {
@@ -163,12 +162,6 @@ const appRoutes = [
     isProtected: true,
   },
 
-  {
-    path: urls.PLAGROUND,
-    Element: PlaygroundScreen,
-    isIndexUrl: false,
-    isProtected: true,
-  },
 ];
 
 export default appRoutes;

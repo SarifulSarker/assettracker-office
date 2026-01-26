@@ -73,6 +73,14 @@ const assetEdit = () => {
       status: "",
       notes: "",
     },
+    validate: {
+      name: (v) => (!v ? "Asset name is required" : null),
+      categoryId: (v) => (!v ? "Category is required" : null),
+      brandId: (v) => (!v ? "Brand is required" : null),
+      vendorId: (v) => (!v ? "Vendor is required" : null),
+      purchasePrice:(v) =>(!v ? "purchasePrice is required" :null),
+      purchaseDate: (v) => (!v ? "Purchase date is required" : null),
+    },
   });
 
   /* -------------------- LOAD EXISTING DATA -------------------- */
@@ -190,6 +198,7 @@ const assetEdit = () => {
               />
 
               <Select
+                allowDeselect={false}
                 label="Category"
                 withAsterisk
                 data={categories.map((c) => ({
@@ -201,6 +210,7 @@ const assetEdit = () => {
               />
 
               <Select
+                allowDeselect={false}
                 label="Subcategory"
                 disabled={!form.values.categoryId || subcategories.length === 0}
                 data={subcategories.map((sc) => ({
@@ -211,6 +221,7 @@ const assetEdit = () => {
               />
 
               <Select
+                allowDeselect={false}
                 label="Brand"
                 withAsterisk
                 data={brands.map((b) => ({
@@ -221,6 +232,7 @@ const assetEdit = () => {
               />
 
               <Select
+                allowDeselect={false}
                 label="Vendor"
                 withAsterisk
                 data={vendors.map((v) => ({
@@ -231,6 +243,7 @@ const assetEdit = () => {
               />
 
               <TextInput
+                withAsterisk
                 label="Purchase Price"
                 type="number"
                 {...form.getInputProps("purchasePrice")}
@@ -247,10 +260,11 @@ const assetEdit = () => {
                 label="Asset Status"
                 placeholder="Select status"
                 data={[
-                  { value: "active", label: "Active / Operating" },
-                  { value: "inactive", label: "Inactive / In Stock" },
-                  { value: "maintenance", label: "Maintenance / Repair" },
+                  { value: "inuse", label: "In Use " },
+                  { value: "instock", label: "In Stock" },
+                  { value: "maintenance", label: "Maintenance" },
                   { value: "damaged", label: "Damaged" },
+                  { value: "lost", label: "Lost" },
                 ]}
                 {...form.getInputProps("status")}
               />

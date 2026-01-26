@@ -50,7 +50,7 @@ const SignIn = () => {
       if (!response.success) {
         notifications.show({
           title: "Error",
-          message:  "Login failed",
+          message: "Login failed",
           color: "red",
           position: "top-center",
         });
@@ -70,12 +70,12 @@ const SignIn = () => {
       );
 
       notifications.show({
-        message: `🎉 ${message} Welcome back ${userName}`,
+        message: `🎉 Welcome back ${userName}`,
         color: "green",
         position: "top-center",
       });
 
-      navigate("/user");
+      navigate("/dashboard");
     },
 
     onError: (error) => {

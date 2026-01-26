@@ -181,7 +181,15 @@ class AssetService {
 
       if (!oldAsset) return ErrorResponse(404, "Asset not found");
 
-      /* ---------------- 2️⃣ Build updateData dynamically ---------------- */
+      /* ---------------- 2️⃣ Relation → Model map (FIX) ---------------- */
+      const relationModelMap = {
+        brand: prisma.brand,
+        category: prisma.category,
+        subCategory: prisma.category, // 👈 SAME MODEL
+        vendor: prisma.vendor,
+      };
+
+      /* ---------------- 3️⃣ Build updateData dynamically ---------------- */
       const updateData = {};
       const changedFields = {};
 
@@ -196,7 +204,10 @@ class AssetService {
 
           if (!newId || oldRelation?.id === newId) continue;
 
-          const newEntity = await prisma[relationKey].findUnique({
+          const model = relationModelMap[relationKey];
+          if (!model) continue;
+
+          const newEntity = await model.findUnique({
             where: { id: newId },
             select: { name: true },
           });
@@ -244,7 +255,7 @@ class AssetService {
         }
       }
 
-      /* ---------------- 3️⃣ Update asset ---------------- */
+      /* ---------------- 4️⃣ Update asset ---------------- */
       const updatedAsset = await prisma.asset.update({
         where: { uid },
         data: updateData,
@@ -256,7 +267,7 @@ class AssetService {
         },
       });
 
-      /* ---------------- 4️⃣ Save log ---------------- */
+      /* ---------------- 5️⃣ Save log (UNCHANGED) ---------------- */
       if (Object.keys(changedFields).length > 0) {
         await prisma.assetLog.create({
           data: {
@@ -313,7 +324,7 @@ class AssetService {
         200,
         `Asset ${
           updatedAsset.is_active ? "activated" : "deactivated"
-        } successfully`
+        } successfully`,
       );
     } catch (error) {
       return ErrorResponse(500, error.message || "Server Error");

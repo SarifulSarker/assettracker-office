@@ -32,8 +32,9 @@ const IdentifierInput = ({ setforgotPasswordActiveStage }) => {
 
         notifications.show({
           success: true,
-          title: "OTP Sent",
+          // title: "OTP Sent",
           message: "An OTP has been sent to your registered email address",
+          position:"top-center"
         });
 
         setforgotPasswordActiveStage({
@@ -44,8 +45,9 @@ const IdentifierInput = ({ setforgotPasswordActiveStage }) => {
       } else {
         notifications.show({
           success: false,
-          title: "Error",
+          
           message: "Email does not exist",
+           position:"top-center"
         });
       }
     },
@@ -54,7 +56,9 @@ const IdentifierInput = ({ setforgotPasswordActiveStage }) => {
       notifications.show({
         success: false,
         title: "Error",
+        
         message: "Something went wrong. Try again.",
+         position:"top-center"
       });
       console.error(error);
     },
