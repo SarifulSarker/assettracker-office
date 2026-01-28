@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   TextInput,
   PasswordInput,
@@ -25,11 +25,21 @@ const schema = Yup.object().shape({
   phone: Yup.string().required("Phone number is required"),
   email: Yup.string()
     .email("Invalid email format")
+    .trim()
     .required("Email is required"),
-  password: Yup.string().required("Password is required"),
+  password: Yup.string()
+    .required("Password is required")
+    .min(6, "Password must be at least 6 characters")
+    .max(12, "Password cannot exceed 12 characters")
+    .matches(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*])/,
+      "Password must contain 1 uppercase, 1 lowercase, and 1 special character",
+    ),
 });
 
 const Signup = () => {
+  const [password, setPassword] = useState("");
+
   const navigate = useNavigate();
   const form = useForm({
     initialValues: {
@@ -43,31 +53,55 @@ const Signup = () => {
   });
 
   const signupMutation = useMutation({
-    mutationFn: (values) => signUpApi(values),
-    onSuccess: (data) => {
+    mutationFn: (value) => signUpApi(value),
+
+    onSuccess: (res) => {
+      console.log(res);
+      //  Case 2: business error (success = false)
+      if (!res?.success) {
+        notifications.show({
+          message: res?.message || "Something went wrong",
+          color: "red",
+          position: "top-center",
+          autoClose: 3000,
+        });
+        return;
+      }
+
+      // 🟩 Case 1: real success
+      queryClient.invalidateQueries(["users"]);
+
       notifications.show({
-        title: "Success",
-        message: data.message || "Account created successfully!",
-        color: "green",
-        autoClose: 3000,
+        message: res.message || "User created successfully!",
         position: "top-center",
+        autoClose: 3000,
       });
-      form.reset();
-      navigate("/");
+
+      navigate("/user");
     },
-    onError: (err) => {
+
+    onError: (error) => {
+      // Network / Server error (5xx, no response, timeout)
       notifications.show({
-        title: "Error",
-        message: err.response?.data?.error || "Signup failed. Try again!",
+        message: error?.response?.data?.message || "Unable to reach server",
         color: "red",
-        autoClose: 3000,
         position: "top-center",
+        autoClose: 3000,
       });
     },
   });
 
   const handleSubmit = () => {
     signupMutation.mutate(form.values); // <-- pass form data here
+  };
+
+  //password rules
+  const passwordRules = {
+    minLength: password.length >= 6,
+    maxLength: password.length <= 12,
+    hasLower: /[a-z]/.test(password),
+    hasUpper: /[A-Z]/.test(password),
+    hasSpecial: /[!@#$%^&*]/.test(password),
   };
 
   return (
@@ -123,8 +157,34 @@ const Signup = () => {
               label="Password"
               placeholder="Enter password"
               required
-              {...form.getInputProps("password")}
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                form.setFieldValue("password", e.target.value); // keep form in sync
+              }}
             />
+            {/* Real-time password rules */}
+            <div style={{ marginTop: 8 }}>
+              <Text color={passwordRules.minLength ? "green" : "red"} size="sm">
+                {passwordRules.minLength ? "✔" : "✖"} Minimum 6 characters
+              </Text>
+              <Text color={passwordRules.maxLength ? "green" : "red"} size="sm">
+                {passwordRules.maxLength ? "✔" : "✖"} Maximum 12 characters
+              </Text>
+              <Text color={passwordRules.hasLower ? "green" : "red"} size="sm">
+                {passwordRules.hasLower ? "✔" : "✖"} At least 1 lowercase
+              </Text>
+              <Text color={passwordRules.hasUpper ? "green" : "red"} size="sm">
+                {passwordRules.hasUpper ? "✔" : "✖"} At least 1 uppercase
+              </Text>
+              <Text
+                color={passwordRules.hasSpecial ? "green" : "red"}
+                size="sm"
+              >
+                {passwordRules.hasSpecial ? "✔" : "✖"} At least 1 special
+                character (!@#$%^&*)
+              </Text>
+            </div>
 
             <Button
               type="submit"
@@ -133,8 +193,7 @@ const Signup = () => {
               radius="md"
               loading={signupMutation.isPending}
               style={{
-                background: `linear-gradient(90deg, ${COLORS.primary}, ${COLORS.accent})`,
-                color: COLORS.secondary,
+                color: COLORS.app_color,
               }}
             >
               Sign Up

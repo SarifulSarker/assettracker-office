@@ -8,7 +8,11 @@ import { updateDepartmentApi } from "../../services/department";
 
 // Validation schema
 const schema = Yup.object().shape({
-  name: Yup.string().required("Department name is required"),
+  name: Yup.string()
+    .required("Department name is required")
+    .min(2, "Designation must be at least 2 characters")
+    .max(80, "Designation cannot exceed 50 characters")
+    .matches(/^[A-Za-z\s]+$/, "Name can only contain letters and spaces"),
 });
 
 const DepartmentEditModal = ({ opened, onClose, department, onSuccess }) => {
@@ -25,8 +29,12 @@ const DepartmentEditModal = ({ opened, onClose, department, onSuccess }) => {
     if (department) {
       form.setValues({ name: department.name });
     }
-  }, [department]);
+  }, [department, opened]);
 
+  const handleClose = () => {
+    form.reset(); // Reset form to initialValues
+    onClose();
+  };
   // Mutation
   const editMutation = useMutation({
     mutationFn: (values) =>
@@ -62,9 +70,13 @@ const DepartmentEditModal = ({ opened, onClose, department, onSuccess }) => {
   // Submit handler
   const handleSubmit = (values) => editMutation.mutate(values);
 
-
   return (
-    <Modal opened={opened} onClose={onClose} title="Edit Department" centered>
+    <Modal
+      opened={opened}
+      onClose={handleClose}
+      title="Edit Department"
+      centered
+    >
       <form onSubmit={form.onSubmit(handleSubmit)}>
         <Stack>
           <TextInput
@@ -75,7 +87,6 @@ const DepartmentEditModal = ({ opened, onClose, department, onSuccess }) => {
           />
 
           <Button type="submit" loading={editMutation.isPending}>
-          
             {editMutation.isPending ? "Saving..." : "Update"}
           </Button>
         </Stack>

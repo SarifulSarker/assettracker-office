@@ -8,7 +8,12 @@ import { createCategoryApi } from "../../services/category.js";
 
 // Validation schema
 const schema = Yup.object().shape({
-  name: Yup.string().required("Category name is required"),
+  name: Yup.string()
+    .required("Category name is required")
+    .required("Department name is required")
+    .min(2, "Designation must be at least 2 characters")
+    .max(80, "Designation cannot exceed 50 characters")
+    .matches(/^[A-Za-z\s]+$/, "Name can only contain letters and spaces"),
 });
 
 const CategoryCreateModal = ({ opened, onClose, onSuccess }) => {

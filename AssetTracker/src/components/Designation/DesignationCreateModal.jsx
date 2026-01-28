@@ -7,7 +7,11 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createDesignationApi } from "../../services/designation.js";
 
 const schema = Yup.object({
-  name: Yup.string().required("Name is required"),
+  name: Yup.string()
+    .required("Name is required")
+    .min(2, "Designation must be at least 2 characters")
+    .max(50, "Designation cannot exceed 50 characters")
+    .matches(/^[A-Za-z\s]+$/, "Name can only contain letters and spaces"),
   description: Yup.string().nullable(),
 });
 
@@ -40,7 +44,12 @@ const DesignationCreateModal = ({ opened, onClose }) => {
   });
 
   return (
-    <Modal opened={opened} onClose={onClose} title="Create Designation" centered>
+    <Modal
+      opened={opened}
+      onClose={onClose}
+      title="Create Designation"
+      centered
+    >
       <form onSubmit={form.onSubmit((v) => mutation.mutate(v))}>
         <Stack>
           <TextInput label="Name" {...form.getInputProps("name")} />

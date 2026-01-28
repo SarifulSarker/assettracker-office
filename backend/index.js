@@ -12,35 +12,20 @@ const app = express();
 
 // ---------------- Environment ----------------
 const PORT = process.env.BACKEND_PORT ;
-// const FRONTEND_URL = process.env.FRONTEND_URL;
 
 console.log("APP_ENV:", process.env.APP_ENV);
-//console.log("Allowed Frontend:", FRONTEND_URL);
+
 console.log("DATABASE URL:", process.env.DATABASE_URL);
-// ---------------- CORS ----------------
-// app.use(
-//   cors({
-//     origin: (origin, callback) => {
-//       // Postman / server-to-server request
-//       if (!origin) return callback(null, true);
 
-//       if (origin === FRONTEND_URL) {
-//         callback(null, true);
-//       } else {
-//         callback(new Error(`CORS blocked: ${origin}`));
-//       }
-//     },
-//     credentials: true,
-//     allowedHeaders: ["Content-Type", "Authorization"],
-
-//   })
-// );
 
 app.use(
-  cors({
-    origin: true, // your frontend URL
-    credentials: true, // allow cookies/auth headers
-  }),
+ cors({
+  origin: [
+    "http://localhost:5173",
+    "http://192.168.0.5:5173",
+  ],
+  credentials: true,
+})
 );
 
 // ---------------- Middleware ----------------

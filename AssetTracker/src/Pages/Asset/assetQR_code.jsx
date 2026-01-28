@@ -75,7 +75,7 @@ const AssetQRPage = () => {
   return (
     <>
       <PageTop PAGE_TITLE="QR" backBtn />
-      <Paper p="lg" withBorder>
+      <Paper mt={20} p="lg" withBorder>
         <Stack align="center" spacing="md">
           {/* Hidden QR div for download & print */}
           <div ref={qrRef} style={{ textAlign: "center" }}>

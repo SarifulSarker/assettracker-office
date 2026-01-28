@@ -7,7 +7,11 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateBrandApi } from "../../services/brand.js";
 
 const schema = Yup.object().shape({
-  name: Yup.string().required("Brand name is required"),
+  name: Yup.string()
+    .required("Brand name is required")
+    .min(2, "Designation must be at least 2 characters")
+    .max(80, "Designation cannot exceed 50 characters")
+    .matches(/^[A-Za-z\s]+$/, "Name can only contain letters and spaces"),
 });
 
 const BrandEditModal = ({ opened, onClose, brand, onSuccess }) => {
@@ -22,8 +26,11 @@ const BrandEditModal = ({ opened, onClose, brand, onSuccess }) => {
     if (brand) {
       form.setValues({ name: brand.name });
     }
-  }, [brand]);
-
+  }, [brand, opened]);
+  const handleClose = () => {
+    form.reset(); // Reset form to initialValues
+    onClose();
+  };
   const mutation = useMutation({
     mutationFn: (values) => updateBrandApi({ id: brand.id, data: values }),
     onSuccess: () => {
@@ -50,7 +57,7 @@ const BrandEditModal = ({ opened, onClose, brand, onSuccess }) => {
   };
 
   return (
-    <Modal opened={opened} onClose={onClose} title="Edit Brand" centered>
+    <Modal opened={opened} onClose={handleClose} title="Edit Brand" centered>
       <form onSubmit={form.onSubmit(handleSubmit)}>
         <Stack>
           <TextInput
@@ -58,10 +65,9 @@ const BrandEditModal = ({ opened, onClose, brand, onSuccess }) => {
             placeholder="Brand Name"
             {...form.getInputProps("name")}
           />
-        <Button type="submit" loading={mutation.isPending}>
-                 
-                   {mutation.isPending ? "Saving..." : "Update"}
-                 </Button>
+          <Button type="submit" loading={mutation.isPending}>
+            {mutation.isPending ? "Saving..." : "Update"}
+          </Button>
         </Stack>
       </form>
     </Modal>

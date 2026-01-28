@@ -7,7 +7,11 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateDesignationApi } from "../../services/designation.js";
 
 const schema = Yup.object({
-  name: Yup.string().required(),
+  name: Yup.string()
+    .required()
+    .min(2, "Designation must be at least 2 characters")
+    .max(80, "Designation cannot exceed 50 characters")
+    .matches(/^[A-Za-z\s]+$/, "Name can only contain letters and spaces"),
 });
 
 const DesignationEditModal = ({ opened, onClose, designation }) => {
@@ -17,7 +21,6 @@ const DesignationEditModal = ({ opened, onClose, designation }) => {
     initialValues: {
       name: "",
       description: "",
-      
     },
     validate: yupResolver(schema),
   });
@@ -27,11 +30,14 @@ const DesignationEditModal = ({ opened, onClose, designation }) => {
       form.setValues({
         name: designation.name,
         description: designation.description || "",
-       
       });
     }
-  }, [designation]);
+  }, [designation, opened]);
 
+  const handleClose = () => {
+    form.reset(); // Reset form to initialValues
+    onClose();
+  };
   const mutation = useMutation({
     mutationFn: (values) =>
       updateDesignationApi({ id: designation.id, data: values }),
@@ -49,7 +55,12 @@ const DesignationEditModal = ({ opened, onClose, designation }) => {
   });
 
   return (
-    <Modal opened={opened} onClose={onClose} title="Edit Designation" centered>
+    <Modal
+      opened={opened}
+      onClose={handleClose}
+      title="Edit Designation"
+      centered
+    >
       <form onSubmit={form.onSubmit((v) => mutation.mutate(v))}>
         <Stack>
           <TextInput label="Name" {...form.getInputProps("name")} />
@@ -57,7 +68,7 @@ const DesignationEditModal = ({ opened, onClose, designation }) => {
             label="Description"
             {...form.getInputProps("description")}
           />
-          
+
           <Button type="submit" loading={mutation.isPending}>
             Update
           </Button>

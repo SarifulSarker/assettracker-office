@@ -9,67 +9,63 @@ import { createDepartmentApi } from "../../services/department.js"; // ✅ impor
 
 // Validation schema
 const schema = Yup.object().shape({
-  name: Yup.string().required("Department name is required"),
+  name: Yup.string()
+    .required("Department name is required")
+    .min(2, "Designation must be at least 2 characters")
+    .max(80, "Designation cannot exceed 50 characters")
+    .matches(/^[A-Za-z\s]+$/, "Name can only contain letters and spaces"),
 });
 
 const DepartmentCreateModal = ({ opened, onClose, page }) => {
- 
   const queryClient = useQueryClient();
 
- 
   const form = useForm({
     initialValues: { name: "" },
     validate: yupResolver(schema),
   });
 
   // Use mutation with the API helper
-const createMutation = useMutation({
-  mutationFn: (values) => createDepartmentApi(values),
- onSuccess: (res) => {
-       // Axios wraps the response inside res.data
-       const response = res?.success;
-     //  console.log(response)
-      
-       if (response) {
-         // Success case
-         notifications.show({
-           title: "Success",
-           message: res.message || "Department created successfully default",
-           position: "top-center",
-           autoClose: 3000,
-         });
- 
-         form.reset();
-         onClose();
-         queryClient.invalidateQueries(["department"]);
-         if (onSuccess) onSuccess();
-       } 
-       else{
-        
-         notifications.show({
-           title: "Failed",
-           message: res.message || "Department already exits, default",
-           position: "top-center",
-         
-         });
- 
-       
-        
-         queryClient.invalidateQueries(["department"]);
-      //   if (onSuccess) onSuccess();
-       }
-     },
-     onError: (error) => {
-    //   console.log("error============================", error);
-       notifications.show({
-         title: "Error",
-         message: res.message || "Something went wrong",
-         position: "top-center",
-         autoClose: 3000,
-       });
-     },
-});
+  const createMutation = useMutation({
+    mutationFn: (values) => createDepartmentApi(values),
+    onSuccess: (res) => {
+      // Axios wraps the response inside res.data
+      const response = res?.success;
+      //  console.log(response)
 
+      if (response) {
+        // Success case
+        notifications.show({
+          title: "Success",
+          message: res.message || "Department created successfully default",
+          position: "top-center",
+          autoClose: 3000,
+        });
+
+        form.reset();
+        onClose();
+        queryClient.invalidateQueries(["department"]);
+        if (onSuccess) onSuccess();
+      } else {
+        notifications.show({
+          title: "Failed",
+          message: res.message || "Department already exits, default",
+          position: "top-center",
+        });
+
+        queryClient.invalidateQueries(["department"]);
+        //   if (onSuccess) onSuccess();
+      }
+    },
+    onError: (error) => {
+      //   console.log("error============================", error);
+      notifications.show({
+        title: "Error",
+        message: res.message || "Something went wrong",
+        position: "top-center",
+        autoClose: 3000,
+      });
+    },
+  });
 
   const handleSubmit = (values) => createMutation.mutate(values);
 

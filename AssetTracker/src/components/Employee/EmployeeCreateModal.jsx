@@ -9,10 +9,19 @@ import { getAllDepartmentsApi } from "../../services/department.js";
 import { getAllDesignationsApi } from "../../services/designation.js";
 // Yup validation
 const schema = Yup.object().shape({
-  fullName: Yup.string().required("Full name is required"),
-  email: Yup.string().email("Invalid email").required("Email is required"),
-  phone: Yup.string().required("Phone number is required"),
-
+  fullName: Yup.string()
+    .required("Full name is required")
+    .min(2, "Full name must be at least 2 characters")
+    .max(50, "Full name cannot exceed 50 characters")
+    .matches(/^[A-Za-z\s]+$/, "Name can only contain letters and spaces"),
+  email: Yup.string()
+    .email("Invalid email")
+    .required("Email is required")
+    .trim(),
+  phone: Yup.string()
+    .required("Phone number is required")
+    .matches(/^\+?[0-9]{11,15}$/, "Phone number must be  digits")
+    .trim(),
   designationId: Yup.string().required("Designation is required"),
   departmentId: Yup.string().required("Department is required"),
 

@@ -76,7 +76,7 @@ const AssetByDepartment = () => {
       plotOptions: {
         bar: {
           horizontal: true,
-       
+          borderRadius: 5,
           distributed: true, // ⭐ per department color
           barHeight: "70%",
         },

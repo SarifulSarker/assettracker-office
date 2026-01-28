@@ -1,56 +1,57 @@
 class CookieService {
   timeToMileSecond(time) {
-    const number = time.substring(0, time.indexOf(" "));
+    const number = parseInt(time);
+    const unit = time.replace(number, "").trim();
 
-    switch (time.substr(time.indexOf(" ") + 1)) {
-      case "day":
+    switch (unit) {
+      case "d":
         return number * 24 * 60 * 60 * 1000;
-      case "hour":
+      case "h":
         return number * 60 * 60 * 1000;
-      case "minute":
+      case "m":
         return number * 60 * 1000;
-      case "second":
+      case "s":
         return number * 1000;
       default:
         return number * 60 * 1000;
     }
   }
 
-  setCookie(cname, cvalue, exTime) {
+  setCookie(name, value, exTime) {
     const d = new Date();
     d.setTime(d.getTime() + this.timeToMileSecond(exTime));
     const expires = "expires=" + d.toUTCString();
 
-    document.cookie = cname + "=" + cvalue + "; Secure; path=/";
+    document.cookie =
+      `${name}=${encodeURIComponent(value)}; ` +
+      `${expires}; ` +
+      `path=/; ` +
+      `SameSite=Lax`;
   }
 
-  getCookie(cname) {
-    const name = cname + "=";
-    const ca = document.cookie.split(";");
-    for (let i = 0; i < ca.length; i++) {
-      let c = ca[i];
-      while (c.charAt(0) === " ") {
-        c = c.substring(1);
-      }
-      if (c.indexOf(name) === 0) {
-        return c.substring(name.length, c.length);
+  getCookie(name) {
+    const cname = name + "=";
+    const decodedCookie = decodeURIComponent(document.cookie);
+    const ca = decodedCookie.split(";");
+
+    for (let c of ca) {
+      c = c.trim();
+      if (c.indexOf(cname) === 0) {
+        return c.substring(cname.length);
       }
     }
     return "";
   }
 
-  checkCookie(cname) {
-    const cookieInfo = this.getCookie(cname);
-    return !!cookieInfo;
+  checkCookie(name) {
+    return !!this.getCookie(name);
   }
 }
 
 const cookieService = new CookieService();
 
-// Export individual functions
 export const setCookie = (name, value, exTime) =>
   cookieService.setCookie(name, value, exTime);
 export const getCookie = (name) => cookieService.getCookie(name);
 export const checkCookie = (name) => cookieService.checkCookie(name);
-
 export default cookieService;

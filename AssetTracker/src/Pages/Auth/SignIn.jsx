@@ -23,6 +23,7 @@ import { signInApi } from "../../services/auth.js";
 /* ================== Validation ================== */
 const schema = Yup.object().shape({
   email: Yup.string()
+    .trim()
     .email("Invalid email format")
     .required("Email is required"),
   password: Yup.string().required("Password is required"),
@@ -37,7 +38,7 @@ const SignIn = () => {
   const form = useForm({
     initialValues: {
       email: getCookie("email") || "",
-      password: "", // ✅ MUST
+      password: "",
     },
     validate: yupResolver(schema),
   });
@@ -49,8 +50,7 @@ const SignIn = () => {
     onSuccess: (response, values) => {
       if (!response.success) {
         notifications.show({
-          title: "Error",
-          message: "Login failed",
+          message: response.error || "Login failed",
           color: "red",
           position: "top-center",
         });
@@ -80,7 +80,6 @@ const SignIn = () => {
 
     onError: (error) => {
       notifications.show({
-        title: "Error",
         message:
           error.response?.data?.message ||
           error.message ||
@@ -108,21 +107,24 @@ const SignIn = () => {
       }}
     >
       <Paper p="xl" radius="md" shadow="xl" w={380}>
-        <form onSubmit={form.onSubmit((values) => mutation.mutate(values))}>
+        <form
+          onSubmit={form.onSubmit((values) =>
+            mutation.mutate({
+              ...values,
+              email: values.email.trim(), // ⭐ double safety
+            }),
+          )}
+        >
           <Stack spacing="md">
             <Title order={3} ta="center">
               Login
             </Title>
-            <div>sariful@gmail.com || 111111</div>
+            <div>sariful@manush.tech || 111111</div>
             <Text ta="center" c={COLORS.dimmed}>
               Distribution Portal
             </Text>
 
-            <TextInput
-              label="Email"
-              placeholder="john.doe@email.com"
-              {...form.getInputProps("email")}
-            />
+            <TextInput label="Email" {...form.getInputProps("email")} />
 
             <PasswordInput
               label="Password"
@@ -138,7 +140,9 @@ const SignIn = () => {
 
             <Text
               size="sm"
-              c={COLORS.accent}
+              c={COLORS.app_color}
+              fw={600}
+              
               style={{ cursor: "pointer" }}
               onClick={() => navigate("/forget-password")}
             >
@@ -150,9 +154,9 @@ const SignIn = () => {
               loading={mutation.isPending}
               radius="md"
               size="md"
+               fz={20}
               style={{
-                background: `linear-gradient(90deg, ${COLORS.primary}, ${COLORS.accent})`,
-                color: COLORS.secondary,
+                color: COLORS.app_color,
               }}
             >
               Login
@@ -163,7 +167,7 @@ const SignIn = () => {
               Don’t have an account?{" "}
               <Text
                 component="span"
-                c={COLORS.primary}
+                c={COLORS.app_color}
                 fw={600}
                 style={{ cursor: "pointer" }}
                 onClick={() => navigate("/signup")}

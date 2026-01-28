@@ -7,7 +7,7 @@ class UserController {
   async createUser(req, res) {
     try {
       const result = await UserService.createUser(req.body);
-      res.status(result.status).json(result);
+      res.status(result.responseCode).json(result);
     } catch (error) {
       console.error("Create User Error:", error);
       res.status(500).json({
@@ -59,25 +59,26 @@ class UserController {
   async updateUser(req, res) {
     const { uid } = req.params;
     const updateData = req.body;
-    console.log("user controller")
-    if (!updateData || Object.keys(updateData).length === 0) {
-      return res.status(400).json({ message: "No data provided to update" });
-    }
 
+   
     try {
-      const updatedUser = await UserService.updateUser(uid, updateData);
+      // 2️⃣ Call service
+      const result = await UserService.updateUser(uid, updateData);
 
-      if (!updatedUser) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      res.status(200).json({
-        message: "User updated successfully back",
-        data: updatedUser,
-      });
+      // 3️⃣ Return service result with proper HTTP status
+      return res.status(result.responseCode).json(result);
     } catch (error) {
       console.error("Update user error:", error);
-      res.status(500).json({ message: error.message });
+
+      // 4️⃣ Catch unexpected errors
+      return res
+        .status(500)
+        .json({
+          responseCode: 500,
+          success: false,
+          message: error.message || "Server Error",
+          data: null,
+        });
     }
   }
 
@@ -95,7 +96,6 @@ class UserController {
         message: "User deleted successfully",
         data: deletedUser,
       });
-      
     } catch (error) {
       res.status(500).json({ message: error.message });
     }

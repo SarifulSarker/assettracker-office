@@ -4,12 +4,20 @@ import { useForm, yupResolver } from "@mantine/form";
 import * as Yup from "yup";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { notifications } from "@mantine/notifications";
-import { createCategoryApi, getAllCategoriesApi } from "../../services/category";
+import {
+  createCategoryApi,
+  getAllCategoriesApi,
+} from "../../services/category";
 
 // Validation schema
 const schema = Yup.object().shape({
   parentId: Yup.string().required("Category is required"),
-  name: Yup.string().required("Subcategory name is required"),
+  name: Yup.string()
+    .required("Subcategory name is required")
+    .required("Department name is required")
+    .min(2, "Designation must be at least 2 characters")
+    .max(80, "Designation cannot exceed 50 characters")
+    .matches(/^[A-Za-z\s]+$/, "Name can only contain letters and spaces"),
 });
 
 const SubCategoryCreateModal = ({ opened, onClose, onSuccess }) => {
@@ -21,8 +29,8 @@ const SubCategoryCreateModal = ({ opened, onClose, onSuccess }) => {
     queryFn: getAllCategoriesApi,
   });
 
-// Make sure categories is always an array
-const categories = data?.data?.categories || []; // ✅
+  // Make sure categories is always an array
+  const categories = data?.data?.categories || []; // ✅
 
   const categoryOptions =
     categories?.map((cat) => ({
@@ -71,12 +79,17 @@ const categories = data?.data?.categories || []; // ✅
   };
 
   return (
-    <Modal opened={opened} onClose={onClose} title="Create Subcategory" centered>
+    <Modal
+      opened={opened}
+      onClose={onClose}
+      title="Create Subcategory"
+      centered
+    >
       <form onSubmit={form.onSubmit(handleSubmit)}>
         <Stack>
           {/* Select Category */}
           <Select
-           allowDeselect={false}
+            allowDeselect={false}
             label="Select Category"
             placeholder="Choose category"
             data={categoryOptions}

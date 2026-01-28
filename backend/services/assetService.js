@@ -81,11 +81,24 @@ class AssetService {
       let filters = {};
 
       // 🔍 Search by asset name
+      // 🔍 Search by asset name OR assigned employee name
       if (search) {
         const terms = search.trim().split(/\s+/);
         filters = {
           AND: terms.map((term) => ({
-            name: { contains: term, mode: "insensitive" },
+            OR: [
+              { name: { contains: term, mode: "insensitive" } },
+              {
+                assetAssingmentEmployees: {
+                  some: {
+                    unassignedAt: null, // only currently assigned
+                    employee: {
+                      fullName: { contains: term, mode: "insensitive" },
+                    },
+                  },
+                },
+              },
+            ],
           })),
         };
       }

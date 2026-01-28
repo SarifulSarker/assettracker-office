@@ -75,7 +75,7 @@ const AssetByCategory = () => {
         bar: {
           distributed: true, // ⭐ MAGIC LINE
           columnWidth: "50%",
-        
+          borderRadius: 5,
         },
       },
 

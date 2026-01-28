@@ -7,9 +7,17 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateVendorApi } from "../../services/vendor.js";
 
 const schema = Yup.object().shape({
-  name: Yup.string().required("Vendor name is required"),
-  email: Yup.string().email("Invalid email").optional(),
-  contact: Yup.string().optional(),
+  name: Yup.string()
+    .required("Vendor name is required")
+    .min(2, "Designation must be at least 2 characters")
+    .max(80, "Designation cannot exceed 50 characters")
+    .matches(/^[A-Za-z\s]+$/, "Name can only contain letters and spaces"),
+
+  email: Yup.string().email("Invalid email").optional().trim(),
+  contact: Yup.string()
+    .required("Phone number is required")
+    .matches(/^\+?[0-9]{11,15}$/, "Phone number must be  digits")
+    .trim(),
   address: Yup.string().optional(),
   notes: Yup.string().optional(),
 });
@@ -38,8 +46,11 @@ const VendorEditModal = ({ opened, onClose, vendor, onSuccess }) => {
         notes: vendor.notes || "",
       });
     }
-  }, [vendor]);
-
+  }, [vendor, opened]);
+  const handleClose = () => {
+    form.reset(); // Reset form to initialValues
+    onClose();
+  };
   const editMutation = useMutation({
     mutationFn: (values) => updateVendorApi({ id: vendor.id, data: values }),
     onSuccess: (res) => {
@@ -77,7 +88,7 @@ const VendorEditModal = ({ opened, onClose, vendor, onSuccess }) => {
   const handleSubmit = (values) => editMutation.mutate(values);
 
   return (
-    <Modal opened={opened} onClose={onClose} title="Edit Vendor" centered>
+    <Modal opened={opened} onClose={handleClose} title="Edit Vendor" centered>
       <form onSubmit={form.onSubmit(handleSubmit)}>
         <Stack>
           <TextInput
@@ -100,7 +111,7 @@ const VendorEditModal = ({ opened, onClose, vendor, onSuccess }) => {
             {...form.getInputProps("notes")}
           />
           <Button type="submit" loading={editMutation.isPending}>
-              Update
+            Update
           </Button>
         </Stack>
       </form>

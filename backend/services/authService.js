@@ -7,52 +7,59 @@ const prisma = new PrismaClient();
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import redisClient from "../redis-client.js";
+import { SuccessResponse, ErrorResponse } from "../utils/return.js";
 
 import { generateTokenKey } from "../utils/tokenKeyGenerator.js";
 import { generateUID } from "../utils/uuid.js";
+
 class AuthService {
   async signup(data) {
     const { first_name, last_name, phone, email, password } = data;
 
+    // 1️⃣ Required fields check
     if (!first_name || !last_name || !phone || !email || !password) {
-      return {
-        success: false,
-        status: 400,
-        error: "All fields are required",
-      };
+      return ErrorResponse(400, "All fields are required");
     }
 
-    const existingUser = await prisma.user.findUnique({ where: { email } });
-
-    if (existingUser) {
-      return {
-        success: false,
-        status: 400,
-        error: "Email is already registered",
-      };
+    // 2️⃣ Email domain check
+    const allowedDomain = "@manush.tech";
+    if (!email.toLowerCase().endsWith(allowedDomain)) {
+      return ErrorResponse(400, "Email Not Valid");
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+  
+    try {
+      // 4️⃣ Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = await prisma.user.create({
-      data: {
-        firstName: first_name,
-        lastName: last_name,
-        uid: await generateUID(10),
-        email,
-        phone,
-        password: hashedPassword,
-      },
-    });
+      // 5️⃣ Create user
+      const user = await prisma.user.create({
+        data: {
+          firstName: first_name,
+          lastName: last_name,
+          uid: await generateUID(10),
+          email,
+          phone,
+          password: hashedPassword,
+        },
+      });
 
-    delete user.password;
+      // 6️⃣ Remove password from response
+      delete user.password;
 
-    return {
-      success: true,
-      status: 201,
-      message: "User registered successfully",
-      data: user,
-    };
+      // 7️⃣ Return success response
+      return SuccessResponse(201, "User registered successfully", user);
+    } catch (error) {
+      console.log(error);
+      // Prisma unique constraint error
+      if (error.code === "P2002") {
+        const field = error.meta?.target || "field";
+
+        return ErrorResponse(409, `${field} already exists`);
+      }
+
+      return ErrorResponse(500, "Internal server error");
+    }
   }
 
   // ---------------- LOGIN ----------------
@@ -85,15 +92,19 @@ class AuthService {
       return {
         success: false,
         status: 400,
-        error: "Invalid email or password",
+        error: "Invalid  password",
       };
     }
 
     // create token
-    const token = jwt.sign({ userId: user.id, ...user }, process.env.JWT_SECRET, {
-      expiresIn: "1D",
-    });
-  
+    const token = jwt.sign(
+      { userId: user.id, ...user },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "1D",
+      },
+    );
+
     delete user.password;
     // Save token in Redis
 

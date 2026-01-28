@@ -9,18 +9,23 @@ import { createVendorApi } from "../../services/vendor"; // ← তোমার 
 
 // Validation schema
 const schema = Yup.object().shape({
-  name: Yup.string().required("Vendor name is required"),
-  email: Yup.string().email("Invalid email").optional(),
-  contact: Yup.string().optional(),
+  name: Yup.string()
+    .required("Vendor name is required")
+    .min(2, "Designation must be at least 2 characters")
+    .max(80, "Designation cannot exceed 50 characters")
+    .matches(/^[A-Za-z\s]+$/, "Name can only contain letters and spaces"),
+  email: Yup.string().email("Invalid email").optional().trim(),
+  contact: Yup.string()
+    .required("Phone number is required")
+    .matches(/^\+?[0-9]{11,15}$/, "Phone number must be  digits")
+    .trim(),
   address: Yup.string().optional(),
   notes: Yup.string().optional(),
 });
 
 const VendorCreateModal = ({ opened, onClose }) => {
- 
   const queryClient = useQueryClient();
 
- 
   const form = useForm({
     initialValues: {
       name: "",
@@ -69,16 +74,29 @@ const VendorCreateModal = ({ opened, onClose }) => {
     <Modal opened={opened} onClose={onClose} title="Create Vendor" centered>
       <form onSubmit={form.onSubmit(handleSubmit)}>
         <Stack>
-
-          <TextInput label="Vendor Name" withAsterisk {...form.getInputProps("name")} />
+          <TextInput
+            label="Vendor Name"
+            withAsterisk
+            {...form.getInputProps("name")}
+          />
 
           <TextInput label="Email" {...form.getInputProps("email")} />
 
           <TextInput label="Contact" {...form.getInputProps("contact")} />
 
-          <Textarea label="Address" autosize minRows={2} {...form.getInputProps("address")} />
+          <Textarea
+            label="Address"
+            autosize
+            minRows={2}
+            {...form.getInputProps("address")}
+          />
 
-          <Textarea label="Notes" autosize minRows={2} {...form.getInputProps("notes")} />
+          <Textarea
+            label="Notes"
+            autosize
+            minRows={2}
+            {...form.getInputProps("notes")}
+          />
 
           <Button type="submit" loading={createMutation.isPending}>
             Create Vendor

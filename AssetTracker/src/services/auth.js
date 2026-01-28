@@ -17,7 +17,7 @@ export const signInApi = async (data) => {
 export const signUpApi = async (formData) => {
   try {
     const response = await httpRequest.post(`${BASE_URL}/signup`, formData);
-    return response.data;
+    return response;
   } catch (error) {
     console.error("Error signing up:", error.response || error);
     throw error; // keep throwing for react-query to handle

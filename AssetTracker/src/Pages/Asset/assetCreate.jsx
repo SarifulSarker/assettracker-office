@@ -119,7 +119,7 @@ const AssetCreate = () => {
       {/* Scrollable form */}
 
       <Stack maw={600} mx="auto">
-        <Paper p="xl" shadow="md" radius="lg">
+        <Paper p="xl" shadow="md" withBorder radius="lg">
           <Text fw={700} size="xl" mb="md">
             Create New Asset
           </Text>

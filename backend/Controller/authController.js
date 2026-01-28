@@ -5,7 +5,7 @@ class AuthController {
   async signup(req, res) {
     try {
       const result = await authService.signup(req.body);
-      res.status(result.status).json(result);
+      res.status(result.responseCode).json(result);
     } catch (error) {
       console.error(error);
       res.status(500).json({

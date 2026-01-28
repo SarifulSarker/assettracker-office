@@ -3,62 +3,55 @@ import bcrypt from "bcrypt";
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 import { generateUID } from "../utils/uuid.js";
+import { SuccessResponse, ErrorResponse } from "../utils/return.js";
+
 class userService {
   // create user
   async createUser(data) {
     try {
       const { first_name, last_name, phone, email } = data;
 
+      // 1️⃣ Required field check
       if (!first_name || !last_name || !phone || !email) {
-        return {
-          success: false,
-          status: 400,
-          error: "All fields are required",
-        };
+        return ErrorResponse(Number(400), "All fields are required");
       }
 
-      const existingUser = await prisma.user.findUnique({ where: { email } });
-      if (existingUser) {
-        return {
-          success: false,
-          status: 400,
-          error: "Email is already registered",
-        };
+      // 2️⃣ Email domain validation
+      const allowedDomain = "@manush.tech";
+      if (!email.toLowerCase().endsWith(allowedDomain)) {
+        return ErrorResponse(Number(400), "Invalid Email");
       }
 
-      // Set default password
+      // 4️⃣ Default password
       const defaultPassword = "12345";
-
-      // Hash the password
       const hashedPassword = await bcrypt.hash(defaultPassword, 10);
-      const uuid = await generateUID(10);
-      // Create user
+
+      // 5️⃣ Create user
       const user = await prisma.user.create({
         data: {
           firstName: first_name,
           lastName: last_name,
-          uid: uuid,
+          uid: await generateUID(10),
           phone,
           email,
           password: hashedPassword,
         },
       });
 
-      // Remove password from response
+      // 6️⃣ Remove password
       delete user.password;
 
-      return {
-        success: true,
-        status: 201,
-        message: "User registered successfully back",
-        data: user,
-      };
+      return SuccessResponse(Number(201), "User registered successfully", user);
     } catch (error) {
-      return {
-        success: false,
-        status: 500,
-        error: error.message || "Server error",
-      };
+      console.log(error);
+      // Prisma unique constraint error
+      if (error.code === "P2002") {
+        const field = error.meta?.target|| "field";
+
+        return ErrorResponse(409, `${field} already exists`);
+      }
+
+      return ErrorResponse(500, "Internal server error");
     }
   }
 
@@ -101,11 +94,11 @@ class userService {
           email: true,
           phone: true,
           is_active: true,
-          token: true,
+
           createdAt: true,
           updatedAt: true,
         },
-        orderBy: { id: "asc" },
+        orderBy: { createdAt: "desc" },
         skip: (page - 1) * perpage,
         take: perpage,
       });
@@ -126,29 +119,37 @@ class userService {
 
   async updateUser(uid, data) {
     try {
-      //  const userId = parseInt(id, 10);
-
-      if (!data || Object.keys(data).length === 0) {
-        throw new Error("No fields to update");
+      // 2️⃣ Email domain validation (only if email exists)
+      if (data.email) {
+        const allowedDomain = "@manush.tech";
+        if (!data.email.toLowerCase().endsWith(allowedDomain)) {
+          return ErrorResponse(400, "Invalid email domain");
+        }
       }
 
+      // 3️⃣ Update user
       const updatedUser = await prisma.user.update({
-        where: { uid: uid },
+        where: { uid },
         data: {
-          firstName: data.firstName,
-          lastName: data.lastName,
+          firstName: data.first_name, // map correctly
+          lastName: data.last_name, // map correctly
           email: data.email,
           phone: data.phone,
         },
       });
 
-      return updatedUser;
+      // 4️⃣ Remove password
+      delete updatedUser.password;
+
+      return SuccessResponse(200, "User updated successfully", updatedUser);
     } catch (error) {
-      return {
-        success: false,
-        status: 500,
-        error: error.message || "Server error",
-      };
+      // Prisma unique constraint
+      if (error.code === "P2002") {
+        const field = error.meta?.target?.[0] || "field";
+        return ErrorResponse(409, `${field} already exists`);
+      }
+
+      return ErrorResponse(500, error.message || "Server error");
     }
   }
 

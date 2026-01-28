@@ -7,7 +7,11 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createBrandApi } from "../../services/brand.js";
 
 const schema = Yup.object().shape({
-  name: Yup.string().required("Brand name is required"),
+  name: Yup.string()
+    .required("Brand name is required")
+    .min(2, "Designation must be at least 2 characters")
+    .max(80, "Designation cannot exceed 50 characters")
+    .matches(/^[A-Za-z\s]+$/, "Name can only contain letters and spaces"),
 });
 
 const BrandCreateModal = ({ opened, onClose, onSuccess }) => {
@@ -23,8 +27,7 @@ const BrandCreateModal = ({ opened, onClose, onSuccess }) => {
     onSuccess: (res) => {
       // Axios wraps the response inside res.data
       const response = res?.success;
-     
-     
+
       if (response) {
         // Success case
         notifications.show({
@@ -38,20 +41,15 @@ const BrandCreateModal = ({ opened, onClose, onSuccess }) => {
         onClose();
         queryClient.invalidateQueries(["brands"]);
         if (onSuccess) onSuccess();
-      } 
-      else{
-       
+      } else {
         notifications.show({
           title: "Failed",
           message: res.message || "Brand already exits, default",
           position: "top-center",
-        
         });
 
-      
-       
         queryClient.invalidateQueries(["brands"]);
-     //   if (onSuccess) onSuccess();
+        //   if (onSuccess) onSuccess();
       }
     },
     onError: (error) => {

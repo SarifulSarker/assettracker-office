@@ -19,12 +19,25 @@ import { setCookie, getCookie } from "../../helpers/Cookie.js";
 import PageTop from "../../components/global/PageTop.jsx";
 // Validation Schema
 const schema = Yup.object().shape({
-  first_name: Yup.string().required("First name is required"),
-  last_name: Yup.string().required("Last name is required"),
-  phone: Yup.string().required("Phone number is required"),
+  first_name: Yup.string()
+    .required("First name is required")
+
+    .min(2, "Designation must be at least 2 characters")
+    .max(50, "Designation cannot exceed 50 characters")
+    .matches(/^[A-Za-z\s]+$/, "Name can only contain letters and spaces"),
+  last_name: Yup.string()
+    .required("Last name is required")
+    .min(2, "Designation must be at least 2 characters")
+    .max(50, "Designation cannot exceed 50 characters")
+    .matches(/^[A-Za-z\s]+$/, "Name can only contain letters and spaces"),
+  phone: Yup.string()
+    .required("Phone number is required")
+    .matches(/^\+?[0-9]{11,15}$/, "Phone number must be  digits")
+    .trim(),
   email: Yup.string()
     .email("Invalid email format")
-    .required("Email is required"),
+    .required("Email is required")
+    .trim(),
 });
 
 const UserCreate = () => {
@@ -49,27 +62,42 @@ const UserCreate = () => {
     validate: yupResolver(schema),
   });
 
+  
   const createUserMutation = useMutation({
     mutationFn: (value) => createUserApi(value),
-    onSuccess: (s) => {
+
+    onSuccess: (res) => {
+     
+      //  Case 2: business error (success = false)
+      if (!res?.success) {
+        notifications.show({
+          
+          message: res?.message || "Something went wrong",
+          color: "red",
+          position: "top-center",
+          autoClose: 3000,
+        });
+        return;
+      }
+
+      // 🟩 Case 1: real success
       queryClient.invalidateQueries(["users"]);
+
       notifications.show({
-        title: "Success",
-        message: s?.data?.message || "User created successfully!",
+        message: res.message || "User created successfully!",
         position: "top-center",
         autoClose: 3000,
       });
+
       navigate("/user");
     },
-    onError: (error) => {
-      const backendMessage =
-        error.response?.data?.message ||
-        error.response?.data?.error ||
-        "Something went wrong";
 
+    onError: (error) => {
+      // Network / Server error (5xx, no response, timeout)
       notifications.show({
-        title: "Error",
-        message: backendMessage,
+        title: "Server Error",
+        message: error?.response?.data?.message || "Unable to reach server",
+        color: "red",
         position: "top-center",
         autoClose: 3000,
       });
@@ -77,7 +105,7 @@ const UserCreate = () => {
   });
 
   const handleSubmit = (values) => {
-  // console.log(values)
+    // console.log(values)
     createUserMutation.mutate(values);
   };
 
@@ -104,9 +132,7 @@ const UserCreate = () => {
               {/* Premium Styled Input */}
               <TextInput
                 label="First Name"
-                placeholder="Enter first name"
                 withAsterisk
-                error={form.errors.first_name}
                 styles={{
                   input: {
                     border: "1px solid #b7c5d3",
@@ -120,19 +146,13 @@ const UserCreate = () => {
                   label: {
                     fontWeight: 600,
                   },
-                  error: {
-                    color: "#d90429",
-                    fontSize: 13,
-                  },
                 }}
                 {...form.getInputProps("first_name")}
               />
 
               <TextInput
                 label="Last Name"
-                placeholder="Enter last name"
                 withAsterisk
-                error={form.errors.last_name}
                 styles={{
                   input: {
                     border: "1px solid #b7c5d3",
@@ -145,37 +165,28 @@ const UserCreate = () => {
                   label: {
                     fontWeight: 600,
                   },
-                  error: {
-                    color: "#d90429",
-                  },
                 }}
                 {...form.getInputProps("last_name")}
               />
 
               <TextInput
                 label="Email"
-                placeholder="Enter email"
                 withAsterisk
-                error={form.errors.email}
                 styles={{
                   input: { border: "1px solid #b7c5d3", borderRadius: 8 },
                   inputFocused: { borderColor: "#0f4794" },
                   label: { fontWeight: 600 },
-                  error: { color: "#d90429" },
                 }}
                 {...form.getInputProps("email")}
               />
 
               <TextInput
                 label="Phone Number"
-                placeholder="01XXXXXXXXX"
                 withAsterisk
-                error={form.errors.phone}
                 styles={{
                   input: { border: "1px solid #b7c5d3", borderRadius: 8 },
                   inputFocused: { borderColor: "#0f4794" },
                   label: { fontWeight: 600 },
-                  error: { color: "#d90429" },
                 }}
                 {...form.getInputProps("phone")}
               />
