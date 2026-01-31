@@ -8,6 +8,7 @@ import * as urls from "./AppUrls";
 import Assets from "../Pages/Asset/Assets";
 
 import user from "../Pages/User/user";
+import UserManagement from "../Pages/User/UserManagement";
 import userCreate from "../Pages/User/userCreate";
 import userEdit from "../Pages/User/userEdit";
 import ForgetPassword from "../Pages/Auth/ForgotPassword";
@@ -23,6 +24,7 @@ import assetEdit from "../Pages/Asset/assetEdit";
 import assetMapping from "../Pages/AssetMapping/assetMapping";
 import assetLog from "../Pages/Asset/assetLog";
 import assetQR_code from "../Pages/Asset/assetQR_code";
+import roleandPermission from "../Pages/RoleAndPermission/roleandPermission";
 
 const appRoutes = [
   // {
@@ -93,7 +95,7 @@ const appRoutes = [
   //user
   {
     path: urls.USER,
-    Element: user,
+    Element: UserManagement,
     isIndexUrl: false,
     isProtected: true,
   },
@@ -161,6 +163,14 @@ const appRoutes = [
     isIndexUrl: false,
     isProtected: true,
   },
+    {
+    path: urls.ROLEANDPERMISSION,
+    Element: roleandPermission,
+    isIndexUrl: false,
+    isProtected: true,
+  },
+
+  
 
 ];
 

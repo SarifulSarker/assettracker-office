@@ -27,7 +27,6 @@ class AuthService {
       return ErrorResponse(400, "Email Not Valid");
     }
 
-  
     try {
       // 4️⃣ Hash password
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -67,63 +66,52 @@ class AuthService {
     const { email, password } = data;
 
     if (!email || !password) {
-      return {
-        success: false,
-        status: 400,
-        error: "All fields are required",
-      };
+      return { success: false, status: 400, error: "All fields are required" };
     }
 
-    // find user
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: {
+        roleInfo: { include: { permission: true } },
+      },
+    });
 
-    if (!user) {
+    if (!user)
       return {
         success: false,
         status: 400,
         error: "Invalid email or password",
       };
-    }
 
-    // password check
     const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch)
+      return { success: false, status: 400, error: "Invalid password" };
 
-    if (!isMatch) {
-      return {
-        success: false,
-        status: 400,
-        error: "Invalid  password",
-      };
-    }
+    const tokenPayload = {
+      userId: user.id,
+      role: user.roleInfo?.role || "NoRole",
+    };
 
-    // create token
-    const token = jwt.sign(
-      { userId: user.id, ...user },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "1D",
-      },
-    );
+    const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, {
+      expiresIn: "1D",
+    });
+
+    // Save token in Redis
+    const tokenKey = generateTokenKey(user.id);
+    await redisClient.set(tokenKey, token, "EX", 24 * 60 * 60);
 
     delete user.password;
-    // Save token in Redis
-
-    const tokenKey = generateTokenKey(user.id); // unique key
-
-    //console.log("this is form login tokenkey ",tokenKey)
-    const expiryInSeconds = 24 * 60 * 60; // 1 day
-
-    //console.log("set redis raw token", token);
-    await redisClient.set(tokenKey, token, "EX", expiryInSeconds);
-
-    // const mytoken = await redisClient.get(tokenKey);
 
     return {
       success: true,
       status: 200,
       message: "Login successful",
       token,
-      data: user,
+      data: {
+        ...user,
+        role: user.roleInfo?.role || "NoRole", // ✅ safe
+        permissions: user.roleInfo?.permission?.modules || {}, // ✅ safe
+      },
     };
   }
 

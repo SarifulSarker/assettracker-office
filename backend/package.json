@@ -4,14 +4,19 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node index.js",
-    "stage": "dotenv -e ./configs/.env.stage -- node index.js",
-    "dev": "dotenv -e ./configs/.env.dev -- nodemon index.js",
-    "migrate:dev": "dotenv -e ./configs/.env.dev -- npx prisma migrate deploy",
-    "migrate:stage": "dotenv -e ./configs/.env.stage -- npx prisma migrate deploy",
-    "prisma:generate": "npx prisma generate",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "start": "node index.js",
+  "stage": "dotenv -e ./configs/.env.stage -- node index.js",
+  "dev": "dotenv -e ./configs/.env.dev -- nodemon index.js",
+
+  "migrate:dev": "dotenv -e ./configs/.env.dev -- npx prisma migrate dev",
+  "migrate:stage": "dotenv -e ./configs/.env.stage -- npx prisma migrate deploy",
+
+  "prisma:generate": "npx prisma generate",
+  "prisma:studio": "dotenv -e ./configs/.env.dev -- npx prisma studio",
+
+  "test": "echo \"Error: no test specified\" && exit 1"
+},
+
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -21,7 +26,6 @@
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
-    "dotenv-cli": "^11.0.0",
     "express": "^5.1.0",
     "ioredis": "^5.8.2",
     "jsonwebtoken": "^9.0.2",
@@ -30,6 +34,7 @@
     "uuid": "^13.0.0"
   },
   "devDependencies": {
+    "dotenv-cli": "^11.0.0",
     "nodemon": "^3.1.11",
     "prisma": "^6.19.0"
   }

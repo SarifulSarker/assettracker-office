@@ -35,3 +35,6 @@ export const VENDOR = "/vendor";
 
 export const DESIGNATION = "/designation";
 
+
+//role and permission
+export const ROLEANDPERMISSION = "/roleandpermission"

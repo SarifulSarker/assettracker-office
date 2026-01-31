@@ -136,8 +136,7 @@ const User = () => {
 
   return (
     <div>
-      <PageTop PAGE_TITLE="User " backBtn={false} />
-
+     
       <TablePaperContent
         filters={
           <UserFilters
@@ -147,6 +146,7 @@ const User = () => {
             onCreate={() => navigate("/user/create")}
             status={status}
             onStatusChange={handleStatusChange}
+          
           />
         }
         filterBadges={null}

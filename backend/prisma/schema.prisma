@@ -11,6 +11,9 @@ model User {
   id  Int    @id @default(autoincrement())
   uid String @unique
 
+roleId   Int?   // <-- question mark মানে nullable
+roleInfo Roles? @relation(fields: [roleId], references: [id])
+
   firstName String
   lastName  String
   email     String  @unique
@@ -21,6 +24,38 @@ model User {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+
+   @@map("user")
+
+}
+
+model Roles {
+  id            Int          @id @default(autoincrement())
+  role          String       @unique
+
+  permissionId  Int
+  permission    Permissions  @relation(fields: [permissionId], references: [id])
+
+  user         User[]
+
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@map("roles")
+}
+
+model Permissions {
+  id          Int    @id @default(autoincrement())
+
+  modules     Json   // 👈 full permission config here
+
+  roles       Roles[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("permissions")
 }
 
 // -------------------- DEPARTMENT --------------------

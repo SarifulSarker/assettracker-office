@@ -1,6 +1,6 @@
 import React from "react";
-import { Flex, Button, TextInput, Select } from "@mantine/core";
-import { IconRefresh, IconPlus } from "@tabler/icons-react";
+import { Flex, Button, TextInput, Select, Group } from "@mantine/core";
+import { IconRefresh, IconPlus, IconUserShield } from "@tabler/icons-react";
 
 const UserFilters = ({ searchKey, onSearchChange, onRefresh, onCreate, status, onStatusChange }) => {
   return (
@@ -30,7 +30,8 @@ const UserFilters = ({ searchKey, onSearchChange, onRefresh, onCreate, status, o
       </Flex>
 
       {/* Right: Create User Button */}
-      <Button
+      <Group>
+         <Button
         leftSection={<IconPlus size={16} />}
         onClick={onCreate}
         style={{
@@ -41,6 +42,9 @@ const UserFilters = ({ searchKey, onSearchChange, onRefresh, onCreate, status, o
       >
         Create User
       </Button>
+
+      
+      </Group>
     </Flex>
   );
 };
