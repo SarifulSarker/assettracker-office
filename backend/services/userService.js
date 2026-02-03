@@ -46,7 +46,7 @@ class userService {
       console.log(error);
       // Prisma unique constraint error
       if (error.code === "P2002") {
-        const field = error.meta?.target|| "field";
+        const field = error.meta?.target || "field";
 
         return ErrorResponse(409, `${field} already exists`);
       }
@@ -119,7 +119,7 @@ class userService {
 
   async updateUser(uid, data) {
     try {
-      // 2️⃣ Email domain validation (only if email exists)
+      // 1️⃣ Email domain validation (only if email exists)
       if (data.email) {
         const allowedDomain = "@manush.tech";
         if (!data.email.toLowerCase().endsWith(allowedDomain)) {
@@ -127,26 +127,50 @@ class userService {
         }
       }
 
-      // 3️⃣ Update user
+      // 2️⃣ Prepare update payload
+      const updatePayload = {
+        firstName: data.first_name,
+        lastName: data.last_name,
+        email: data.email,
+        phone: data.phone,
+      };
+
+      // 3️⃣ roleId optional (nullable support)
+      if (data.roleId !== undefined) {
+        updatePayload.roleId =
+          data.roleId === null ? null : Number(data.roleId);
+      }
+
+      // 4️⃣ Update user
       const updatedUser = await prisma.user.update({
         where: { uid },
-        data: {
-          firstName: data.first_name, // map correctly
-          lastName: data.last_name, // map correctly
-          email: data.email,
-          phone: data.phone,
+        data: updatePayload,
+        include: {
+          roleInfo: {
+            select: {
+              id: true,
+              role: true,
+            },
+          },
         },
       });
 
-      // 4️⃣ Remove password
+      // 5️⃣ Remove sensitive fields
       delete updatedUser.password;
 
       return SuccessResponse(200, "User updated successfully", updatedUser);
     } catch (error) {
-      // Prisma unique constraint
+      console.error("Update user service error:", error);
+
+      // Unique constraint
       if (error.code === "P2002") {
         const field = error.meta?.target?.[0] || "field";
         return ErrorResponse(409, `${field} already exists`);
+      }
+
+      // Foreign key constraint (invalid roleId)
+      if (error.code === "P2003") {
+        return ErrorResponse(400, "Invalid role selected");
       }
 
       return ErrorResponse(500, error.message || "Server error");

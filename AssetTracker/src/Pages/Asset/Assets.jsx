@@ -1,31 +1,46 @@
-import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button, Group, Text, Flex, Tooltip, ActionIcon } from "@mantine/core";
-import { useNavigate } from "react-router-dom";
+import { ActionIcon, Button, Flex, Group, Text, Tooltip } from "@mantine/core";
 import { closeAllModals, modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import {
-  IconEdit,
-  IconTrash,
-  IconHistory,
   IconCheck,
   IconDownload,
+  IconEdit,
+  IconHistory,
+  IconTrash,
 } from "@tabler/icons-react";
-import COLORS from "../../constants/Colors";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import COLORS from "../../constants/Colors";
 
+import { IconQrcode } from "@tabler/icons-react";
+import AssetFilters from "../../components/Asset/AssetFilters.jsx";
+import CustomPagination from "../../components/global/CustomPagination.jsx";
+import CustomTable from "../../components/global/CustomTable.jsx";
 import PageTop from "../../components/global/PageTop.jsx";
 import TablePaperContent from "../../components/global/TablePaperContent.jsx";
-import CustomTable from "../../components/global/CustomTable.jsx";
-import CustomPagination from "../../components/global/CustomPagination.jsx";
-import AssetFilters from "../../components/Asset/AssetFilters.jsx";
-import { IconQrcode } from "@tabler/icons-react";
 import downloadAssetsCSV from "../../helpers/downloadAssetsCSV.js";
-import { getAllAssetsApi, deleteAssetApi } from "../../services/asset.js";
-import SpecsCell from "../../helpers/collaps.jsx";
+import { deleteAssetApi, getAllAssetsApi } from "../../services/asset.js";
+import { usePermissions } from "../../hooks/useAuthPermissions.js";
 const PAGE_SIZE = 10;
 
 const Assets = () => {
+  // if (
+  //   !hasPermission({
+  //     module: "assets",
+  //     permission: "create",
+  //     moduleCheck: false,
+  //   })
+  // ) {
+  //   return <AccessDenied />;
+  // }
+
+  const { hasPermission } = usePermissions();
+
+  if (!hasPermission("user", "view"))
+    return <Text>No permission to view users</Text>;
+
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 

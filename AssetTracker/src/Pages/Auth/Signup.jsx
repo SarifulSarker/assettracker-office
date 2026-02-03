@@ -11,7 +11,7 @@ import {
 } from "@mantine/core";
 import { useForm, yupResolver } from "@mantine/form";
 import * as Yup from "yup";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { notifications } from "@mantine/notifications";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -39,7 +39,7 @@ const schema = Yup.object().shape({
 
 const Signup = () => {
   const [password, setPassword] = useState("");
-
+ const queryClient = useQueryClient();
   const navigate = useNavigate();
   const form = useForm({
     initialValues: {

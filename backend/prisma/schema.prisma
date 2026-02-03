@@ -11,8 +11,8 @@ model User {
   id  Int    @id @default(autoincrement())
   uid String @unique
 
-roleId   Int?   // <-- question mark মানে nullable
-roleInfo Roles? @relation(fields: [roleId], references: [id])
+  roleId   Int? // <-- question mark মানে nullable
+  roleInfo Roles? @relation(fields: [roleId], references: [id])
 
   firstName String
   lastName  String
@@ -25,35 +25,33 @@ roleInfo Roles? @relation(fields: [roleId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-
-   @@map("user")
-
+  @@map("user")
 }
 
 model Roles {
-  id            Int          @id @default(autoincrement())
-  role          String       @unique
+  id   Int    @id @default(autoincrement())
+  role String @unique
 
-  permissionId  Int
-  permission    Permissions  @relation(fields: [permissionId], references: [id])
+  permissionId Int
+  permission   Permissions @relation(fields: [permissionId], references: [id])
 
-  user         User[]
+  user User[]
 
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("roles")
 }
 
 model Permissions {
-  id          Int    @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
-  modules     Json   // 👈 full permission config here
+  modules Json // 👈 full permission config here
 
-  roles       Roles[]
+  roles Roles[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("permissions")
 }
@@ -181,7 +179,10 @@ model Asset {
   id  Int    @id @default(autoincrement())
   uid String @unique
 
-  name    String @unique
+  name String @unique
+
+  images String[]// ✅ multiple image path
+
   brandId Int?
   brand   Brand? @relation(fields: [brandId], references: [id])
 

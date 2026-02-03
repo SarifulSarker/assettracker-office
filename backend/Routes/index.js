@@ -34,6 +34,7 @@ const protectedRoutes = [
   {path:"/asset-mapping", route:assetMappingRoutes},
   {path:"/dashboard", route:dashboardRoutes},
   {path:"/role", route:RoleAndPermissionRoutes},
+  
 ];
 
 protectedRoutes.forEach((item) => {

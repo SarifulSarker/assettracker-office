@@ -1,7 +1,6 @@
 import httpRequest from "../helpers/httpRequest.js";
 
 export const getAllAssetsApi = async ({ page, perpage, search, status }) => {
- 
   const data = await httpRequest.get("/asset/get-all-assets", {
     page,
     perpage,
@@ -19,18 +18,19 @@ export const getAssetByIdApi = async (uid) => {
 };
 
 // CREATE ASSET
-export const createAssetApi = async (data) => {
-  if (!data) throw new Error("Asset data is required");
-  return httpRequest.post("/asset/create-asset", data);
+export const createAssetApi = async (formData) => {
+  if (!formData) throw new Error("Asset data is required");
+  return httpRequest.post("/asset/create-asset", formData);
 };
 
 // // UPDATE ASSET
 
-export const updateAssetApi = async (uid, data) => {
+export const updateAssetApi = async (uid, formData) => {
+ 
   if (!uid) throw new Error("Asset ID is required");
-  if (!data) throw new Error("Asset data is required");
+  if (!formData) throw new Error("Asset data is required");
 
-  return httpRequest.put(`/asset/${uid}`, data);
+  return httpRequest.put(`/asset/${uid}`, formData);
 };
 
 // DELETE ASSET

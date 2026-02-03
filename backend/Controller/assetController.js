@@ -4,12 +4,18 @@ class AssetController {
   // CREATE
   async createAsset(req, res) {
     try {
-      const result = await assetService.createAsset(req.body, req.user);
-
-      //   console.log(req.user);
+      const result = await assetService.createAsset(
+        req.body,
+        req.files, // ✅ images here
+        req.user,
+      );
+       
       res.status(result.responseCode).json(result);
     } catch (error) {
-      res.status(500).json({ success: false, message: error.message });
+      res.status(500).json({
+        success: false,
+        message: error.message,
+      });
     }
   }
 
@@ -53,15 +59,21 @@ class AssetController {
     }
   }
 
-  // UPDATE
   async updateAsset(req, res) {
     try {
+      const purchasePrice = req.body.purchasePrice;
+      req.body.purchasePrice =
+        purchasePrice !== undefined && purchasePrice !== ""
+          ? parseFloat(purchasePrice)
+          : null;
+
       const result = await assetService.updateAsset(
         req.params.uid,
-        req.body,
+        req.body, // <-- Form fields
         req.user,
+        req.files, // <-- multer parsed files
       );
-
+     
       res.status(result.responseCode).json(result);
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });

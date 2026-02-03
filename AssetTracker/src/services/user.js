@@ -1,5 +1,4 @@
 import httpRequest from "../helpers/httpRequest.js"; 
-// তোমার httpRequest file যেখানে আছে সেই path অনুযায়ী ঠিক করে দিও
 
 // Get all users with pagination
 

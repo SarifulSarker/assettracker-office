@@ -1,5 +1,3 @@
-// src/constants/SidebarItems.js
-
 import {
   IconUser,
   IconDeviceLaptop,
@@ -19,55 +17,66 @@ import * as urls from "./AppUrls";
 const SidebarItems = [
   {
     label: "DashBoard",
+    module: null, // permission check নেই
     icon: IconLayoutDashboard,
     link: urls.DASHBOARD,
   },
   {
     label: "User",
+    module: "user",
     icon: IconUser,
     link: urls.USER,
   },
   {
     label: "Assets",
+    module: "asset",
     icon: IconDeviceLaptop,
     link: urls.ASSETS,
   },
   {
     label: "Employee",
+    module: "employee",
     icon: IconUserCircle,
     link: urls.EMPLOYEE,
   },
   {
     label: "Asset Assignment",
+    module: "asset_assignment",
     icon: IconMapPinCheck,
     link: urls.ASSET_MAPPING,
   },
   {
     label: "Settings",
+    module: null, // parent container, permission check on children
     icon: IconSettings,
     links: [
       {
-        label: "Designation",
+        label: "Designations",
+        module: "designation",
         icon: IconDeviceTabletShare,
         link: urls.DESIGNATION,
       },
       {
-        label: "Department",
+        label: "Departments",
+        module: "department",
         icon: IconBuildingStore,
         link: urls.DEPARTMENT,
       },
       {
-        label: "Category",
+        label: "Categories",
+        module: "category",
         icon: IconListTree,
         link: urls.CATEGORIES,
       },
       {
-        label: "Vendor",
+        label: "Vendors",
+        module: "vendor",
         icon: IconBusinessplan,
         link: urls.VENDOR,
       },
       {
-        label: "Brand",
+        label: "Brands",
+        module: "brand",
         icon: IconBrandAngular,
         link: urls.BRAND,
       },

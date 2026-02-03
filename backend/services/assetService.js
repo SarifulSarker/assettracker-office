@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 
 class AssetService {
   // CREATE
-  async createAsset(data, issuer) {
+  async createAsset(data, files, issuer) {
     try {
       const {
         name,
@@ -26,6 +26,12 @@ class AssetService {
       if (!name) {
         return ErrorResponse(400, "Asset name is required");
       }
+
+      // ✅ image paths
+      const imagePaths = files?.length
+        ? files.map((file) => `/uploads/assets/${file.filename}`)
+        : [];
+
       const asset = await prisma.asset.create({
         data: {
           name,
@@ -35,6 +41,8 @@ class AssetService {
           notes,
           purchaseDate: purchaseDate ? new Date(purchaseDate) : null,
           purchasePrice: purchasePrice ? Number(purchasePrice) : null,
+
+          images: imagePaths, // ✅ here
 
           brand: brandId ? { connect: { id: Number(brandId) } } : undefined,
           category: categoryId
@@ -53,17 +61,17 @@ class AssetService {
         },
       });
 
-      // 2️⃣ Create log (inline, no transaction)
-      const dt = await prisma.assetLog.create({
+      // 🧾 asset log
+      await prisma.assetLog.create({
         data: {
           asset_id: asset.id,
           asset_uid: asset.uid,
           context: ASSET_LOG_CONTEXT.CREATE,
-          description: `Asset created by ${issuer.firstName || "system"}`,
+          description: `Asset created by ${issuer?.firstName || "system"}`,
           issuer: issuer?.firstName || "system",
         },
       });
-      // console.log(dt)
+
       return SuccessResponse(201, "Asset created successfully", asset);
     } catch (error) {
       return ErrorResponse(500, error.message || "Server Error");
@@ -177,9 +185,18 @@ class AssetService {
   }
 
   // UPDATE
-  async updateAsset(uid, payload, issuer) {
+  async updateAsset(uid, payload, issuer, files) {
     try {
       if (!uid) return ErrorResponse(400, "Asset UID is required");
+
+      // ---------------- Convert FormData to plain object ----------------
+      if (payload instanceof FormData) {
+        const obj = {};
+        for (const [key, value] of payload.entries()) {
+          obj[key] = value;
+        }
+        payload = obj;
+      }
 
       /* ---------------- 1️⃣ Fetch old asset with all relations ---------------- */
       const oldAsset = await prisma.asset.findUnique({
@@ -194,11 +211,11 @@ class AssetService {
 
       if (!oldAsset) return ErrorResponse(404, "Asset not found");
 
-      /* ---------------- 2️⃣ Relation → Model map (FIX) ---------------- */
+      /* ---------------- 2️⃣ Relation → Model map ---------------- */
       const relationModelMap = {
         brand: prisma.brand,
         category: prisma.category,
-        subCategory: prisma.category, // 👈 SAME MODEL
+        subCategory: prisma.category,
         vendor: prisma.vendor,
       };
 
@@ -207,9 +224,9 @@ class AssetService {
       const changedFields = {};
 
       for (const [key, value] of Object.entries(payload)) {
-        if (value === undefined) continue;
+        if (value === undefined || value === null) continue;
 
-        /* ---------- relation fields (xxxId) ---------- */
+        // ---------- relation fields ----------
         if (key.endsWith("Id")) {
           const relationKey = key.replace("Id", "");
           const oldRelation = oldAsset[relationKey];
@@ -230,14 +247,11 @@ class AssetService {
             to: newEntity?.name || "N/A",
           };
 
-          updateData[relationKey] = {
-            connect: { id: newId },
-          };
-
+          updateData[relationKey] = { connect: { id: newId } };
           continue;
         }
 
-        /* ---------- date fields ---------- */
+        // ---------- date fields ----------
         if (
           oldAsset[key] instanceof Date ||
           key.toLowerCase().includes("date")
@@ -245,30 +259,55 @@ class AssetService {
           const oldDate = oldAsset[key]
             ? new Date(oldAsset[key]).toISOString()
             : null;
-
           const newDate = value ? new Date(value).toISOString() : null;
 
           if (oldDate !== newDate) {
-            changedFields[key] = {
-              from: oldAsset[key],
-              to: value,
-            };
+            changedFields[key] = { from: oldAsset[key], to: value };
             updateData[key] = new Date(value);
           }
           continue;
         }
 
-        /* ---------- scalar fields ---------- */
+        // ---------- purchasePrice Float ----------
+        if (key === "purchasePrice") {
+          const floatValue = parseFloat(value);
+          if (oldAsset.purchasePrice !== floatValue) {
+            changedFields[key] = {
+              from: oldAsset.purchasePrice,
+              to: floatValue,
+            };
+            updateData[key] = floatValue;
+          }
+          continue;
+        }
+
+        // ---------- scalar fields ----------
         if (oldAsset[key] !== value) {
-          changedFields[key] = {
-            from: oldAsset[key],
-            to: value,
-          };
+          changedFields[key] = { from: oldAsset[key], to: value };
           updateData[key] = value;
         }
       }
 
-      /* ---------------- 4️⃣ Update asset ---------------- */
+      /* ---------------- 4️⃣ Handle images (REPLACE LOGIC) ---------------- */
+
+      // existing images sent from frontend
+      let existingImages = [];
+
+      if (payload.existingImages) {
+        existingImages = Array.isArray(payload.existingImages)
+          ? payload.existingImages
+          : [payload.existingImages];
+      }
+
+      // new uploaded images (multer files)
+      const newImages = files
+        ? files.map((file) => `/uploads/assets/${file.filename}`)
+        : [];
+
+      // overwrite images completely
+      updateData.images = [...existingImages, ...newImages];
+      delete updateData.existingImages;
+
       const updatedAsset = await prisma.asset.update({
         where: { uid },
         data: updateData,
@@ -280,7 +319,7 @@ class AssetService {
         },
       });
 
-      /* ---------------- 5️⃣ Save log (UNCHANGED) ---------------- */
+      /* ---------------- 6️⃣ Save log ---------------- */
       if (Object.keys(changedFields).length > 0) {
         await prisma.assetLog.create({
           data: {

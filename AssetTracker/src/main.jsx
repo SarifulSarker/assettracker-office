@@ -17,6 +17,7 @@ import "@mantine/core/styles.css";
 
 import "@mantine/tiptap/styles.css";
 // create query client
+
 const queryClient = new QueryClient();
 
 createRoot(document.getElementById("root")).render(
@@ -33,5 +34,5 @@ createRoot(document.getElementById("root")).render(
         </ModalsProvider>
       </MantineProvider>
     </ReduxWrapper>
-  </StrictMode>
+  </StrictMode>,
 );

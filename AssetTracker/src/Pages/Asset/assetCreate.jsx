@@ -6,7 +6,6 @@ import {
   TextInput,
   Select,
   Button,
-  ScrollArea,
   Textarea,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
@@ -21,10 +20,12 @@ import { getAllBrandsApi } from "../../services/brand.js";
 import { getAllVendorsApi } from "../../services/vendor.js";
 import { getAllCategoriesApi } from "../../services/category.js";
 import RichTextInput from "../../helpers/RichTextInput.jsx";
+import FileUploadArea from "../../components/Asset/FileUploadArea.jsx";
 
 const AssetCreate = () => {
   const navigate = useNavigate();
   const [subcategories, setSubcategories] = useState([]);
+  const [images, setImages] = useState([]);
 
   /* -------------------- QUERIES -------------------- */
   const { data: CategoriesData } = useQuery({
@@ -51,13 +52,13 @@ const AssetCreate = () => {
     initialValues: {
       name: "",
       categoryId: "",
-      subcategoryId: "",
+      subCategoryId: "",
       brandId: "",
       vendorId: "",
       purchasePrice: "",
       purchaseDate: null,
       specs: "",
-      status: "in-stock",
+      status: "instock",
       notes: "",
     },
     validate: {
@@ -71,20 +72,36 @@ const AssetCreate = () => {
 
   /* -------------------- MUTATION -------------------- */
   const createMutation = useMutation({
-    mutationFn: (values) =>
-      createAssetApi({
-        ...values,
-        specs: values.specs?.trim() || null,
-        categoryId: Number(values.categoryId),
-        subCategoryId: values.subcategoryId
-          ? Number(values.subcategoryId)
-          : null,
-        brandId: Number(values.brandId),
-        vendorId: Number(values.vendorId),
-        purchasePrice: values.purchasePrice
-          ? Number(values.purchasePrice)
-          : null,
-      }),
+    mutationFn: (values) => {
+      const formData = new FormData();
+
+      formData.append("name", values.name);
+      formData.append("categoryId", Number(values.categoryId));
+      formData.append(
+        "subCategoryId",
+        values.subcategoryId ? Number(values.subcategoryId) : "",
+      );
+      formData.append("brandId", Number(values.brandId));
+      formData.append("vendorId", Number(values.vendorId));
+      formData.append("status", values.status);
+      formData.append("specs", values.specs || "");
+      formData.append("notes", values.notes || "");
+
+      if (values.purchasePrice)
+        formData.append("purchasePrice", values.purchasePrice);
+
+      if (values.purchaseDate) {
+        const date =
+          values.purchaseDate instanceof Date
+            ? values.purchaseDate
+            : new Date(values.purchaseDate);
+        formData.append("purchaseDate", date.toISOString());
+      }
+
+      images.forEach((file) => formData.append("images", file));
+
+      return createAssetApi(formData);
+    },
     onSuccess: () => {
       notifications.show({
         title: "Success",
@@ -97,8 +114,9 @@ const AssetCreate = () => {
     onError: (error) => {
       notifications.show({
         title: "Error",
-        message: error.response?.data?.message || "Something went wrong",
+        message: error?.response?.data?.message || "Something went wrong",
         color: "red",
+        position: "top-center",
       });
     },
   });
@@ -106,17 +124,14 @@ const AssetCreate = () => {
   /* -------------------- HANDLERS -------------------- */
   const handleCategoryChange = (value) => {
     form.setFieldValue("categoryId", value);
-    form.setFieldValue("subcategoryId", "");
+    form.setFieldValue("subcategoryId", ""); // reset subcategory
     const category = categories.find((c) => c.id.toString() === value);
     setSubcategories(category?.children || []);
   };
 
   return (
     <>
-      {/* Fixed top section */}
       <PageTop PAGE_TITLE="Create Asset" backBtn />
-
-      {/* Scrollable form */}
 
       <Stack maw={600} mx="auto">
         <Paper p="xl" shadow="md" withBorder radius="lg">
@@ -125,20 +140,23 @@ const AssetCreate = () => {
           </Text>
 
           <form onSubmit={form.onSubmit((v) => createMutation.mutate(v))}>
-            <Stack>
+            <Stack spacing="md">
+              <FileUploadArea images={images} setImages={setImages} />
+
               <TextInput
                 label="Asset Name"
                 withAsterisk
                 {...form.getInputProps("name")}
               />
+
               <Textarea
                 resize="vertical"
                 label="Specifications"
                 placeholder="e.g. 8GB / Intel i5 / 512GB SSD"
                 {...form.getInputProps("specs")}
               />
+
               <Select
-                allowDeselect={false}
                 label="Category"
                 withAsterisk
                 data={categories.map((c) => ({
@@ -149,6 +167,7 @@ const AssetCreate = () => {
                 onChange={handleCategoryChange}
                 error={form.errors.categoryId}
               />
+
               <Select
                 allowDeselect={false}
                 label="Subcategory"
@@ -159,8 +178,8 @@ const AssetCreate = () => {
                 }))}
                 {...form.getInputProps("subcategoryId")}
               />
+
               <Select
-                allowDeselect={false}
                 label="Brand"
                 withAsterisk
                 data={brands.map((b) => ({
@@ -169,8 +188,8 @@ const AssetCreate = () => {
                 }))}
                 {...form.getInputProps("brandId")}
               />
+
               <Select
-                allowDeselect={false}
                 label="Vendor"
                 withAsterisk
                 data={vendors.map((v) => ({
@@ -179,11 +198,13 @@ const AssetCreate = () => {
                 }))}
                 {...form.getInputProps("vendorId")}
               />
+
               <TextInput
                 label="Purchase Price"
                 type="number"
                 {...form.getInputProps("purchasePrice")}
               />
+
               <DateInput
                 label="Purchase Date"
                 withAsterisk
@@ -191,12 +212,11 @@ const AssetCreate = () => {
                 onChange={(v) => form.setFieldValue("purchaseDate", v)}
                 error={form.errors.purchaseDate}
               />
+
               <Select
-                allowDeselect={false}
                 label="Asset Status"
-                placeholder="Select status"
                 data={[
-                  { value: "inuse", label: "In Use " },
+                  { value: "inuse", label: "In Use" },
                   { value: "instock", label: "In Stock" },
                   { value: "maintenance", label: "Maintenance" },
                   { value: "damaged", label: "Damaged" },
@@ -204,12 +224,14 @@ const AssetCreate = () => {
                 ]}
                 {...form.getInputProps("status")}
               />
+
               <RichTextInput
                 label="Notes"
                 value={form.values.notes}
                 onChange={(val) => form.setFieldValue("notes", val)}
                 {...form.getInputProps("notes")}
               />
+
               <Button type="submit" loading={createMutation.isPending}>
                 Create Asset
               </Button>

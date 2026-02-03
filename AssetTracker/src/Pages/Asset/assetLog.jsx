@@ -37,7 +37,7 @@ const AssetLog = () => {
 
   const asset = assetData?.data;
   const assetUID = uid;
-
+  console.log(asset?.images);
   /* ---------------- Logs ---------------- */
   const {
     data: AssignlogData,
@@ -87,6 +87,34 @@ const AssetLog = () => {
             ) : (
               <Stack spacing="sm">
                 {/* Asset basic info */}
+
+                {/* Asset Images - Right side / top */}
+                {/* Asset Images - Right/top side */}
+                {asset?.images && asset.images.length > 0 && (
+                  <Stack spacing="xs" mt="sm">
+                    <Text size="sm" fw={500}>
+                      Asset Images
+                    </Text>
+                    <Group spacing="sm">
+                      {asset.images.map((img, idx) => (
+                        <img
+                          key={idx}
+                          src={`${import.meta.env.VITE_APP_BACKEND_BASE_URL}${img}`} // ✅ full URL
+                          
+                          alt={`Asset Image ${idx + 1}`}
+                          style={{
+                            width: 80,
+                            height: 80,
+                            objectFit: "cover",
+                            borderRadius: 4,
+                            border: "1px solid #e0e0e0",
+                          }}
+                        />
+                      ))}
+                    </Group>
+                  </Stack>
+                )}
+
                 <Text fw={600} component="div">
                   Asset: {asset?.name || "N/A"}
                 </Text>
@@ -158,8 +186,7 @@ const AssetLog = () => {
                 {/* Subcategory */}
                 {asset?.subCategory && (
                   <Text size="sm" component="div">
-                    <b>Subcategory:</b> {asset.subCategory.name} 
-                   
+                    <b>Subcategory:</b> {asset.subCategory.name}
                   </Text>
                 )}
 

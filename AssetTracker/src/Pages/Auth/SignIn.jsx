@@ -119,7 +119,7 @@ const SignIn = () => {
             <Title order={3} ta="center">
               Login
             </Title>
-            <div>sariful@manush.tech || 111111</div>
+            <div>sariful@manush.tech || Super@123</div>
             <Text ta="center" c={COLORS.dimmed}>
               Distribution Portal
             </Text>

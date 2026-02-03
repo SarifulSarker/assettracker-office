@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Box, Stack, TextInput, Button, Paper, Text } from "@mantine/core";
+import { Select } from "@mantine/core";
 import { useForm, yupResolver } from "@mantine/form";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getUserByIdApi, updateUserApi } from "../../services/user";
@@ -8,7 +9,7 @@ import { notifications } from "@mantine/notifications";
 import * as Yup from "yup";
 import { IconCheck, IconX } from "@tabler/icons-react";
 import PageTop from "../../components/global/PageTop.jsx";
-
+import { GetRoleAndPermissionApi } from "../../services/roleandPermission";
 // Validation Schema
 const schema = Yup.object().shape({
   first_name: Yup.string()
@@ -40,6 +41,20 @@ const UserEdit = () => {
     queryKey: ["user", uid],
     queryFn: () => getUserByIdApi(uid),
   });
+  const { data: roleRes, isLoading: roleLoading } = useQuery({
+    queryKey: ["roles", 1, ""],
+    queryFn: () =>
+      GetRoleAndPermissionApi({
+        page: 1,
+        perpage: 100,
+        search: "",
+      }),
+  });
+  const roles = roleRes?.data?.roles || [];
+  const roleOptions = roles.map((r) => ({
+    value: String(r.id),
+    label: r.role, // 👈 শুধু role name
+  }));
 
   // Initialize form
   const form = useForm({
@@ -48,6 +63,7 @@ const UserEdit = () => {
       last_name: "",
       email: "",
       phone: "",
+      roleId: "", // 👈 NEW
     },
     validate: yupResolver(schema),
   });
@@ -60,57 +76,59 @@ const UserEdit = () => {
         last_name: user.data.lastName || "",
         email: user.data.email || "",
         phone: user.data.phone || "",
+        roleId: user.data.roleId ? String(user.data.roleId) : "",
       });
     }
   }, [user]);
 
   // Update mutation
   const mutation = useMutation({
-  mutationFn: (values) => updateUserApi({ uid, data: values }),
+    mutationFn: (values) => updateUserApi({ uid, data: values }),
 
-  onSuccess: (res) => {
-   
-    // 🟥 Case 2: business error (success = false)
-    if (!res?.success) {
+    onSuccess: (res) => {
+      // 🟥 Case 2: business error (success = false)
+      if (!res?.success) {
+        notifications.show({
+          title: "Error",
+          message: res?.message || "Something went wrong",
+          color: "red",
+          position: "top-center",
+          autoClose: 3000,
+        });
+        return;
+      }
+
+      // 🟩 Case 1: real success
+      queryClient.invalidateQueries(["users"]);
+
       notifications.show({
-        title: "Error",
-        message: res?.message || "Something went wrong",
+        title: "Success",
+        message: res?.message || "User updated successfully!",
+        color: "green",
+        position: "top-center",
+        autoClose: 3000,
+      });
+
+      navigate("/user");
+    },
+
+    onError: (error) => {
+      // Network / Server error (5xx, no response, timeout)
+      notifications.show({
+        title: "Server Error",
+        message: error?.response?.data?.message || "Unable to reach server",
         color: "red",
         position: "top-center",
         autoClose: 3000,
       });
-      return;
-    }
-
-    // 🟩 Case 1: real success
-    queryClient.invalidateQueries(["users"]);
-
-    notifications.show({
-      title: "Success",
-      message: res?.message || "User updated successfully!",
-      color: "green",
-      position: "top-center",
-      autoClose: 3000,
-    });
-
-    navigate("/user");
-  },
-
-  onError: (error) => {
-    // Network / Server error (5xx, no response, timeout)
-    notifications.show({
-      title: "Server Error",
-      message: error?.response?.data?.message || "Unable to reach server",
-      color: "red",
-      position: "top-center",
-      autoClose: 3000,
-    });
-  },
-});
-
+    },
+  });
 
   const handleSubmit = (values) => {
-    mutation.mutate(values);
+    mutation.mutate({
+      ...values,
+      roleId: Number(values.roleId),
+    });
   };
 
   if (isLoading) return <Text>Loading user...</Text>;
@@ -188,6 +206,25 @@ const UserEdit = () => {
                   label: { fontWeight: 600 },
                 }}
               />
+              <Select
+                label="Role"
+                placeholder="Select role"
+                data={roleOptions}
+                withAsterisk
+                searchable
+                clearable
+                disabled={roleLoading}
+                {...form.getInputProps("roleId")}
+                styles={{
+                  input: {
+                    border: "1px solid #b7c5d3",
+                    borderRadius: 8,
+                    padding: 10,
+                  },
+                  label: { fontWeight: 600 },
+                }}
+              />
+
               <Button
                 type="submit"
                 size="md"

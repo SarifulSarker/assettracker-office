@@ -16,11 +16,18 @@ import BrandEditModal from "../../components/Brand/BrandEditModal.jsx";
 
 import { getAllBrandsApi, deleteBrandApi } from "../../services/brand.js";
 import useDebounce from "../../hooks/useDebounce.js";
+import { usePermissions } from "../../hooks/useAuthPermissions.js";
 
 const PAGE_SIZE = 10;
 
 const Brand = () => {
   const queryClient = useQueryClient();
+
+  const { hasPermission } = usePermissions();
+
+  if (!hasPermission("brand", "view")) {
+    return <Text>No permission to view users</Text>;
+  }
 
   const [page, setPage] = useState(1);
   const [searchKey, setSearchKey] = useState("");
@@ -134,35 +141,40 @@ const Brand = () => {
       headerTitle: "Actions",
       row: (v, row) => (
         <Group spacing="xs">
-          <Tooltip label="Edit" withArrow>
-            <Button
-              size="xs"
-              onClick={() => openEditModal(row)}
-              style={{ backgroundColor: "#3b82f6", color: "#fff" }}
-            >
-              <IconEdit size={14} />
-            </Button>
-          </Tooltip>
+          {hasPermission("brand", "edit") && (
+            <Tooltip label="Edit" withArrow>
+              <Button
+                size="xs"
+                onClick={() => openEditModal(row)}
+                style={{ backgroundColor: "#3b82f6", color: "#fff" }}
+              >
+                <IconEdit size={14} />
+              </Button>
+            </Tooltip>
+          )}
 
-          <Tooltip
-            label={statusBool ? "Delete" : "Activate"}
-            withArrow
-            position="top"
-          >
-            <Button
-              size="xs"
-              onClick={() => openDeleteModal(row.id)}
-              style={{
-                backgroundColor: statusBool ? "#ef4444" : "#10b981", // red if active, green if inactive
-                color: "#fff",
-              }}
+          {hasPermission("brand", statusBool ? "delete" : "view") && (
+            <Tooltip
+              label={statusBool ? "Delete" : "Activate"}
+              withArrow
+              position="top"
             >
-              {statusBool ? <IconTrash size={14} /> : <IconCheck size={14} />}
-            </Button>
-          </Tooltip>
+              <Button
+                size="xs"
+                onClick={() => openDeleteModal(row.id)}
+                style={{
+                  backgroundColor: statusBool ? "#ef4444" : "#10b981",
+                  color: "#fff",
+                }}
+              >
+                {statusBool ? <IconTrash size={14} /> : <IconCheck size={14} />}
+              </Button>
+            </Tooltip>
+          )}
         </Group>
       ),
     },
+    ,
   ];
 
   return (

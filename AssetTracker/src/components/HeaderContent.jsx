@@ -5,7 +5,7 @@ import COLORS from "../constants/Colors";
 const HeaderContent = () => {
   const user = useSelector((state) => state.auth.user); // user object
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
-
+  
   return (
     <Flex direction="column">
       {isLoggedIn && user ? (

@@ -47,7 +47,7 @@ class AuthService {
       delete user.password;
 
       // 7️⃣ Return success response
-      return SuccessResponse(201, "User registered successfully", user);
+      return SuccessResponse(200, "User registered successfully", user);
     } catch (error) {
       console.log(error);
       // Prisma unique constraint error
