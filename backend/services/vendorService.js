@@ -7,34 +7,42 @@ import { generateUID } from "../utils/uuid.js";
 class vendorService {
   // Create Vendor
   async createVendor(data) {
-    const { name, contact, email, address, notes } = data;
-    if (!name) {
-      return { success: false, status: 400, error: "Vendor name is required" };
+    try {
+      const { name, contact, email, address, notes } = data;
+
+      if (!name) {
+        return ErrorResponse(400, "Vendor name is required");
+      }
+
+      // Check if vendor already exists by name
+      const existingVendor = await prisma.vendor.findFirst({ where: { name } });
+      if (existingVendor) {
+        return ErrorResponse(400, "Vendor already exists");
+      }
+
+      const vendor = await prisma.vendor.create({
+        data: {
+          name,
+          uid: await generateUID(10),
+          contact,
+          email,
+          address,
+          notes,
+        },
+      });
+
+      return SuccessResponse(201, "Vendor created successfully", vendor);
+    } catch (error) {
+      console.log(error);
+      // Prisma unique constraint error
+      if (error.code === "P2002") {
+        const field = error.meta?.target || "field";
+
+        return ErrorResponse(409, `${field} already exists`);
+      }
+
+      return ErrorResponse(500, "Internal server error");
     }
-
-    // Check if vendor already exists by name
-    const existingVendor = await prisma.vendor.findFirst({ where: { name } });
-    if (existingVendor) {
-      return { success: false, status: 400, error: "Vendor already exists" };
-    }
-
-    const vendor = await prisma.vendor.create({
-      data: {
-        name,
-        uid: await generateUID(10),
-        contact,
-        email,
-        address,
-        notes,
-      },
-    });
-
-    return {
-      success: true,
-      status: 201,
-      message: "Vendor created successfully",
-      data: vendor,
-    };
   }
 
   // Get all vendors with pagination + search
@@ -123,35 +131,33 @@ class vendorService {
 
   // Delete vendor
   async deleteVendor(id) {
-     try {
-    const vendor = await prisma.vendor.findUnique({
-      where: { id: Number(id) },
-      select: { is_active: true },
-    });
+    try {
+      const vendor = await prisma.vendor.findUnique({
+        where: { id: Number(id) },
+        select: { is_active: true },
+      });
 
-    if (!vendor) {
-      return { success: false, status: 404, message: "Vendor not found" };
+      if (!vendor) {
+        return { success: false, status: 404, message: "Vendor not found" };
+      }
+
+      const updatedVendor = await prisma.vendor.update({
+        where: { id: Number(id) },
+        data: {
+          is_active: !vendor.is_active,
+        },
+      });
+
+      return {
+        success: true,
+        status: 200,
+        data: updatedVendor,
+        message: `Vendor ${updatedVendor.is_active ? "activated" : "deactivated"} successfully`,
+      };
+    } catch (error) {
+      return { success: false, status: 400, error: error.message };
     }
-
-    const updatedVendor = await prisma.vendor.update({
-      where: { id: Number(id) },
-      data: {
-        is_active: !vendor.is_active,
-      },
-    });
-
-    return {
-      success: true,
-      status: 200,
-      data: updatedVendor,
-      message: `Vendor ${updatedVendor.is_active ? "activated" : "deactivated"} successfully`,
-    };
-  } catch (error) {
-    return { success: false, status: 400, error: error.message };
   }
-  }
-
-  
 }
 
 export default new vendorService();

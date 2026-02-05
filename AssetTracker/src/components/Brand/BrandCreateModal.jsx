@@ -40,7 +40,7 @@ const BrandCreateModal = ({ opened, onClose, onSuccess }) => {
         form.reset();
         onClose();
         queryClient.invalidateQueries(["brands"]);
-        if (onSuccess) onSuccess();
+        if (onSuccess) onSuccess(res.data);
       } else {
         notifications.show({
           title: "Failed",

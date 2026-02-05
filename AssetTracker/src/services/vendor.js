@@ -17,7 +17,11 @@ export const getVendorByIdApi = (id) => {
 
 // Create vendor
 export const createVendorApi = (data) => {
-  return httpRequest.post("/vendor/create-vendor", data);
+  try {
+     return httpRequest.post("/vendor/create-vendor", data);
+  } catch (error) {
+      throw error.response?.data || error;
+  }
 };
 
 // Update vendor

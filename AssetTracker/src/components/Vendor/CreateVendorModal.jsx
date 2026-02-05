@@ -15,15 +15,15 @@ const schema = Yup.object().shape({
     .max(80, "Designation cannot exceed 50 characters")
     .matches(/^[A-Za-z\s]+$/, "Name can only contain letters and spaces"),
   email: Yup.string().email("Invalid email").optional().trim(),
-  contact: Yup.string()
-    .required("Phone number is required")
-    .matches(/^\+?[0-9]{11,15}$/, "Phone number must be  digits")
-    .trim(),
+  // contact: Yup.string()
+  //   .required("Phone number is required")
+  //   .matches(/^\+?[0-9]{11,15}$/, "Phone number must be  digits")
+  //   .trim(),
   address: Yup.string().optional(),
   notes: Yup.string().optional(),
 });
 
-const VendorCreateModal = ({ opened, onClose }) => {
+const VendorCreateModal = ({ opened, onClose, onSuccess }) => {
   const queryClient = useQueryClient();
 
   const form = useForm({
@@ -49,7 +49,8 @@ const VendorCreateModal = ({ opened, onClose }) => {
         });
         form.reset();
         onClose();
-        queryClient.invalidateQueries(["vendor"]);
+        queryClient.invalidateQueries(["vendors"]);
+        if (onSuccess) onSuccess(res.data);
       } else {
         notifications.show({
           title: "Failed",

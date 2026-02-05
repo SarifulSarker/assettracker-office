@@ -9,6 +9,9 @@ class AssetController {
         req.files, // ✅ images here
         req.user,
       );
+
+
+     
        
       res.status(result.responseCode).json(result);
     } catch (error) {

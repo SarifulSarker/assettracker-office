@@ -204,7 +204,7 @@ const AssetEdit = () => {
         <Paper p="xl" withBorder radius="lg">
           <form onSubmit={form.onSubmit((v) => updateMutation.mutate(v))}>
             <Stack>
-              <Text fw={600}>Asset Images (max 5)</Text>
+              <Text fw={700}>Asset Images (max 5)</Text>
 
               <Group>
                 {images.map((img, index) => (

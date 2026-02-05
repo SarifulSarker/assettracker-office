@@ -7,6 +7,9 @@ import {
   Select,
   Button,
   Textarea,
+  ActionIcon,
+  Group,
+  Tooltip,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { useForm } from "@mantine/form";
@@ -21,11 +24,21 @@ import { getAllVendorsApi } from "../../services/vendor.js";
 import { getAllCategoriesApi } from "../../services/category.js";
 import RichTextInput from "../../helpers/RichTextInput.jsx";
 import FileUploadArea from "../../components/Asset/FileUploadArea.jsx";
+import { IconPlus } from "@tabler/icons-react";
+import CategoryCreateModal from "../../components/Category/CategoryCreateModal.jsx";
+import BrandCreateModal from "../../components/Brand/BrandCreateModal.jsx";
+import VendorCreateModal from "../../components/Vendor/CreateVendorModal.jsx";
+import SubCategoryCreateModal from "../../components/SubCategory/SubCategoryCreateModal.jsx";
+import SelectWithAdd from "../../utils/SelectWithAdd.jsx";
 
 const AssetCreate = () => {
   const navigate = useNavigate();
   const [subcategories, setSubcategories] = useState([]);
   const [images, setImages] = useState([]);
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false);
+  const [brandModalOpen, setBrandModalOpen] = useState(false);
+  const [vendorModalOpen, setVendorModalOpen] = useState(false);
+  const [subCategoryModalOpen, setSubCategoryModalOpen] = useState(false);
 
   /* -------------------- QUERIES -------------------- */
   const { data: CategoriesData } = useQuery({
@@ -73,13 +86,14 @@ const AssetCreate = () => {
   /* -------------------- MUTATION -------------------- */
   const createMutation = useMutation({
     mutationFn: (values) => {
+      console.log(values);
       const formData = new FormData();
 
       formData.append("name", values.name);
       formData.append("categoryId", Number(values.categoryId));
       formData.append(
         "subCategoryId",
-        values.subcategoryId ? Number(values.subcategoryId) : "",
+        values.subCategoryId ? Number(values.subCategoryId) : "",
       );
       formData.append("brandId", Number(values.brandId));
       formData.append("vendorId", Number(values.vendorId));
@@ -124,7 +138,7 @@ const AssetCreate = () => {
   /* -------------------- HANDLERS -------------------- */
   const handleCategoryChange = (value) => {
     form.setFieldValue("categoryId", value);
-    form.setFieldValue("subcategoryId", ""); // reset subcategory
+    form.setFieldValue("subCategoryId", ""); // reset subcategory
     const category = categories.find((c) => c.id.toString() === value);
     setSubcategories(category?.children || []);
   };
@@ -133,7 +147,7 @@ const AssetCreate = () => {
     <>
       <PageTop PAGE_TITLE="Create Asset" backBtn />
 
-      <Stack maw={600} mx="auto">
+      <Stack maw={700} mx="auto">
         <Paper p="xl" shadow="md" withBorder radius="lg">
           <Text fw={700} size="xl" mb="md">
             Create New Asset
@@ -145,6 +159,12 @@ const AssetCreate = () => {
 
               <TextInput
                 label="Asset Name"
+                styles={{
+                  label: {
+                    fontSize: "18px",
+                    fontWeight: 500,
+                  },
+                }}
                 withAsterisk
                 {...form.getInputProps("name")}
               />
@@ -152,61 +172,124 @@ const AssetCreate = () => {
               <Textarea
                 resize="vertical"
                 label="Specifications"
+                styles={{
+                  label: {
+                    fontSize: "18px",
+                    fontWeight: 500,
+                  },
+                }}
                 placeholder="e.g. 8GB / Intel i5 / 512GB SSD"
                 {...form.getInputProps("specs")}
               />
 
-              <Select
-                label="Category"
-                withAsterisk
+              <SelectWithAdd
+                label="Category *"
+                value={form.values.categoryId}
+                onChange={handleCategoryChange}
                 data={categories.map((c) => ({
                   value: c.id.toString(),
                   label: c.name,
                 }))}
-                value={form.values.categoryId}
-                onChange={handleCategoryChange}
+                onAddClick={() => setCategoryModalOpen(true)}
                 error={form.errors.categoryId}
               />
 
-              <Select
-                allowDeselect={false}
+              <CategoryCreateModal
+                opened={categoryModalOpen}
+                onClose={() => setCategoryModalOpen(false)}
+                onSuccess={(newCategory) => {
+                  form.setFieldValue("categoryId", newCategory.id.toString());
+                }}
+              />
+              <SelectWithAdd
                 label="Subcategory"
-                disabled={!form.values.categoryId || subcategories.length === 0}
+                value={form.values.subCategoryId}
+                onChange={(val) => form.setFieldValue("subCategoryId", val)}
                 data={subcategories.map((sc) => ({
                   value: sc.id.toString(),
                   label: sc.name,
                 }))}
-                {...form.getInputProps("subcategoryId")}
+                disabled={!form.values.categoryId || subcategories.length === 0}
+                onAddClick={() => setSubCategoryModalOpen(true)}
               />
+              <SubCategoryCreateModal
+                opened={subCategoryModalOpen}
+                onClose={() => setSubCategoryModalOpen(false)}
+                categories={categories}
+                onSuccess={(newSubcategory) => {
+                  const updatedCategory = categories.find(
+                    (c) => c.id.toString() === form.values.categoryId,
+                  );
+                  if (updatedCategory) {
+                    // নতুন সাবক্যাটাগরি যোগ করা
+                    const updatedSubcategories = [
+                      ...subcategories,
+                      newSubcategory,
+                    ];
+                    setSubcategories(updatedSubcategories);
 
-              <Select
-                label="Brand"
-                withAsterisk
+                    // auto select
+                    form.setFieldValue(
+                      "subCategoryId",
+                      newSubcategory.id.toString(),
+                    );
+                  }
+                }}
+              />
+              <SelectWithAdd
+                label="Brand *"
+                value={form.values.brandId}
+                onChange={(val) => form.setFieldValue("brandId", val)}
                 data={brands.map((b) => ({
                   value: b.id.toString(),
                   label: b.name,
                 }))}
-                {...form.getInputProps("brandId")}
+                onAddClick={() => setBrandModalOpen(true)}
               />
-
-              <Select
-                label="Vendor"
-                withAsterisk
+              <BrandCreateModal
+                opened={brandModalOpen}
+                onClose={() => setBrandModalOpen(false)}
+                onSuccess={(newBrand) => {
+                  form.setFieldValue("brandId", newBrand.id.toString());
+                }}
+              />
+              <SelectWithAdd
+                label="Vendor *"
+                value={form.values.vendorId}
+                onChange={(val) => form.setFieldValue("vendorId", val)}
                 data={vendors.map((v) => ({
                   value: v.id.toString(),
                   label: v.name,
                 }))}
-                {...form.getInputProps("vendorId")}
+                onAddClick={() => setVendorModalOpen(true)}
               />
-
+              <VendorCreateModal
+                opened={vendorModalOpen}
+                onClose={() => setVendorModalOpen(false)}
+                onSuccess={(newVendor) => {
+                  form.setFieldValue("vendorId", newVendor.id.toString());
+                }}
+              />
               <TextInput
                 label="Purchase Price"
                 type="number"
                 {...form.getInputProps("purchasePrice")}
+                styles={{
+                  label: {
+                    fontSize: "18px",
+                    fontWeight: 500,
+                  },
+                }}
               />
 
               <DateInput
                 label="Purchase Date"
+                styles={{
+                  label: {
+                    fontSize: "18px",
+                    fontWeight: 500,
+                  },
+                }}
                 withAsterisk
                 value={form.values.purchaseDate}
                 onChange={(v) => form.setFieldValue("purchaseDate", v)}
@@ -215,6 +298,12 @@ const AssetCreate = () => {
 
               <Select
                 label="Asset Status"
+                styles={{
+                  label: {
+                    fontSize: "18px",
+                    fontWeight: 500,
+                  },
+                }}
                 data={[
                   { value: "inuse", label: "In Use" },
                   { value: "instock", label: "In Stock" },
@@ -227,6 +316,12 @@ const AssetCreate = () => {
 
               <RichTextInput
                 label="Notes"
+                styles={{
+                  label: {
+                    fontSize: "18px",
+                    fontWeight: 500,
+                  },
+                }}
                 value={form.values.notes}
                 onChange={(val) => form.setFieldValue("notes", val)}
                 {...form.getInputProps("notes")}

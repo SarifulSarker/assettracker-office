@@ -23,7 +23,7 @@ class userService {
       }
 
       // 4️⃣ Default password
-      const defaultPassword = "12345";
+      const defaultPassword = "User@123";
       const hashedPassword = await bcrypt.hash(defaultPassword, 10);
 
       // 5️⃣ Create user

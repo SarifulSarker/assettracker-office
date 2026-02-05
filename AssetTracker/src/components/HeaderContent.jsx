@@ -5,7 +5,8 @@ import COLORS from "../constants/Colors";
 const HeaderContent = () => {
   const user = useSelector((state) => state.auth.user); // user object
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
-  
+  const role = useSelector((state) => state.auth.user?.role);
+
   return (
     <Flex direction="column">
       {isLoggedIn && user ? (
@@ -14,7 +15,7 @@ const HeaderContent = () => {
             {user.firstName} {user.lastName}
           </Text>
           <Text size="sm" color={COLORS.background}>
-            {user.email}
+            {role}
           </Text>
         </>
       ) : (

@@ -26,7 +26,7 @@ const CategoryCreateModal = ({ opened, onClose, onSuccess }) => {
 
   const mutation = useMutation({
     mutationFn: (values) => createCategoryApi(values),
-    onSuccess: () => {
+    onSuccess: (res) => {
       notifications.show({
         title: "Success",
         message: "Category created successfully!",
@@ -36,7 +36,7 @@ const CategoryCreateModal = ({ opened, onClose, onSuccess }) => {
       form.reset();
       onClose();
       queryClient.invalidateQueries(["categories"]);
-      if (onSuccess) onSuccess();
+      if (onSuccess) onSuccess(res.data);
     },
     onError: (error) => {
       const msg = error.response?.data?.message || "Something went wrong";

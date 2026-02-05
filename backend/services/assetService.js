@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import { PrismaClient } from "@prisma/client";
 import { SuccessResponse, ErrorResponse } from "../utils/return.js";
-import { generateUID } from "../utils/uuid.js";
+import { generateAssetUID, generateUID } from "../utils/uuid.js";
 import { ASSET_LOG_CONTEXT } from "../utils/ASSET_LOG_CONTEXT.js";
 
 const prisma = new PrismaClient();
@@ -35,7 +35,7 @@ class AssetService {
       const asset = await prisma.asset.create({
         data: {
           name,
-          uid: await generateUID(10),
+          uid: generateAssetUID(new Date()),
           specs,
           status,
           notes,

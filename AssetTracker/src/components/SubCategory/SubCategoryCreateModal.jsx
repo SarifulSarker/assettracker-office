@@ -20,27 +20,12 @@ const schema = Yup.object().shape({
     .matches(/^[A-Za-z\s]+$/, "Name can only contain letters and spaces"),
 });
 
-const SubCategoryCreateModal = ({ opened, onClose, onSuccess }) => {
+const SubCategoryCreateModal = ({ opened, onClose, categories, onSuccess }) => {
   const queryClient = useQueryClient();
-
-  // Load existing categories
-  const { data } = useQuery({
-    queryKey: ["categories_for_sub"],
-    queryFn: getAllCategoriesApi,
-  });
-
-  // Make sure categories is always an array
-  const categories = data?.data?.categories || []; // ✅
-
-  const categoryOptions =
-    categories?.map((cat) => ({
-      label: cat.name,
-      value: cat.id.toString(),
-    })) || [];
 
   const form = useForm({
     initialValues: {
-      parentId: "",
+      parentId: "", // selected category
       name: "",
     },
     validate: yupResolver(schema),
@@ -50,9 +35,9 @@ const SubCategoryCreateModal = ({ opened, onClose, onSuccess }) => {
     mutationFn: (values) =>
       createCategoryApi({
         name: values.name,
-        parentId: Number(values.parentId), // important
+        parentId: Number(values.parentId),
       }),
-    onSuccess: () => {
+    onSuccess: (res) => {
       notifications.show({
         title: "Success",
         message: "Subcategory created successfully!",
@@ -61,14 +46,16 @@ const SubCategoryCreateModal = ({ opened, onClose, onSuccess }) => {
 
       form.reset();
       onClose();
-      queryClient.invalidateQueries(["categories"]);
-      if (onSuccess) onSuccess();
+
+      // call onSuccess with new subcategory
+      if (onSuccess) onSuccess(res.data);
+
+      queryClient.invalidateQueries(["categories"]); // refresh categories globally
     },
     onError: (error) => {
-      const msg = error.response?.data?.message || "Something went wrong";
       notifications.show({
         title: "Error",
-        message: msg,
+        message: error.response?.data?.message || "Something went wrong",
         position: "top-center",
       });
     },
@@ -87,16 +74,17 @@ const SubCategoryCreateModal = ({ opened, onClose, onSuccess }) => {
     >
       <form onSubmit={form.onSubmit(handleSubmit)}>
         <Stack>
-          {/* Select Category */}
           <Select
             allowDeselect={false}
             label="Select Category"
             placeholder="Choose category"
-            data={categoryOptions}
+            data={categories.map((cat) => ({
+              label: cat.name,
+              value: cat.id.toString(),
+            }))}
             {...form.getInputProps("parentId")}
           />
 
-          {/* Subcategory name */}
           <TextInput
             label="Subcategory Name"
             placeholder="Enter subcategory name"
