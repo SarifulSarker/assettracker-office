@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Box,
   Text,
@@ -12,6 +12,7 @@ import {
   ActionIcon,
   Image,
   Loader,
+  Modal,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { useForm } from "@mantine/form";
@@ -35,6 +36,10 @@ const AssetEdit = () => {
   const [images, setImages] = useState([]);
   // string = existing image
   // File = new image
+  const [uploadOpened, setUploadOpened] = useState(false);
+
+  const cameraRef = useRef(null);
+  const galleryRef = useRef(null);
 
   /* -------------------- QUERIES -------------------- */
   const { data: assetData, isLoading } = useQuery({
@@ -195,16 +200,56 @@ const AssetEdit = () => {
       </Box>
     );
   }
+  {
+    /* Camera input */
+  }
 
   return (
     <>
+      <input
+        type="file"
+        accept="image/*"
+        capture="environment"
+        multiple
+        ref={cameraRef}
+        style={{ display: "none" }}
+        onChange={handleAddImages}
+      />
+      ;{/* Gallery input */}
+      <input
+        type="file"
+        accept="image/*"
+        multiple
+        ref={galleryRef}
+        style={{ display: "none" }}
+        onChange={handleAddImages}
+      />
+      ;
       <PageTop PAGE_TITLE="Edit Asset" backBtn />
-
-      <Box maw={600} mx="auto">
+      <Box maw={600} mt={10} mx="auto">
         <Paper p="xl" withBorder radius="lg">
           <form onSubmit={form.onSubmit((v) => updateMutation.mutate(v))}>
             <Stack>
               <Text fw={700}>Asset Images (max 5)</Text>
+              <Modal
+                opened={uploadOpened}
+                onClose={() => setUploadOpened(false)}
+                title="Upload Image"
+                centered
+              >
+                <Stack>
+                  <Button onClick={() => cameraRef.current.click()}>
+                    📷 Take Photo
+                  </Button>
+
+                  <Button
+                    variant="light"
+                    onClick={() => galleryRef.current.click()}
+                  >
+                    🖼️ Choose from Gallery
+                  </Button>
+                </Stack>
+              </Modal>
 
               <Group>
                 {images.map((img, index) => (
@@ -233,19 +278,12 @@ const AssetEdit = () => {
 
                 {images.length < 5 && (
                   <Button
-                    component="label"
                     size="xs"
                     variant="outline"
                     style={{ height: 80 }}
+                    onClick={() => setUploadOpened(true)}
                   >
                     + Add
-                    <input
-                      hidden
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      onChange={handleAddImages}
-                    />
                   </Button>
                 )}
               </Group>

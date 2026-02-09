@@ -56,7 +56,7 @@ const Signup = () => {
     mutationFn: (value) => signUpApi(value),
 
     onSuccess: (res) => {
-      console.log(res);
+     
       //  Case 2: business error (success = false)
       if (!res?.success) {
         notifications.show({

@@ -1,6 +1,7 @@
 import React from "react";
 import { Flex, Button, TextInput, Select } from "@mantine/core";
 import { IconRefresh, IconPlus } from "@tabler/icons-react";
+import { usePermissions } from "../../hooks/useAuthPermissions.js";
 
 const BrandFilters = ({
   searchKey,
@@ -10,6 +11,8 @@ const BrandFilters = ({
   onRefresh,
   onCreate,
 }) => {
+  const { hasPermission } = usePermissions();
+
   return (
     <Flex justify="space-between" align="center" mb="sm">
       <Flex gap="sm" align="center">
@@ -20,7 +23,7 @@ const BrandFilters = ({
         />
 
         <Select
-         allowDeselect={false}
+          allowDeselect={false}
           w={130}
           value={status}
           onChange={onStatusChange}
@@ -34,14 +37,15 @@ const BrandFilters = ({
           <IconRefresh size={16} />
         </Button>
       </Flex>
-
-      <Button
-        leftSection={<IconPlus size={16} />}
-        onClick={onCreate}
-        style={{ backgroundColor: "#0f4794", color: "#fff", borderRadius: 8 }}
-      >
-        Create Brand
-      </Button>
+      {hasPermission("brand", "add") && (
+        <Button
+          leftSection={<IconPlus size={16} />}
+          onClick={onCreate}
+          style={{ backgroundColor: "#0f4794", color: "#fff", borderRadius: 8 }}
+        >
+          Create Brand
+        </Button>
+      )}
     </Flex>
   );
 };

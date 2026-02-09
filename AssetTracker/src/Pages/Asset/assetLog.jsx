@@ -13,7 +13,11 @@ import {
   Loader,
   Center,
   Flex,
+  Modal,
+  Box,
+  Overlay,
 } from "@mantine/core";
+import { Image as MantineImage } from "@mantine/core";
 import {
   getEmployeesByAssetApi,
   getAssetLogsByContextApi,
@@ -23,10 +27,12 @@ import PageTop from "../../components/global/PageTop";
 import { ASSET_LOG_CONTEXT } from "../../utils/ASSET_LOG_CONTEXT";
 import AssetContextLogs from "../../components/Asset/AssetContextLogs";
 import { IconCurrencyTaka } from "@tabler/icons-react";
-
+import { Carousel } from "@mantine/carousel";
 const AssetLog = () => {
   const { uid } = useParams();
   const [context, setContext] = useState(null);
+  const [opened, setOpened] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
 
   /* ---------------- Asset Info ---------------- */
   const { data: assetData, isLoading: assetLoading } = useQuery({
@@ -37,7 +43,7 @@ const AssetLog = () => {
 
   const asset = assetData?.data;
   const assetUID = uid;
-  console.log(asset?.images);
+  // console.log(asset?.images);
   /* ---------------- Logs ---------------- */
   const {
     data: AssignlogData,
@@ -88,32 +94,103 @@ const AssetLog = () => {
               <Stack spacing="sm">
                 {/* Asset basic info */}
 
-                {/* Asset Images - Right side / top */}
                 {/* Asset Images - Right/top side */}
+
                 {asset?.images && asset.images.length > 0 && (
                   <Stack spacing="xs" mt="sm">
-                    <Text size="sm" fw={500}>
+                    <Text size="sm" fw={600}>
                       Asset Images
                     </Text>
-                    <Group spacing="sm">
-                      {asset.images.map((img, idx) => (
-                        <img
-                          key={idx}
-                          src={`${import.meta.env.VITE_APP_BACKEND_BASE_URL}${img}`} // ✅ full URL
-                          
-                          alt={`Asset Image ${idx + 1}`}
-                          style={{
-                            width: 80,
-                            height: 80,
-                            objectFit: "cover",
-                            borderRadius: 4,
-                            border: "1px solid #e0e0e0",
-                          }}
-                        />
-                      ))}
-                    </Group>
+
+                    <Box
+                      onClick={() => {
+                        setActiveIndex(0);
+                        setOpened(true);
+                      }}
+                      style={{
+                        width: "30%",
+                        height: "150px",
+                        position: "relative",
+                        cursor: "pointer",
+                        borderRadius: 12,
+                        overflow: "hidden",
+                      }}
+                    >
+                      {/* Main thumbnail */}
+                      <MantineImage
+                        src={`${import.meta.env.VITE_APP_BACKEND_BASE_URL}${asset.images[0]}`}
+                        height={120}
+                        fit="cover"
+                      />
+
+                      {/* Overlay */}
+                      <Overlay
+                        gradient="linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%)"
+                        opacity={0.6}
+                        color="#000"
+                        radius="md"
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontWeight: 600,
+                          color: "white",
+                          transition: "opacity 0.3s",
+                          "&:hover": {
+                            opacity: 1,
+                          },
+                        }}
+                      >
+                        <span>Click to view gallery</span>
+                        <span style={{ fontSize: "0.75rem" }}>
+                          +{asset.images.length} photos
+                        </span>
+                      </Overlay>
+                    </Box>
                   </Stack>
                 )}
+                <Modal
+                  opened={opened}
+                  onClose={() => setOpened(false)}
+                  centered
+                  withCloseButton={true}
+                  padding={10}
+                  size="70%"
+                  lockScroll
+                  withinPortal
+                  trapFocus
+                  styles={{
+                    overlay: {
+                      backdropFilter: "blur(3px)",
+                    },
+                  }}
+                >
+                  <Carousel withIndicators initialSlide={activeIndex}>
+                    {asset?.images?.map((img, i) => (
+                      <Carousel.Slide key={i}>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <img
+                            src={`${import.meta.env.VITE_APP_BACKEND_BASE_URL}${img}`}
+                            style={{
+                              width: "98%",
+                              display: "flex",
+                              alignItems: "center",
+                              objectFit: "contain",
+                              marginBottom: "40px", // ✅ prevent cut
+                            }}
+                          />
+                        </div>
+                      </Carousel.Slide>
+                    ))}
+                  </Carousel>
+                </Modal>
 
                 <Text fw={600} component="div">
                   Asset: {asset?.name || "N/A"}

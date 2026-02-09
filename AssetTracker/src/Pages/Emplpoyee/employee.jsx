@@ -14,12 +14,14 @@ import EmployeeFilters from "../../components/Employee/EmployeeFilters.jsx";
 import EmployeeCreateModal from "../../components/Employee/EmployeeCreateModal.jsx";
 import EmployeeEditModal from "../../components/Employee/EmployeeEditModal.jsx";
 import EmployeeAssetsModal from "../../components/Employee/EmployeeAssetsModal.jsx";
+import { usePermissions } from "../../hooks/useAuthPermissions.js";
 
 import {
   getAllEmployeesApi,
   deleteEmployeeApi,
 } from "../../services/employee.js";
 import useDebounce from "../../hooks/useDebounce.js";
+import StandardFilters from "../../constants/StandardFilters.jsx";
 
 const PAGE_SIZE = 10;
 
@@ -36,6 +38,7 @@ const Employee = () => {
   const [employeeForAssets, setEmployeeForAssets] = useState(null);
 
   const debouncedSearch = useDebounce(searchKey, 1000);
+  const { hasPermission } = usePermissions();
 
   // Convert status string to boolean before sending to API
   const statusBool =
@@ -163,42 +166,47 @@ const Employee = () => {
       headerTitle: "Actions",
       row: (v, row) => (
         <Group spacing="xs">
-          <Tooltip label="Edit" withArrow position="top">
-            <Button
-              size="xs"
-              onClick={() => openEditModal(row)}
-              style={{ backgroundColor: "#3b82f6", color: "#fff" }}
-            >
-              <IconEdit size={14} />
-            </Button>
-          </Tooltip>
+          {hasPermission("employee", "edit") && (
+            <Tooltip label="Edit" withArrow position="top">
+              <Button
+                size="xs"
+                onClick={() => openEditModal(row)}
+                style={{ backgroundColor: "#3b82f6", color: "#fff" }}
+              >
+                <IconEdit size={14} />
+              </Button>
+            </Tooltip>
+          )}
 
-          <Tooltip
-            label={statusBool ? "Delete" : "Activate"}
-            withArrow
-            position="top"
-          >
-            <Button
-              size="xs"
-              onClick={() => openDeleteModal(row.uid)}
-              style={{
-                backgroundColor: statusBool ? "#ef4444" : "#10b981", // red if active, green if inactive
-                color: "#fff",
-              }}
+          {hasPermission("employee", "delete") && (
+            <Tooltip
+              label={statusBool ? "Delete" : "Activate"}
+              withArrow
+              position="top"
             >
-              {statusBool ? <IconTrash size={14} /> : <IconCheck size={14} />}
-            </Button>
-          </Tooltip>
-
-          <Tooltip label="View details" withArrow position="top">
-            <Button
-              size="xs"
-              onClick={() => openAssetsModal(row)}
-              style={{ backgroundColor: "#10b981", color: "#fff" }}
-            >
-              <IconEye size={14} />
-            </Button>
-          </Tooltip>
+              <Button
+                size="xs"
+                onClick={() => openDeleteModal(row.uid)}
+                style={{
+                  backgroundColor: statusBool ? "#ef4444" : "#10b981", // red if active, green if inactive
+                  color: "#fff",
+                }}
+              >
+                {statusBool ? <IconTrash size={14} /> : <IconCheck size={14} />}
+              </Button>
+            </Tooltip>
+          )}
+          {hasPermission("employee", "details") && (
+            <Tooltip label="View details" withArrow position="top">
+              <Button
+                size="xs"
+                onClick={() => openAssetsModal(row)}
+                style={{ backgroundColor: "#10b981", color: "#fff" }}
+              >
+                <IconEye size={14} />
+              </Button>
+            </Tooltip>
+          )}
         </Group>
       ),
     },
@@ -210,7 +218,15 @@ const Employee = () => {
 
       <TablePaperContent
         filters={
-          <EmployeeFilters
+          // <EmployeeFilters
+          //   searchKey={searchKey}
+          //   status={status}
+          //   onSearchChange={handleSearch}
+          //   onStatusChange={handleStatusChange}
+          //   onRefresh={handleRefresh}
+          //   onCreate={() => setCreateModalOpened(true)}
+          // />
+            <StandardFilters
             searchKey={searchKey}
             status={status}
             onSearchChange={handleSearch}

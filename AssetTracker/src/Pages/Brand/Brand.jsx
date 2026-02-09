@@ -17,6 +17,7 @@ import BrandEditModal from "../../components/Brand/BrandEditModal.jsx";
 import { getAllBrandsApi, deleteBrandApi } from "../../services/brand.js";
 import useDebounce from "../../hooks/useDebounce.js";
 import { usePermissions } from "../../hooks/useAuthPermissions.js";
+import StandardFilters from "../../constants/StandardFilters.jsx";
 
 const PAGE_SIZE = 10;
 
@@ -25,9 +26,9 @@ const Brand = () => {
 
   const { hasPermission } = usePermissions();
 
-  if (!hasPermission("brand", "view")) {
-    return <Text>No permission to view users</Text>;
-  }
+  // if (!hasPermission("brand", "view")) {
+  //   return <Text>No permission to view users</Text>;
+  // }
 
   const [page, setPage] = useState(1);
   const [searchKey, setSearchKey] = useState("");
@@ -183,7 +184,15 @@ const Brand = () => {
 
       <TablePaperContent
         filters={
-          <BrandFilters
+          // <BrandFilters
+          //   searchKey={searchKey}
+          //   status={status}
+          //   onSearchChange={handleSearch}
+          //   onStatusChange={handleStatusChange}
+          //   onRefresh={handleRefresh}
+          //   onCreate={() => setCreateModalOpened(true)}
+          // />
+          <StandardFilters
             searchKey={searchKey}
             status={status}
             onSearchChange={handleSearch}

@@ -1,6 +1,7 @@
 import React from "react";
 import { Flex, Button, TextInput, Select } from "@mantine/core";
 import { IconRefresh, IconPlus } from "@tabler/icons-react";
+import { usePermissions } from "../../hooks/useAuthPermissions.js";
 
 const EmployeeFilters = ({
   searchKey,
@@ -10,6 +11,8 @@ const EmployeeFilters = ({
   onRefresh,
   onCreate,
 }) => {
+  const { hasPermission } = usePermissions();
+
   return (
     <Flex justify="space-between" align="center" mb="sm">
       {/* Left: Search + Status + Refresh */}
@@ -21,7 +24,7 @@ const EmployeeFilters = ({
         />
 
         <Select
-         allowDeselect={false}
+          allowDeselect={false}
           placeholder="Select Status"
           value={status}
           onChange={onStatusChange}
@@ -37,13 +40,15 @@ const EmployeeFilters = ({
       </Flex>
 
       {/* Right: Create Employee */}
-      <Button
-        leftSection={<IconPlus size={16} />}
-        onClick={onCreate}
-        style={{ backgroundColor: "#0f4794", color: "#fff", borderRadius: 8 }}
-      >
-        Create Employee
-      </Button>
+      {hasPermission("employee", "add") && (
+        <Button
+          leftSection={<IconPlus size={16} />}
+          onClick={onCreate}
+          style={{ backgroundColor: "#0f4794", color: "#fff", borderRadius: 8 }}
+        >
+          Create Employee
+        </Button>
+      )}
     </Flex>
   );
 };

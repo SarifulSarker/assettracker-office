@@ -12,6 +12,7 @@ import CustomPagination from "../../components/global/CustomPagination";
 import DepartmentFilters from "../../components/department/DepartmentFilters";
 import DepartmentCreateModal from "../../components/department/DepartmentCreateModal.jsx";
 import DepartmentEditModal from "../../components/department/DepartmentEditModal";
+import { usePermissions } from "../../hooks/useAuthPermissions.js";
 
 import {
   getAllDepartmentsApi,
@@ -19,6 +20,7 @@ import {
 } from "../../services/department.js";
 import useDebounce from "../../hooks/useDebounce.js";
 import dayjs from "dayjs";
+import StandardFilters from "../../constants/StandardFilters.jsx";
 
 const PAGE_SIZE = 10;
 
@@ -33,6 +35,7 @@ const Department = () => {
   const [selectedDepartment, setSelectedDepartment] = useState(null);
 
   const debouncedSearch = useDebounce(searchKey, 1000);
+  const { hasPermission } = usePermissions();
 
   // Convert status string to boolean
   const statusBool =
@@ -140,32 +143,36 @@ const Department = () => {
       headerTitle: "Actions",
       row: (v, r) => (
         <Group spacing="xs">
-          <Tooltip label="Edit" withArrow>
-            <Button
-              size="xs"
-              onClick={() => openEditModal(r)}
-              style={{ backgroundColor: "#3b82f6", color: "#fff" }}
-            >
-              <IconEdit size={14} />
-            </Button>
-          </Tooltip>
+          {hasPermission("department", "edit") && (
+            <Tooltip label="Edit" withArrow>
+              <Button
+                size="xs"
+                onClick={() => openEditModal(r)}
+                style={{ backgroundColor: "#3b82f6", color: "#fff" }}
+              >
+                <IconEdit size={14} />
+              </Button>
+            </Tooltip>
+          )}
 
-          <Tooltip
-            label={statusBool ? "Delete" : "Activate"}
-            withArrow
-            position="top"
-          >
-            <Button
-              size="xs"
-              onClick={() => openDeleteModal(r.id)}
-              style={{
-                backgroundColor: statusBool ? "#ef4444" : "#10b981", // red if active, green if inactive
-                color: "#fff",
-              }}
+          {hasPermission("department", "delete") && (
+            <Tooltip
+              label={statusBool ? "Delete" : "Activate"}
+              withArrow
+              position="top"
             >
-              {statusBool ? <IconTrash size={14} /> : <IconCheck size={14} />}
-            </Button>
-          </Tooltip>
+              <Button
+                size="xs"
+                onClick={() => openDeleteModal(r.id)}
+                style={{
+                  backgroundColor: statusBool ? "#ef4444" : "#10b981", // red if active, green if inactive
+                  color: "#fff",
+                }}
+              >
+                {statusBool ? <IconTrash size={14} /> : <IconCheck size={14} />}
+              </Button>
+            </Tooltip>
+          )}
         </Group>
       ),
     },
@@ -177,7 +184,15 @@ const Department = () => {
 
       <TablePaperContent
         filters={
-          <DepartmentFilters
+          // <DepartmentFilters
+          //   searchKey={searchKey}
+          //   status={status}
+          //   onStatusChange={handleStatusChange}
+          //   onSearchChange={handleSearchChange}
+          //   onRefresh={handleRefresh}
+          //   onCreate={() => setCreateModalOpened(true)}
+          // />
+          <StandardFilters
             searchKey={searchKey}
             status={status}
             onStatusChange={handleStatusChange}

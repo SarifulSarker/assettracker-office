@@ -1,6 +1,7 @@
 import React from "react";
 import { Flex, Button, TextInput, Select } from "@mantine/core";
 import { IconRefresh, IconPlus } from "@tabler/icons-react";
+import { usePermissions } from "../../hooks/useAuthPermissions.js";
 
 const VendorFilters = ({
   searchKey,
@@ -10,6 +11,8 @@ const VendorFilters = ({
   onRefresh,
   onCreate,
 }) => {
+  const { hasPermission } = usePermissions();
+
   return (
     <Flex justify="space-between" align="center" mb="sm">
       <Flex gap="sm" align="center">
@@ -27,21 +30,22 @@ const VendorFilters = ({
             { value: "inactive", label: "Inactive" },
           ]}
           w={130}
-           allowDeselect={false}
+          allowDeselect={false}
         />
 
         <Button onClick={onRefresh}>
           <IconRefresh size={16} />
         </Button>
       </Flex>
-
-      <Button
-        leftSection={<IconPlus size={16} />}
-        onClick={onCreate}
-        style={{ backgroundColor: "#0f4794", color: "#fff", borderRadius: 8 }}
-      >
-        Create Vendor
-      </Button>
+      {hasPermission("vendor", "add") && (
+        <Button
+          leftSection={<IconPlus size={16} />}
+          onClick={onCreate}
+          style={{ backgroundColor: "#0f4794", color: "#fff", borderRadius: 8 }}
+        >
+          Create Vendor
+        </Button>
+      )}
     </Flex>
   );
 };

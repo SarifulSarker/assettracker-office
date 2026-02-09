@@ -28,8 +28,7 @@ const SidebarLink = ({
   };
 
   // Wrapper: if parent has a direct link
-  const Wrapper = ({ children }) =>
-    link ? (
+  const Wrapper = ({ children }) =>link ? (
       <Link
         to={link}
         style={{ textDecoration: "none" }}

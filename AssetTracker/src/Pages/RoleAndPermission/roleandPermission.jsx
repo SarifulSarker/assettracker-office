@@ -27,6 +27,8 @@ import TablePaperContent from "../../components/global/TablePaperContent.jsx";
 import RoleAndPermissionFilters from "../../components/RoleAndPermission/RoleAndPermissionFilters.jsx";
 import RoleAndPermissionCreateModel from "../../components/RoleAndPermission/RoleAndPermissionCreateModel.jsx";
 import RoleAndPermissionEditModel from "../../components/RoleAndPermission/RoleAndPermissionEditModel.jsx";
+import { usePermissions } from "../../hooks/useAuthPermissions.js";
+
 const PAGE_SIZE = 10;
 
 const RoleAndPermission = () => {
@@ -38,6 +40,7 @@ const RoleAndPermission = () => {
   const debouncedSearch = useDebounce(searchKey, 2000);
   const [editModalOpened, setEditModalOpened] = useState(false);
   const [selectedRole, setSelectedRole] = useState(null);
+  const { hasPermission } = usePermissions();
 
   const handleSearch = (e) => {
     setSearchKey(e.currentTarget.value);
@@ -90,7 +93,6 @@ const RoleAndPermission = () => {
   const total = data?.data?.total || 0;
 
   const openEditModal = (roles) => {
-  
     setSelectedRole(roles);
     setEditModalOpened(true);
   };
@@ -147,24 +149,28 @@ const RoleAndPermission = () => {
       headerTitle: "Actions",
       row: (v, row) => (
         <Group spacing="xs">
-          <Tooltip label="Edit role" withArrow position="top">
-            <Button
-              size="xs"
-              onClick={() => openEditModal(row)}
-              style={{ backgroundColor: "#3b82f6", color: "#fff" }}
-            >
-              <IconEdit size={14} />
-            </Button>
-          </Tooltip>
-          <Tooltip label="Delete role" withArrow position="top">
-            <Button
-              size="xs"
-              onClick={() => openDeleteModal(row.id)}
-              style={{ backgroundColor: "#ef4444", color: "#fff" }}
-            >
-              <IconTrash size={14} />
-            </Button>
-          </Tooltip>
+          {hasPermission("role", "edit") && (
+            <Tooltip label="Edit role" withArrow position="top">
+              <Button
+                size="xs"
+                onClick={() => openEditModal(row)}
+                style={{ backgroundColor: "#3b82f6", color: "#fff" }}
+              >
+                <IconEdit size={14} />
+              </Button>
+            </Tooltip>
+          )}
+          {hasPermission("role", "delete") && (
+            <Tooltip label="Delete role" withArrow position="top">
+              <Button
+                size="xs"
+                onClick={() => openDeleteModal(row.id)}
+                style={{ backgroundColor: "#ef4444", color: "#fff" }}
+              >
+                <IconTrash size={14} />
+              </Button>
+            </Tooltip>
+          )}
         </Group>
       ),
     },

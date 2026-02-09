@@ -19,6 +19,8 @@ import {
   deleteDesignationApi,
 } from "../../services/designation.js";
 import useDebounce from "../../hooks/useDebounce.js";
+import { usePermissions } from "../../hooks/useAuthPermissions.js";
+import StandardFilters from "../../constants/StandardFilters.jsx";
 
 const PAGE_SIZE = 10;
 
@@ -33,6 +35,7 @@ const Designation = () => {
   const [selectedDesignation, setSelectedDesignation] = useState(null);
 
   const debouncedSearch = useDebounce(searchKey, 1000);
+  const { hasPermission } = usePermissions();
 
   // Convert status string to boolean before sending API
   const statusBool =
@@ -134,28 +137,32 @@ const Designation = () => {
       headerTitle: "Actions",
       row: (v, r) => (
         <Group spacing="xs">
-          <Tooltip label="Edit" withArrow>
-            <Button size="xs" onClick={() => openEditModal(r)}>
-              <IconEdit size={14} />
-            </Button>
-          </Tooltip>
+          {hasPermission("designation", "edit") && (
+            <Tooltip label="Edit" withArrow>
+              <Button size="xs" onClick={() => openEditModal(r)}>
+                <IconEdit size={14} />
+              </Button>
+            </Tooltip>
+          )}
 
-          <Tooltip
-            label={statusBool ? "Delete" : "Activate"}
-            withArrow
-            position="top"
-          >
-            <Button
-              size="xs"
-              onClick={() => openDeleteModal(r.id)}
-              style={{
-                backgroundColor: statusBool ? "#ef4444" : "#10b981", // red if active, green if inactive
-                color: "#fff",
-              }}
+          {hasPermission("designation", "delete") && (
+            <Tooltip
+              label={statusBool ? "Delete" : "Activate"}
+              withArrow
+              position="top"
             >
-              {statusBool ? <IconTrash size={14} /> : <IconCheck size={14} />}
-            </Button>
-          </Tooltip>
+              <Button
+                size="xs"
+                onClick={() => openDeleteModal(r.id)}
+                style={{
+                  backgroundColor: statusBool ? "#ef4444" : "#10b981", // red if active, green if inactive
+                  color: "#fff",
+                }}
+              >
+                {statusBool ? <IconTrash size={14} /> : <IconCheck size={14} />}
+              </Button>
+            </Tooltip>
+          )}
         </Group>
       ),
     },
@@ -167,11 +174,20 @@ const Designation = () => {
 
       <TablePaperContent
         filters={
-          <DesignationFilters
+          // <DesignationFilters
+          //   searchKey={searchKey}
+          //   status={status}
+          //   onStatusChange={handleStatusChange}
+          //   onSearchChange={handleSearchChange}
+          //   onRefresh={handleRefresh}
+          //   onCreate={() => setCreateModalOpened(true)}
+          // />
+            <StandardFilters
             searchKey={searchKey}
-            status={status}
+            status={status} 
             onStatusChange={handleStatusChange}
             onSearchChange={handleSearchChange}
+           
             onRefresh={handleRefresh}
             onCreate={() => setCreateModalOpened(true)}
           />

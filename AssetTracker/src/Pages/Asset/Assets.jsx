@@ -6,6 +6,7 @@ import {
   IconDownload,
   IconEdit,
   IconHistory,
+  IconLogs,
   IconTrash,
 } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -23,23 +24,14 @@ import TablePaperContent from "../../components/global/TablePaperContent.jsx";
 import downloadAssetsCSV from "../../helpers/downloadAssetsCSV.js";
 import { deleteAssetApi, getAllAssetsApi } from "../../services/asset.js";
 import { usePermissions } from "../../hooks/useAuthPermissions.js";
+import StandardFilters from "../../constants/StandardFilters.jsx";
 const PAGE_SIZE = 10;
 
 const Assets = () => {
-  // if (
-  //   !hasPermission({
-  //     module: "assets",
-  //     permission: "create",
-  //     moduleCheck: false,
-  //   })
-  // ) {
-  //   return <AccessDenied />;
-  // }
+
 
   const { hasPermission } = usePermissions();
 
-  if (!hasPermission("user", "view"))
-    return <Text>No permission to view users</Text>;
 
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -215,53 +207,58 @@ const Assets = () => {
       headerTitle: "Actions",
       row: (v, row) => (
         <Group spacing="xs">
-          <Tooltip label="Edit Asset" withArrow>
-            <Button
-              size="xs"
-              onClick={() => navigate(`/assets/edit/${row.uid}`)}
-              style={{ backgroundColor: "#3b82f6", color: "#fff" }}
+          {hasPermission("asset", "edit") && (
+            <Tooltip label="Edit Asset" withArrow>
+              <Button
+                size="xs"
+                onClick={() => navigate(`/assets/edit/${row.uid}`)}
+                style={{ backgroundColor: "#3b82f6", color: "#fff" }}
+              >
+                <IconEdit size={14} />
+              </Button>
+            </Tooltip>
+          )}
+          {hasPermission("asset", "delete") && (
+            <Tooltip
+              label={statusBool ? "Delete" : "Activate"}
+              withArrow
+              position="top"
             >
-              <IconEdit size={14} />
-            </Button>
-          </Tooltip>
+              <Button
+                size="xs"
+                onClick={() => openDeleteModal(row.uid)}
+                style={{
+                  backgroundColor: statusBool ? "#ef4444" : "#10b981", // red if active, green if inactive
+                  color: "#fff",
+                }}
+              >
+                {statusBool ? <IconTrash size={14} /> : <IconCheck size={14} />}
+              </Button>
+            </Tooltip>
+          )}
 
-          <Tooltip
-            label={statusBool ? "Delete" : "Activate"}
-            withArrow
-            position="top"
-          >
-            <Button
-              size="xs"
-              onClick={() => openDeleteModal(row.uid)}
-              style={{
-                backgroundColor: statusBool ? "#ef4444" : "#10b981", // red if active, green if inactive
-                color: "#fff",
-              }}
-            >
-              {statusBool ? <IconTrash size={14} /> : <IconCheck size={14} />}
-            </Button>
-          </Tooltip>
-
-          <Tooltip label="Asset Details" withArrow>
-            <Button
-              size="xs"
-              onClick={() => navigate(`/assets/asset-log/${row.uid}`)}
-              style={{ backgroundColor: "#10b981", color: "#fff" }}
-            >
-              <IconHistory size={14} />
-            </Button>
-          </Tooltip>
-
-          {/* QR Code */}
-          <Tooltip label="Print QR Code" withArrow>
-            <Button
-              size="xs"
-              onClick={() => navigate(`/assets/qr/${row.uid}`)}
-              style={{ backgroundColor: "#6366f1", color: "#fff" }}
-            >
-              <IconQrcode size={14} />
-            </Button>
-          </Tooltip>
+          {hasPermission("asset", "logs") && (
+            <Tooltip label="Asset Log&Details" withArrow>
+              <Button
+                size="xs"
+                onClick={() => navigate(`/assets/asset-log/${row.uid}`)}
+                style={{ backgroundColor: "#10b981", color: "#fff" }}
+              >
+                <IconLogs size={14} />
+              </Button>
+            </Tooltip>
+          )}
+          {hasPermission("asset", "QR") && (
+            <Tooltip label="Print QR Code" withArrow>
+              <Button
+                size="xs"
+                onClick={() => navigate(`/assets/qr/${row.uid}`)}
+                style={{ backgroundColor: "#6366f1", color: "#fff" }}
+              >
+                <IconQrcode size={14} />
+              </Button>
+            </Tooltip>
+          )}
         </Group>
       ),
     },
@@ -273,7 +270,15 @@ const Assets = () => {
 
       <TablePaperContent
         filters={
-          <AssetFilters
+          // <AssetFilters
+          //   searchKey={searchKey}
+          //   onSearchChange={handleSearchChange}
+          //   status={status}
+          //   onStatusChange={handleStatusChange}
+          //   onRefresh={handleRefresh}
+          //   onCreate={() => navigate("/assets/create")}
+          // />
+          <StandardFilters
             searchKey={searchKey}
             onSearchChange={handleSearchChange}
             status={status}

@@ -6,14 +6,19 @@ export const MODULES = [
     permissions: ["view", "add", "edit", "delete"],
   },
   {
+    key: "role",
+    label: "Role",
+    permissions: ["view", "add", "edit", "delete"],
+  },
+  {
     key: "asset",
     label: "Asset",
-    permissions: ["view", "add", "edit", "delete"],
+    permissions: ["view", "add", "edit", "delete", "logs", "QR"],
   },
   {
     key: "employee",
     label: "Employee",
-    permissions: ["view", "add", "edit", "delete"],
+    permissions: ["view", "add", "edit", "delete", "details"],
   },
   {
     key: "asset_assignment",

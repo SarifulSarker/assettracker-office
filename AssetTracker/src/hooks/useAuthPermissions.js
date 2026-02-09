@@ -15,8 +15,7 @@ export const usePermissions = () => {
 
   const role = useSelector((state) => state.auth.user?.role);
 
-  const hasPermission = (module, action) =>
-    checkPermission(permissions, module, action, role);
+  const hasPermission = (module, action) =>checkPermission(permissions, module, action, role);
 
   return { permissions, role, hasPermission };
 };

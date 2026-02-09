@@ -21,6 +21,8 @@ import { IconCheck, IconEdit, IconTrash } from "@tabler/icons-react";
 import SubCategoryCreateModal from "../../components/SubCategory/SubCategoryCreateModal.jsx";
 import useDebounce from "../../hooks/useDebounce.js";
 import SubCategoryEditModal from "../../components/Category/SubCategoryEditModal.jsx";
+import { usePermissions } from "../../hooks/useAuthPermissions.js";
+import useResponsive from "../../utils/useResponsive.js";
 
 const PAGE_SIZE = 10;
 
@@ -31,6 +33,7 @@ const CategoryPage = () => {
   const [selectedType, setSelectedType] = useState("category");
   const [searchKey, setSearchKey] = useState("");
   const [page, setPage] = useState(1);
+  const { hasPermission } = usePermissions();
 
   const [createModalOpened, setCreateModalOpened] = useState(false);
   const [CreateSubCategoryOpened, setCreateSubCategoryOpened] = useState(false);
@@ -41,6 +44,7 @@ const CategoryPage = () => {
   const statusBool =
     status === "active" ? true : status === "inactive" ? false : undefined;
   const [editSubCategoryOpened, setEditSubCategoryOpened] = useState(false);
+  const { isMobile } = useResponsive();
 
   // fetch categories
   const { data, isPending, isLoading, isRefetching } = useQuery({
@@ -85,7 +89,7 @@ const CategoryPage = () => {
     .filter((item) =>
       searchKey
         ? item.name.toLowerCase().includes(searchKey.toLowerCase())
-        : true
+        : true,
     );
 
   // Open edit modal
@@ -123,11 +127,13 @@ const CategoryPage = () => {
   const openDeleteModal = (id) => {
     modals.openConfirmModal({
       title: "Are you sure?",
-      children:     <Text size="sm">
-                {statusBool
-                  ? "Do you want to delete this items?"
-                  : "Do you want to activate this items?"}
-              </Text>,
+      children: (
+        <Text size="sm">
+          {statusBool
+            ? "Do you want to delete this items?"
+            : "Do you want to activate this items?"}
+        </Text>
+      ),
       labels: { confirm: "Confirm", cancel: "Cancel" },
       confirmProps: { color: "red" },
       onConfirm: () => deleteMutation.mutate(id),
@@ -155,32 +161,36 @@ const CategoryPage = () => {
       headerTitle: "Actions",
       row: (v, row) => (
         <Group spacing="xs">
-          <Tooltip label="Edit" position="top" withArrow>
-            <Button
-              size="xs"
-              onClick={() => openEditModal(row)}
-              style={{ backgroundColor: "#3b82f6", color: "#fff" }}
-            >
-              <IconEdit size={14} />
-            </Button>
-          </Tooltip>
+          {hasPermission(row.type, "edit") && (
+            <Tooltip label="Edit" position="top" withArrow>
+              <Button
+                size="xs"
+                onClick={() => openEditModal(row)}
+                style={{ backgroundColor: "#3b82f6", color: "#fff" }}
+              >
+                <IconEdit size={14} />
+              </Button>
+            </Tooltip>
+          )}
 
-          <Tooltip
-            label={statusBool ? "Delete" : "Activate"}
-            withArrow
-            position="top"
-          >
-            <Button
-              size="xs"
-              onClick={() => openDeleteModal(row.id)}
-              style={{
-                backgroundColor: statusBool ? "#ef4444" : "#10b981", // red if active, green if inactive
-                color: "#fff",
-              }}
+          {hasPermission(row.type, "delete") && (
+            <Tooltip
+              label={statusBool ? "Delete" : "Activate"}
+              withArrow
+              position="top"
             >
-              {statusBool ? <IconTrash size={14} /> : <IconCheck size={14} />}
-            </Button>
-          </Tooltip>
+              <Button
+                size="xs"
+                onClick={() => openDeleteModal(row.id)}
+                style={{
+                  backgroundColor: statusBool ? "#ef4444" : "#10b981",
+                  color: "#fff",
+                }}
+              >
+                {statusBool ? <IconTrash size={14} /> : <IconCheck size={14} />}
+              </Button>
+            </Tooltip>
+          )}
         </Group>
       ),
     },
@@ -197,7 +207,12 @@ const CategoryPage = () => {
 
   return (
     <div>
-      <PageTop PAGE_TITLE="Category & Subcategory Management" backBtn={false} />
+      {!isMobile && (
+        <PageTop
+          PAGE_TITLE="Category & Subcategory Management"
+          backBtn={false}
+        />
+      )}
 
       <TablePaperContent
         filters={

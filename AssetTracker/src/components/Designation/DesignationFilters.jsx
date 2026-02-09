@@ -1,6 +1,7 @@
 import React from "react";
 import { Flex, Button, TextInput, Select } from "@mantine/core";
 import { IconRefresh, IconPlus } from "@tabler/icons-react";
+import { usePermissions } from "../../hooks/useAuthPermissions.js";
 
 const DesignationFilters = ({
   searchKey,
@@ -10,6 +11,8 @@ const DesignationFilters = ({
   onRefresh,
   onCreate,
 }) => {
+  const { hasPermission } = usePermissions();
+
   return (
     <Flex justify="space-between" align="center" mb="sm">
       {/* Left: Search + Status + Refresh */}
@@ -28,7 +31,7 @@ const DesignationFilters = ({
             { value: "active", label: "Active" },
             { value: "inactive", label: "Inactive" },
           ]}
-           allowDeselect={false}
+          allowDeselect={false}
         />
 
         <Button onClick={onRefresh}>
@@ -37,13 +40,15 @@ const DesignationFilters = ({
       </Flex>
 
       {/* Right: Create Designation */}
-      <Button
-        leftSection={<IconPlus size={16} />}
-        onClick={onCreate}
-        style={{ backgroundColor: "#0f4794", color: "#fff", borderRadius: 8 }}
-      >
-        Create Designation
-      </Button>
+      {hasPermission("designation", "add") && (
+        <Button
+          leftSection={<IconPlus size={16} />}
+          onClick={onCreate}
+          style={{ backgroundColor: "#0f4794", color: "#fff", borderRadius: 8 }}
+        >
+          Create Designation
+        </Button>
+      )}
     </Flex>
   );
 };

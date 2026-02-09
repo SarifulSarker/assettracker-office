@@ -147,7 +147,7 @@ const AssetCreate = () => {
     <>
       <PageTop PAGE_TITLE="Create Asset" backBtn />
 
-      <Stack maw={700} mx="auto">
+      <Stack maw={700} mt={10} mx="auto">
         <Paper p="xl" shadow="md" withBorder radius="lg">
           <Text fw={700} size="xl" mb="md">
             Create New Asset

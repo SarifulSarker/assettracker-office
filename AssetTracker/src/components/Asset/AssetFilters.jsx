@@ -1,8 +1,18 @@
 import React from "react";
 import { Flex, Button, TextInput, Select } from "@mantine/core";
 import { IconRefresh, IconPlus } from "@tabler/icons-react";
+import { usePermissions } from "../../hooks/useAuthPermissions.js";
 
-const AssetFilters = ({ searchKey, onSearchChange, status, onStatusChange, onRefresh, onCreate }) => {
+const AssetFilters = ({
+  searchKey,
+  onSearchChange,
+  status,
+  onStatusChange,
+  onRefresh,
+  onCreate,
+}) => {
+  const { hasPermission } = usePermissions();
+
   return (
     <Flex justify="space-between" align="center" mb="sm">
       {/* Left: Search + Status + Refresh */}
@@ -14,7 +24,7 @@ const AssetFilters = ({ searchKey, onSearchChange, status, onStatusChange, onRef
         />
 
         <Select
-         allowDeselect={false}
+          allowDeselect={false}
           placeholder="Select Status"
           value={status}
           onChange={onStatusChange}
@@ -30,13 +40,15 @@ const AssetFilters = ({ searchKey, onSearchChange, status, onStatusChange, onRef
       </Flex>
 
       {/* Right: Create Asset */}
-      <Button
-        leftSection={<IconPlus size={16} />}
-        onClick={onCreate}
-        style={{ backgroundColor: "#0f4794", color: "#fff", borderRadius: 8 }}
-      >
-        Create Asset
-      </Button>
+      {hasPermission("asset", "add") && (
+        <Button
+          leftSection={<IconPlus size={16} />}
+          onClick={onCreate}
+          style={{ backgroundColor: "#0f4794", color: "#fff", borderRadius: 8 }}
+        >
+          Create Asset
+        </Button>
+      )}
     </Flex>
   );
 };

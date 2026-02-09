@@ -17,10 +17,12 @@ import {
   unassignAssetApi,
 } from "../../services/assetMapping.js";
 import { notifications } from "@mantine/notifications";
+import { usePermissions } from "../../hooks/useAuthPermissions.js";
 
 const EmployeeAssetsModal = ({ opened, onClose, employee }) => {
   const [selectedAssets, setSelectedAssets] = useState([]);
   const queryClient = useQueryClient();
+  const { hasPermission } = usePermissions();
 
   const {
     data: response,
@@ -50,7 +52,7 @@ const EmployeeAssetsModal = ({ opened, onClose, employee }) => {
 
   const toggleSelectAsset = (id) => {
     setSelectedAssets((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
   };
 
@@ -103,10 +105,13 @@ const EmployeeAssetsModal = ({ opened, onClose, employee }) => {
           assignments.map((a) => (
             <Paper key={a.id} p="md" withBorder radius="md">
               <Group align="flex-start">
-                <Checkbox
-                  checked={selectedAssets.includes(a.id)}
-                  onChange={() => toggleSelectAsset(a.id)}
-                />
+                {hasPermission("asset_assignment", "unassign") && (
+                  <Checkbox
+                    checked={selectedAssets.includes(a.id)}
+                    onChange={() => toggleSelectAsset(a.id)}
+                  />
+                )}
+
                 <Text fw={600}>{a.asset?.name || "Unknown Asset"}</Text>
 
                 <Group spacing="xs" ml="auto">
@@ -140,7 +145,8 @@ const EmployeeAssetsModal = ({ opened, onClose, employee }) => {
         )}
 
         {/* Bulk unassign button */}
-        {assignments.length > 0 && (
+
+        {assignments.length > 0 && hasPermission("asset_assignment", "unassign") && (
           <Button color="red" onClick={confirmUnassignSelected}>
             Select & Unassign
           </Button>

@@ -84,7 +84,7 @@ const ForgotPassword = () => {
               }}
               variant="subtle"
               size="compact-sm"
-              color={hexToRgba(COLORS.accent)}
+              color={hexToRgba(COLORS.app_color)}
             >
               Click here
             </Button>

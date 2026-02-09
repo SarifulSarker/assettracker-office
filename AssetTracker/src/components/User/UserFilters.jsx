@@ -1,8 +1,18 @@
 import React from "react";
 import { Flex, Button, TextInput, Select, Group } from "@mantine/core";
 import { IconRefresh, IconPlus, IconUserShield } from "@tabler/icons-react";
+import { usePermissions } from "../../hooks/useAuthPermissions.js";
 
-const UserFilters = ({ searchKey, onSearchChange, onRefresh, onCreate, status, onStatusChange }) => {
+const UserFilters = ({
+  searchKey,
+  onSearchChange,
+  onRefresh,
+  onCreate,
+  status,
+  onStatusChange,
+}) => {
+  const { hasPermission } = usePermissions();
+
   return (
     <Flex justify="space-between" align="center" mb="sm">
       {/* Left: Search + Status + Refresh */}
@@ -21,7 +31,7 @@ const UserFilters = ({ searchKey, onSearchChange, onRefresh, onCreate, status, o
             { value: "active", label: "Active" },
             { value: "inactive", label: "Inactive" },
           ]}
-           allowDeselect={false}
+          allowDeselect={false}
         />
 
         <Button onClick={onRefresh}>
@@ -31,19 +41,19 @@ const UserFilters = ({ searchKey, onSearchChange, onRefresh, onCreate, status, o
 
       {/* Right: Create User Button */}
       <Group>
-         <Button
-        leftSection={<IconPlus size={16} />}
-        onClick={onCreate}
-        style={{
-          backgroundColor: "#0f4794",
-          color: "#fff",
-          borderRadius: 8,
-        }}
-      >
-        Create User
-      </Button>
-
-      
+        {hasPermission("user", "add") && (
+          <Button
+            leftSection={<IconPlus size={16} />}
+            onClick={onCreate}
+            style={{
+              backgroundColor: "#0f4794",
+              color: "#fff",
+              borderRadius: 8,
+            }}
+          >
+            Create User
+          </Button>
+        )}
       </Group>
     </Flex>
   );

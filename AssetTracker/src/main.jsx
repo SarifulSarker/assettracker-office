@@ -17,6 +17,9 @@ import "@mantine/core/styles.css";
 
 import "@mantine/tiptap/styles.css";
 // create query client
+import '@mantine/core/styles.css';
+
+import '@mantine/carousel/styles.css';
 
 const queryClient = new QueryClient();
 

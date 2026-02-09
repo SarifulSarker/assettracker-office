@@ -21,11 +21,13 @@ import { logout } from "../store/reducers/authReducer";
 import { modals } from "@mantine/modals";
 import HeaderContent from "../components/HeaderContent";
 import Logo from "../assets/Logo SVG.svg";
+import useResponsive from "../utils/useResponsive"; // je hook tumi banayechile
 
 const PrivateLayout = () => {
   const [opened, { toggle, close }] = useDisclosure(false);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { isMobile, isTablet } = useResponsive();
 
   const handleLogout = () => {
     dispatch(logout());
@@ -71,25 +73,29 @@ const PrivateLayout = () => {
         }}
       >
         <Flex
-          align="center" // vertically center everything
-          justify="space-between" // push first child left, second child right
+          align="center"
+          justify="space-between"
           h="100%"
-          px="lg"
+          px={isMobile ? "sm" : "lg"} // padding adjust
         >
           {/* Left side: burger + logo */}
-          <Flex align="center" gap="md">
+          <Flex align="center" gap={isMobile ? "sm" : "md"}>
             <Burger
               opened={opened}
               onClick={toggle}
-              hiddenFrom="md"
-              size="sm"
-              color={COLORS.secondary}
+              hiddenFrom="md" // Mantine automatically hides burger from md+ screens
+              size={isMobile ? "sm" : "md"}
+              color="#ffffff"
             />
             <Box
               component="img"
               src={Logo}
               alt="Logo"
-              style={{ width: "auto", marginLeft: -44, height: 57 }}
+              style={{
+                width: isMobile ? 160 : "auto", // responsive width
+                height: isMobile ? 45 : 57,
+                marginLeft: isMobile ? -20 : -44,
+              }}
             />
           </Flex>
 
@@ -113,18 +119,17 @@ const PrivateLayout = () => {
           <SidebarLinks onClickMobile={close} />
         </ScrollArea>
         <Button
-          leftSection={<IconLogout size={20} />} // icon একটু বড়
+          leftSection={<IconLogout size={20} />}
           onClick={handleLogoutModal}
           fullWidth
           variant="light"
           color="red"
           style={{
-          
             borderRadius: 14,
             fontWeight: 600,
             justifyContent: "center",
-            marginBottom: 16, // ⭐ down margin
-            fontSize: 16, // text একটু বড়
+            marginBottom: 16,
+            fontSize: 16,
           }}
         >
           Logout

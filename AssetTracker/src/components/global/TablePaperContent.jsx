@@ -9,9 +9,9 @@ const TablePaperContent = ({
 }) => {
   return (
     <Paper
-      // shadow="xs"
+     
       p="md"
-      // mt="20px"
+     
       style={{
         height: "calc(100vh - 130px)",
       }}

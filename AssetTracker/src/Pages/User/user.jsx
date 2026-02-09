@@ -13,6 +13,8 @@ import PageTop from "../../components/global/PageTop.jsx";
 import UserFilters from "../../components/User/UserFilters.jsx";
 import TablePaperContent from "../../components/global/TablePaperContent";
 import useDebounce from "../../hooks/useDebounce.js";
+import { usePermissions } from "../../hooks/useAuthPermissions.js";
+import StandardFilters from "../../constants/StandardFilters.jsx";
 
 const PAGE_SIZE = 10;
 
@@ -24,6 +26,7 @@ const User = () => {
   const [searchKey, setSearchKey] = useState("");
   const [status, setStatus] = useState("active"); // default active
   const debouncedSearch = useDebounce(searchKey, 2000);
+  const { hasPermission } = usePermissions();
 
   const handleSearch = (e) => {
     setSearchKey(e.currentTarget.value);
@@ -105,30 +108,35 @@ const User = () => {
       headerTitle: "Actions",
       row: (v, row) => (
         <Group spacing="xs">
-          <Tooltip label="Edit user" withArrow position="top">
-            <Button
-              size="xs"
-              onClick={() => {
-                navigate(`/user/edit/${row.uid}`);
-              }}
-              style={{ backgroundColor: "#3b82f6", color: "#fff" }}
+          {hasPermission("user", "edit") && (
+            <Tooltip label="Edit user" withArrow position="top">
+              <Button
+                size="xs"
+                onClick={() => {
+                  navigate(`/user/edit/${row.uid}`);
+                }}
+                style={{ backgroundColor: "#3b82f6", color: "#fff" }}
+              >
+                <IconEdit size={14} />
+              </Button>
+            </Tooltip>
+          )}
+
+          {hasPermission("user", "delete") && (
+            <Tooltip
+              label={statusBool ? "Delete" : "Activate"}
+              withArrow
+              position="top"
             >
-              <IconEdit size={14} />
-            </Button>
-          </Tooltip>
-          <Tooltip
-            label={statusBool ? "Delete" : "Activate"}
-            withArrow
-            position="top"
-          >
-            <Button
-              size="xs"
-              onClick={() => openDeleteModal(row.uid)}
-              style={{ backgroundColor: "#ef4444", color: "#fff" }}
-            >
-              <IconTrash size={14} />
-            </Button>
-          </Tooltip>
+              <Button
+                size="xs"
+                onClick={() => openDeleteModal(row.uid)}
+                style={{ backgroundColor: "#ef4444", color: "#fff" }}
+              >
+                {statusBool ? <IconTrash size={14} /> : <IconCheck size={14} />}
+              </Button>
+            </Tooltip>
+          )}
         </Group>
       ),
     },
@@ -136,17 +144,17 @@ const User = () => {
 
   return (
     <div>
-     
       <TablePaperContent
         filters={
-          <UserFilters
+        
+
+          <StandardFilters
             searchKey={searchKey}
             onSearchChange={handleSearch}
             onRefresh={handleRefresh}
             onCreate={() => navigate("/user/create")}
             status={status}
             onStatusChange={handleStatusChange}
-          
           />
         }
         filterBadges={null}

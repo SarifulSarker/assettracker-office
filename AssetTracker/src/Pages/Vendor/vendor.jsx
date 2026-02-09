@@ -16,6 +16,8 @@ import VendorEditModal from "../../components/Vendor/EditVendorModal.jsx";
 
 import { getAllVendorsApi, deleteVendorApi } from "../../services/vendor.js";
 import useDebounce from "../../hooks/useDebounce.js";
+import { usePermissions } from "../../hooks/useAuthPermissions.js";
+import StandardFilters from "../../constants/StandardFilters.jsx";
 
 const PAGE_SIZE = 10;
 
@@ -30,6 +32,7 @@ const Vendor = () => {
   const [selectedVendor, setSelectedVendor] = useState(null);
 
   const debouncedSearch = useDebounce(searchKey, 1000);
+  const { hasPermission } = usePermissions();
 
   // 🔁 convert status string → boolean
   const statusBool =
@@ -114,28 +117,32 @@ const Vendor = () => {
       headerTitle: "Actions",
       row: (v, r) => (
         <Group spacing="xs">
-          <Tooltip label="Edit" withArrow>
-            <Button size="xs" onClick={() => openEditModal(r)}>
-              <IconEdit size={14} />
-            </Button>
-          </Tooltip>
+          {hasPermission("vendor", "edit") && (
+            <Tooltip label="Edit" withArrow>
+              <Button size="xs" onClick={() => openEditModal(r)}>
+                <IconEdit size={14} />
+              </Button>
+            </Tooltip>
+          )}
 
-          <Tooltip
-            label={statusBool ? "Delete" : "Activate"}
-            withArrow
-            position="top"
-          >
-            <Button
-              size="xs"
-              onClick={() => openDeleteModal(r.id)}
-              style={{
-                backgroundColor: statusBool ? "#ef4444" : "#10b981", // red if active, green if inactive
-                color: "#fff",
-              }}
+          {hasPermission("vendor", "delete") && (
+            <Tooltip
+              label={statusBool ? "Delete" : "Activate"}
+              withArrow
+              position="top"
             >
-              {statusBool ? <IconTrash size={14} /> : <IconCheck size={14} />}
-            </Button>
-          </Tooltip>
+              <Button
+                size="xs"
+                onClick={() => openDeleteModal(r.id)}
+                style={{
+                  backgroundColor: statusBool ? "#ef4444" : "#10b981", // red if active, green if inactive
+                  color: "#fff",
+                }}
+              >
+                {statusBool ? <IconTrash size={14} /> : <IconCheck size={14} />}
+              </Button>
+            </Tooltip>
+          )}
         </Group>
       ),
     },
@@ -154,7 +161,15 @@ const Vendor = () => {
 
       <TablePaperContent
         filters={
-          <VendorFilters
+          // <VendorFilters
+          //   searchKey={searchKey}
+          //   status={status}
+          //   onSearchChange={handleSearch}
+          //   onStatusChange={handleStatusChange}
+          //   onRefresh={handleRefresh}
+          //   onCreate={() => setCreateModalOpened(true)}
+          // />
+           <StandardFilters
             searchKey={searchKey}
             status={status}
             onSearchChange={handleSearch}
