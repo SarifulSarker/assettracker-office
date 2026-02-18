@@ -7,11 +7,11 @@ class AssetAssignmentController {
       const result = await AssetAssignmentService.assignAssetsToEmployee(
         employeeId,
         assetIds,
-        req.user
+        req.user,
       );
 
       // use statusCode from service response
-      return res.status(result.statusCode || 200).json(result);
+      return res.status(result.responseCode || 200).json(result);
     } catch (error) {
       console.error("Assign Assets Controller Error:", error);
       return res.status(500).json({
@@ -25,10 +25,9 @@ class AssetAssignmentController {
   async getAssetsByEmployee(req, res) {
     try {
       const employeeId = parseInt(req.params.id);
-      const result = await AssetAssignmentService.getAssetsByEmployee(
-        employeeId
-      );
-      return res.status(result.statusCode || 200).json(result);
+      const result =
+        await AssetAssignmentService.getAssetsByEmployee(employeeId);
+      return res.status(result.responseCode || 200).json(result);
     } catch (error) {
       console.error("Get Assets By Employee Controller Error:", error);
       return res.status(500).json({
@@ -59,7 +58,7 @@ class AssetAssignmentController {
     try {
       // Expect an array of assignment IDs in the body
       const { assignmentIds } = req.body;
-     
+
       if (
         !assignmentIds ||
         !Array.isArray(assignmentIds) ||
@@ -72,9 +71,8 @@ class AssetAssignmentController {
       }
 
       // Call the updated service for bulk unassign
-      const response = await AssetAssignmentService.unassignAssetService(
-        assignmentIds
-      );
+      const response =
+        await AssetAssignmentService.unassignAssetService(assignmentIds);
 
       return res.status(response.statusCode || 200).json(response);
     } catch (error) {
@@ -114,9 +112,9 @@ class AssetAssignmentController {
 
       const result = await AssetAssignmentService.getLogsByAssetAndContext(
         assetUId,
-        context
+        context,
       );
-      return res.status(result.statusCode || 200).json(result);
+      return res.status(result.responseCode || 200).json(result);
     } catch (error) {
       console.error("AssetLogController Error:", error);
       return res.status(500).json({
@@ -135,15 +133,40 @@ class AssetAssignmentController {
 
       const response = await AssetAssignmentService.getAssetDetails(
         uid,
-        context
+        context,
       );
 
-      return res.status(response.statusCode || 200).json(response);
+      return res.status(response.responseCode || 200).json(response);
     } catch (err) {
       console.error("AssetController Error:", err);
       return res.status(500).json({
         success: false,
         message: "Server error",
+      });
+    }
+  }
+
+  //for report
+
+  async getReportData(req, res) {
+    try {
+      const page = parseInt(req.query.page) || 1;
+      const pageSize = parseInt(req.query.pageSize) || 10;
+      const exportAll = req.query.exportAll === "true"; 
+
+      const result = await AssetAssignmentService.getAssetAssignmentData(
+        page,
+        pageSize,
+        exportAll,
+      );
+
+      return res.status(result.responseCode).json(result);
+    } catch (error) {
+      console.error("Get Report Data Error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Internal server error",
+        error: error.message,
       });
     }
   }

@@ -21,7 +21,7 @@ const authSlice = createSlice({
       state.email = remember ? email : "";
      
       // Save token & user in cookies
-      setCookie("token", token, "1d");
+      setCookie("token", token, "7d");
    
       // Remember email and password
       if (remember) {

@@ -1,9 +1,7 @@
 import { Select } from "@mantine/core";
-const EmployeeHeader = ({
-  employees,
-  selectedEmployeeId,
-  setSelectedEmployeeId,
-}) => {
+
+const EmployeeHeader = ({employees,selectedEmployeeId,setSelectedEmployeeId,}) => {
+
   if (!employees || employees.length === 0) return null; // or a loader
  
   return (

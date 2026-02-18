@@ -76,10 +76,23 @@ export const getAssetLogsByContextApi = async ({ assetUId, context }) => {
     if (!assetUId) throw new Error("Asset UID is required FS");
 
     const { data } = await httpRequest.get(
-      `/asset-mapping/${assetUId}/${context}`
+      `/asset-mapping/${assetUId}/${context}`,
     );
     return data; // { success, message, data } from backend
-  } catch (err) {
-    throw new Error(err?.response?.data?.message || err.message || "API Error");
+  } catch (error) {
+    console.error("getting getAssetLogsByContextApi api", error);
+    throw error;
+  }
+};
+
+export const getAssetsReportApi = async ({page, pageSize,exportAll}) => {
+  try {
+    const data = await httpRequest.get("/asset-mapping/getAssetReport",{
+      page,pageSize,exportAll
+    });
+    return data?.data || "bal";
+  } catch (error) {
+    console.error("getting assets report api", error);
+    throw error;
   }
 };

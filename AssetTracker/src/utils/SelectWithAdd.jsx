@@ -16,7 +16,13 @@ const SelectWithAdd = ({
     <div style={{ width: "100%" }}>
       {/* Label + Icon in same row */}
       <Flex justify="space-between" align="center" mb={4}>
-        <Text style={{ fontSize: "18px", fontWeight: 500 }}>{label}</Text>
+        <Text size="18px" fw={500}>
+          {label}
+          <Text span c="red" ml={4}>
+            *
+          </Text>
+        </Text>
+
         {onAddClick && (
           <Tooltip label={`Add ${label}`} withArrow position="top">
             <ActionIcon

@@ -37,7 +37,7 @@ class AssetAssignmentService {
       const assetMap = new Map(assets.map((a) => [a.id, a.uid]));
 
       // 3️⃣ Assign assets
-     
+
       const assignments = await Promise.all(
         assetIds.map(async (assetId) => {
           // 3a. Create assignment
@@ -80,7 +80,7 @@ class AssetAssignmentService {
                 asset: { id: assetId },
                 assignedAt: new Date(),
               }),
-              issuer: issuer?.firstName || "system",
+              issuer: issuer?.userFirstName || "system",
             },
           }),
         ),
@@ -93,6 +93,7 @@ class AssetAssignmentService {
     }
   }
 
+  //employee has this assets
   async getAssetsByEmployee(employeeId) {
     try {
       const assets = await prisma.assetAssingmentEmployee.findMany({
@@ -317,6 +318,59 @@ class AssetAssignmentService {
       });
     } catch (err) {
       console.error("AssetService Error:", err);
+      return ErrorResponse(500, "Server error", err);
+    }
+  }
+
+  //for report
+  async getAssetAssignmentData(page, pageSize, exportAll = false) {
+    try {
+      const skip = exportAll ? undefined : (page - 1) * pageSize;
+      const take = exportAll ? undefined : pageSize;
+
+      const total = await prisma.employee.count();
+
+      const employees = await prisma.employee.findMany({
+        include: {
+          assetAssingmentEmployees: {
+            where: { is_active: true },
+            include: {
+              asset: {
+                include: { category: true, subCategory: true },
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take,
+      });
+
+      const data = employees.map((emp, index) => {
+        const assets = emp.assetAssingmentEmployees.map((a) => a.asset);
+
+        return {
+          sl: skip ? skip + index + 1 : index + 1, // serial number
+          employeeName: emp.fullName,
+          employeeUid: emp.uid,
+          assignedAsset: assets.map((a) => a.name).join(", "),
+          assetType: assets.map((a) => a.subCategory?.name || "").join(", "),
+          assetPrice: assets.reduce(
+            (sum, a) => sum + (a.purchasePrice || 0),
+            0,
+          ),
+          purchaseDate: assets
+            .map((a) => a.purchaseDate?.toISOString().split("T")[0] || "")
+            .join(", "),
+        };
+      });
+
+      return SuccessResponse(200, "Asset Assignment Data fetched", {
+        data,
+        total,
+      });
+    } catch (err) {
+      console.error(err);
       return ErrorResponse(500, "Server error", err);
     }
   }

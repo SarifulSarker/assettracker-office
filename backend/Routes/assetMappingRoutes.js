@@ -6,9 +6,11 @@ const router = express.Router();
 router.post("/", (req, res) =>
   AssetAssignmentController.assignAssets(req, res),
 );
+
 router.get("/employee/:id", (req, res) =>
   AssetAssignmentController.getAssetsByEmployee(req, res),
 );
+
 router.get("/asset/:uid", (req, res) =>
   AssetAssignmentController.getEmployeesByAsset(req, res),
 );
@@ -22,4 +24,5 @@ router.get(
 router.get("/:assetUId/:context", AssetAssignmentController.getLogsByAsset);
 
 router.get("/log/:uid/details", AssetAssignmentController.getAssetDetails);
+router.get("/getAssetReport", AssetAssignmentController.getReportData)
 export default router;

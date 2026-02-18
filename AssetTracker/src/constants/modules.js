@@ -1,6 +1,11 @@
 // src/constants/modules.js
 export const MODULES = [
   {
+    key: "dashboard",
+    label: "Dashboard",
+    permissions: ["view"],
+  },
+  {
     key: "user",
     label: "User",
     permissions: ["view", "add", "edit", "delete"],

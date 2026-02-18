@@ -36,6 +36,8 @@
     "dayjs": "^1.11.19",
     "embla-carousel": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
+    "exceljs": "^4.4.0",
+    "file-saver": "^2.0.5",
     "react": "^19.2.0",
     "react-countdown": "^2.3.6",
     "react-dnd": "^16.0.1",

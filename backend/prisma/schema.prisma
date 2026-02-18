@@ -181,16 +181,19 @@ model Asset {
 
   name String @unique
 
-  images String[]// ✅ multiple image path
+  images String[] // ✅ multiple image path
 
   brandId Int?
   brand   Brand? @relation(fields: [brandId], references: [id])
 
   specs         String?
-  status        String    @default("in-stock")
+
   notes         String?
   purchaseDate  DateTime?
   purchasePrice Float?
+
+  // 🆕 total quantity of units
+  units Int @default(0)
 
   categoryId Int?
   category   Category? @relation("CategoryAssets", fields: [categoryId], references: [id])
@@ -202,6 +205,8 @@ model Asset {
   vendor    Vendor? @relation(fields: [vendorId], references: [id])
   is_active Boolean @default(true)
 
+  assetUnits AssetUnit[]
+
   assetAssingmentEmployees   AssetAssingmentEmployee[]
   assetAssingmentDepartments AssetAssingmentDepartment[]
   assetLogs                  AssetLog[]
@@ -209,7 +214,50 @@ model Asset {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+
   @@map("assets")
+}
+
+model AssetUnit {
+  id Int @id @default(autoincrement())
+
+  assetId Int
+  asset   Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  productId String     @unique
+  status    UnitStatus @default(IN_STOCK)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assetAssingmentEmployees AssetAssingmentEmployee[]
+
+
+  @@unique([id, assetId])
+  @@map("asset_units")
+}
+
+// -------------------- ASSET ASSIGNMENT EMPLOYEE --------------------
+model AssetAssingmentEmployee {
+  id Int @id @default(autoincrement())
+
+  assetId Int
+  asset   Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  assetUnitId Int
+  assetUnit AssetUnit @relation(fields: [assetUnitId, assetId], references: [id, assetId])
+
+  employeeId Int
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  assignedAt   DateTime  @default(now())
+  unassignedAt DateTime?
+  is_active    Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("asset_assingment_employee")
 }
 
 model AssetLog {
@@ -229,26 +277,6 @@ model AssetLog {
   @@map("asset_log")
 }
 
-// -------------------- ASSET ASSIGNMENT EMPLOYEE --------------------
-model AssetAssingmentEmployee {
-  id Int @id @default(autoincrement())
-
-  assetId Int
-  asset   Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
-
-  employeeId Int
-  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-
-  assignedAt   DateTime  @default(now())
-  unassignedAt DateTime?
-  is_active    Boolean   @default(true)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("asset_assingment_employee")
-}
-
 // -------------------- ASSET ASSIGNMENT DEPARTMENT --------------------
 model AssetAssingmentDepartment {
   id Int @id @default(autoincrement())
@@ -264,4 +292,12 @@ model AssetAssingmentDepartment {
 
   @@unique([assetId, departmentId])
   @@map("asset_assingment_department")
+}
+
+enum UnitStatus {
+  IN_STOCK
+  IN_USE
+  SOLD
+  DAMAGED
+  LOST
 }

@@ -38,3 +38,5 @@ export const DESIGNATION = "/designation";
 
 //role and permission
 export const ROLEANDPERMISSION = "/roleandpermission"
+
+export const REPORT = "/report"

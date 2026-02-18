@@ -12,9 +12,10 @@ class AssetService {
     try {
       const {
         name,
+        units, // total number of units
+        productIds, // array of product IDs (length should match units)
         brandId,
         specs,
-        status,
         notes,
         purchaseDate,
         purchasePrice,
@@ -32,18 +33,18 @@ class AssetService {
         ? files.map((file) => `/uploads/assets/${file.filename}`)
         : [];
 
+      // -------------------- CREATE ASSET --------------------
       const asset = await prisma.asset.create({
         data: {
           name,
           uid: generateAssetUID(new Date()),
           specs,
-          status,
+
           notes,
           purchaseDate: purchaseDate ? new Date(purchaseDate) : null,
           purchasePrice: purchasePrice ? Number(purchasePrice) : null,
-
-          images: imagePaths, // ✅ here
-
+          units: Number(units),
+          images: imagePaths,
           brand: brandId ? { connect: { id: Number(brandId) } } : undefined,
           category: categoryId
             ? { connect: { id: Number(categoryId) } }
@@ -61,7 +62,19 @@ class AssetService {
         },
       });
 
-      // 🧾 asset log
+      // -------------------- CREATE ASSET UNITS --------------------
+      const assetUnitData = productIds.map((pid) => ({
+        assetId: asset.id,
+        productId: pid,
+        status: "IN_STOCK", // default status
+      }));
+
+      await prisma.assetUnit.createMany({
+        data: assetUnitData,
+        skipDuplicates: true, // just in case
+      });
+
+      // -------------------- ASSET LOG --------------------
       await prisma.assetLog.create({
         data: {
           asset_id: asset.id,
@@ -72,7 +85,11 @@ class AssetService {
         },
       });
 
-      return SuccessResponse(201, "Asset created successfully", asset);
+      return SuccessResponse(
+        201,
+        "Asset created successfully with units",
+        asset,
+      );
     } catch (error) {
       return ErrorResponse(500, error.message || "Server Error");
     }
@@ -224,6 +241,8 @@ class AssetService {
       const changedFields = {};
 
       for (const [key, value] of Object.entries(payload)) {
+        if (key === "existingImages") continue;
+
         if (value === undefined || value === null) continue;
 
         // ---------- relation fields ----------
@@ -327,7 +346,7 @@ class AssetService {
             asset_uid: uid,
             context: ASSET_LOG_CONTEXT.UPDATE,
             description: `Updated fields: ${JSON.stringify(changedFields)}`,
-            issuer: issuer?.firstName || "system",
+            issuer: issuer?.userFirstName || "system",
           },
         });
       }
@@ -367,8 +386,8 @@ class AssetService {
             : ASSET_LOG_CONTEXT.DELETE, // or DEACTIVATE
           description: `${updatedAsset.name} Asset ${
             updatedAsset.is_active ? "Activated" : "Deactivated"
-          } by ${issuer?.firstName || "system"}`,
-          issuer: issuer?.firstName || "system",
+          } by ${issuer?.userFirstName || "system"}`,
+          issuer: issuer?.userFirstName || "system",
         },
       });
 

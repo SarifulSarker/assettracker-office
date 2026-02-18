@@ -25,6 +25,7 @@ import assetMapping from "../Pages/AssetMapping/assetMapping";
 import assetLog from "../Pages/Asset/assetLog";
 import assetQR_code from "../Pages/Asset/assetQR_code";
 import roleandPermission from "../Pages/RoleAndPermission/roleandPermission";
+import Reports from "../Pages/REPORT/Reports";
 
 const appRoutes = [
   // {
@@ -163,15 +164,18 @@ const appRoutes = [
     isIndexUrl: false,
     isProtected: true,
   },
-    {
+  {
     path: urls.ROLEANDPERMISSION,
     Element: roleandPermission,
     isIndexUrl: false,
     isProtected: true,
   },
-
-  
-
+  {
+    path: urls.REPORT,
+    Element: Reports,
+    isIndexUrl: false,
+    isProtected: true,
+  },
 ];
 
 export default appRoutes;

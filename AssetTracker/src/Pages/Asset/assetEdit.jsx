@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import {
   Box,
   Text,
@@ -27,15 +27,14 @@ import { getAllBrandsApi } from "../../services/brand.js";
 import { getAllVendorsApi } from "../../services/vendor.js";
 import { getAllCategoriesApi } from "../../services/category.js";
 import RichTextInput from "../../helpers/RichTextInput.jsx";
-
+import ImagePreviewList from "../../components/Asset/ImagePreviewList.jsx";
 const AssetEdit = () => {
   const navigate = useNavigate();
   const { uid } = useParams();
 
-  const [subcategories, setSubcategories] = useState([]);
+  //const [subcategories, setSubcategories] = useState([]);
   const [images, setImages] = useState([]);
-  // string = existing image
-  // File = new image
+
   const [uploadOpened, setUploadOpened] = useState(false);
 
   const cameraRef = useRef(null);
@@ -92,6 +91,42 @@ const AssetEdit = () => {
     },
   });
 
+  const categoryOptions = useMemo(() => {
+    return categories.map((c) => ({
+      value: c.id.toString(),
+      label: c.name,
+    }));
+  }, [categories]);
+
+  const brandOptions = useMemo(() => {
+    return brands.map((b) => ({
+      value: b.id.toString(),
+      label: b.name,
+    }));
+  }, [brands]);
+
+  const vendorOptions = useMemo(() => {
+    return vendors.map((v) => ({
+      value: v.id.toString(),
+      label: v.name,
+    }));
+  }, [vendors]);
+  
+  const selectedCategory = useMemo(() => {
+    return categories.find((c) => c.id.toString() === form.values.categoryId);
+  }, [categories, form.values.categoryId]);
+
+  const subCategoryOptions = useMemo(() => {
+    if (!selectedCategory) return [];
+
+    return (
+      selectedCategory.children?.map((s) => ({
+        value: s.id.toString(),
+        label: s.name,
+      })) || []
+    );
+  }, [selectedCategory]);
+
   /* -------------------- LOAD DATA -------------------- */
   useEffect(() => {
     if (asset && categories.length) {
@@ -107,9 +142,6 @@ const AssetEdit = () => {
         status: asset.status || "",
         notes: asset.notes || "",
       });
-
-      const parent = categories.find((c) => c.id === asset.categoryId);
-      setSubcategories(parent?.children || []);
 
       // ✅ existing images load
       setImages(asset.images || []);
@@ -168,8 +200,6 @@ const AssetEdit = () => {
   const handleCategoryChange = (value) => {
     form.setFieldValue("categoryId", value);
     form.setFieldValue("subcategoryId", "");
-    const cat = categories.find((c) => c.id.toString() === value);
-    setSubcategories(cat?.children || []);
   };
 
   const handleRemoveImage = (index) => {
@@ -180,7 +210,7 @@ const AssetEdit = () => {
     const files = Array.from(e.target.files);
     const all = [...images, ...files];
 
-    if (all.length > 5) {
+    if (all.length >= 5) {
       notifications.show({
         title: "Limit exceeded",
         message: "Maximum 5 images allowed",
@@ -215,7 +245,7 @@ const AssetEdit = () => {
         style={{ display: "none" }}
         onChange={handleAddImages}
       />
-      ;{/* Gallery input */}
+
       <input
         type="file"
         accept="image/*"
@@ -224,7 +254,7 @@ const AssetEdit = () => {
         style={{ display: "none" }}
         onChange={handleAddImages}
       />
-      ;
+
       <PageTop PAGE_TITLE="Edit Asset" backBtn />
       <Box maw={600} mt={10} mx="auto">
         <Paper p="xl" withBorder radius="lg">
@@ -252,29 +282,10 @@ const AssetEdit = () => {
               </Modal>
 
               <Group>
-                {images.map((img, index) => (
-                  <div key={index} style={{ position: "relative" }}>
-                    <Image
-                      src={
-                        img instanceof File
-                          ? URL.createObjectURL(img)
-                          : `${import.meta.env.VITE_APP_BACKEND_BASE_URL}${img}`
-                      }
-                      width={80}
-                      height={80}
-                      radius="sm"
-                      fit="cover"
-                    />
-                    <ActionIcon
-                      color="red"
-                      size="sm"
-                      style={{ position: "absolute", top: -8, right: -8 }}
-                      onClick={() => handleRemoveImage(index)}
-                    >
-                      <IconX size={14} />
-                    </ActionIcon>
-                  </div>
-                ))}
+                <ImagePreviewList
+                  images={images}
+                  onRemove={handleRemoveImage}
+                />
 
                 {images.length < 5 && (
                   <Button
@@ -298,41 +309,29 @@ const AssetEdit = () => {
               <Select
                 label="Category"
                 withAsterisk
-                data={categories.map((c) => ({
-                  value: c.id.toString(),
-                  label: c.name,
-                }))}
+                data={categoryOptions}
                 value={form.values.categoryId}
                 onChange={handleCategoryChange}
               />
 
               <Select
                 label="Subcategory"
-                disabled={!subcategories.length}
-                data={subcategories.map((s) => ({
-                  value: s.id.toString(),
-                  label: s.name,
-                }))}
+                disabled={!subCategoryOptions.length}
+                data={subCategoryOptions}
                 {...form.getInputProps("subcategoryId")}
               />
 
               <Select
                 label="Brand"
                 withAsterisk
-                data={brands.map((b) => ({
-                  value: b.id.toString(),
-                  label: b.name,
-                }))}
+                data={brandOptions}
                 {...form.getInputProps("brandId")}
               />
 
               <Select
                 label="Vendor"
                 withAsterisk
-                data={vendors.map((v) => ({
-                  value: v.id.toString(),
-                  label: v.name,
-                }))}
+                data={vendorOptions}
                 {...form.getInputProps("vendorId")}
               />
 

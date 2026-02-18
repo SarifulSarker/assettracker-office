@@ -89,6 +89,8 @@ class AuthService {
 
     const tokenPayload = {
       userId: user.id,
+      userFirstName:user.firstName,
+      userLastName:user.lastName,
       role: user.roleInfo?.role || "NoRole",
     };
 

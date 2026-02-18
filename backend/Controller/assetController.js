@@ -9,10 +9,7 @@ class AssetController {
         req.files, // ✅ images here
         req.user,
       );
-
-
      
-       
       res.status(result.responseCode).json(result);
     } catch (error) {
       res.status(500).json({
@@ -76,7 +73,7 @@ class AssetController {
         req.user,
         req.files, // <-- multer parsed files
       );
-     
+
       res.status(result.responseCode).json(result);
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });

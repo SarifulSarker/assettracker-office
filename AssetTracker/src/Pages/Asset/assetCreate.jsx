@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Stack,
   Paper,
@@ -7,16 +7,16 @@ import {
   Select,
   Button,
   Textarea,
-  ActionIcon,
+  NumberInput,
   Group,
-  Tooltip,
+  Grid,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
-import { useForm } from "@mantine/form";
+import { useForm, yupResolver } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-
+import * as Yup from "yup";
 import PageTop from "../../components/global/PageTop.jsx";
 import { createAssetApi } from "../../services/asset.js";
 import { getAllBrandsApi } from "../../services/brand.js";
@@ -24,12 +24,34 @@ import { getAllVendorsApi } from "../../services/vendor.js";
 import { getAllCategoriesApi } from "../../services/category.js";
 import RichTextInput from "../../helpers/RichTextInput.jsx";
 import FileUploadArea from "../../components/Asset/FileUploadArea.jsx";
-import { IconPlus } from "@tabler/icons-react";
+import SelectWithAdd from "../../utils/SelectWithAdd.jsx";
 import CategoryCreateModal from "../../components/Category/CategoryCreateModal.jsx";
 import BrandCreateModal from "../../components/Brand/BrandCreateModal.jsx";
 import VendorCreateModal from "../../components/Vendor/CreateVendorModal.jsx";
 import SubCategoryCreateModal from "../../components/SubCategory/SubCategoryCreateModal.jsx";
-import SelectWithAdd from "../../utils/SelectWithAdd.jsx";
+
+const assetSchema = Yup.object().shape({
+  name: Yup.string().required("Asset name is required"),
+  categoryId: Yup.string().required("Category is required"),
+  subCategoryId: Yup.string().nullable(),
+  brandId: Yup.string().required("Brand is required"),
+  vendorId: Yup.string().required("Vendor is required"),
+  purchasePrice: Yup.number()
+    .typeError("Purchase price must be a number")
+    .positive("Price must be positive")
+    .nullable(),
+  purchaseDate: Yup.date().required("Purchase date is required"),
+  specs: Yup.string().nullable(),
+
+  notes: Yup.string().nullable(),
+  units: Yup.number().min(1, "At least 1 unit required").required(),
+  unitInputs: Yup.array().of(
+    Yup.object().shape({
+      productId: Yup.string().required("Product ID required"),
+      status: Yup.string().required(),
+    }),
+  ),
+});
 
 const AssetCreate = () => {
   const navigate = useNavigate();
@@ -45,12 +67,10 @@ const AssetCreate = () => {
     queryKey: ["categories"],
     queryFn: () => getAllCategoriesApi({ page: 1, perpage: 1000, search: "" }),
   });
-
   const { data: BrandsData } = useQuery({
     queryKey: ["brands"],
     queryFn: () => getAllBrandsApi({ page: 1, pageSize: 1000, search: "" }),
   });
-
   const { data: VendorsData } = useQuery({
     queryKey: ["vendors"],
     queryFn: () => getAllVendorsApi({ page: 1, perpage: 1000, search: "" }),
@@ -60,8 +80,23 @@ const AssetCreate = () => {
   const brands = BrandsData?.data?.brands || [];
   const vendors = VendorsData?.data?.vendors || [];
 
+  const categoryOptions = useMemo(
+    () =>
+      categories.map((c) => ({ value: c.id.toString(), label: c.name })) || [],
+    [categories],
+  );
+  const brandOptions = useMemo(
+    () => brands.map((b) => ({ value: b.id.toString(), label: b.name })) || [],
+    [brands],
+  );
+  const vendorOptions = useMemo(
+    () => vendors.map((v) => ({ value: v.id.toString(), label: v.name })) || [],
+    [vendors],
+  );
+
   /* -------------------- FORM -------------------- */
   const form = useForm({
+    mode: "uncontrolled",
     initialValues: {
       name: "",
       categoryId: "",
@@ -71,22 +106,44 @@ const AssetCreate = () => {
       purchasePrice: "",
       purchaseDate: null,
       specs: "",
-      status: "instock",
       notes: "",
+      units: 1,
+
+      // ⭐ NEW
+      unitInputs: [
+        {
+          productId: "",
+          status: "IN_STOCK",
+        },
+      ],
     },
-    validate: {
-      name: (v) => (!v ? "Asset name is required" : null),
-      categoryId: (v) => (!v ? "Category is required" : null),
-      brandId: (v) => (!v ? "Brand is required" : null),
-      vendorId: (v) => (!v ? "Vendor is required" : null),
-      purchaseDate: (v) => (!v ? "Purchase date is required" : null),
-    },
+
+    validate: yupResolver(assetSchema),
   });
+
+  /* -------------------- HANDLE UNIT INPUTS -------------------- */
+  useEffect(() => {
+    const totalUnits = Number(form.values.units) || 0;
+    let arr = form.values.unitInputs || [];
+
+    if (totalUnits > arr.length) {
+      arr = [
+        ...arr,
+        ...Array(totalUnits - arr.length).fill({
+          productId: "",
+          status: "IN_STOCK",
+        }),
+      ];
+    } else if (totalUnits < arr.length) {
+      arr = arr.slice(0, totalUnits);
+    }
+
+    form.setFieldValue("unitInputs", arr);
+  }, [form.values.units]);
 
   /* -------------------- MUTATION -------------------- */
   const createMutation = useMutation({
     mutationFn: (values) => {
-      console.log(values);
       const formData = new FormData();
 
       formData.append("name", values.name);
@@ -97,12 +154,21 @@ const AssetCreate = () => {
       );
       formData.append("brandId", Number(values.brandId));
       formData.append("vendorId", Number(values.vendorId));
-      formData.append("status", values.status);
+
       formData.append("specs", values.specs || "");
       formData.append("notes", values.notes || "");
+      formData.append("units", Number(values.units));
+      formData.append("status", values.status || "IN_STOCK"); // default
+
+      // Ensure no empty productIds
+      values.unitInputs.forEach((unit) => {
+        if (unit.productId) {
+          formData.append("productIds[]", unit.productId);
+        }
+      });
 
       if (values.purchasePrice)
-        formData.append("purchasePrice", values.purchasePrice);
+        formData.append("purchasePrice", Number(values.purchasePrice));
 
       if (values.purchaseDate) {
         const date =
@@ -135,7 +201,10 @@ const AssetCreate = () => {
     },
   });
 
-  /* -------------------- HANDLERS -------------------- */
+  useEffect(() => {
+    form.setFieldValue("subCategoryId", "");
+  }, [form.values.categoryId]);
+
   const handleCategoryChange = (value) => {
     form.setFieldValue("categoryId", value);
     form.setFieldValue("subCategoryId", ""); // reset subcategory
@@ -143,6 +212,7 @@ const AssetCreate = () => {
     setSubcategories(category?.children || []);
   };
 
+  /* -------------------- JSX -------------------- */
   return (
     <>
       <PageTop PAGE_TITLE="Create Asset" backBtn />
@@ -153,47 +223,66 @@ const AssetCreate = () => {
             Create New Asset
           </Text>
 
-          <form onSubmit={form.onSubmit((v) => createMutation.mutate(v))}>
+          <form
+            onSubmit={form.onSubmit((v) => {
+              createMutation.mutate(v);
+            })}
+          >
             <Stack spacing="md">
-              <FileUploadArea images={images} setImages={setImages} />
-
               <TextInput
                 label="Asset Name"
-                styles={{
-                  label: {
-                    fontSize: "18px",
-                    fontWeight: 500,
-                  },
-                }}
                 withAsterisk
                 {...form.getInputProps("name")}
               />
+              {/* -------------------- UNITS SECTION -------------------- */}
+              <NumberInput
+                label="Total Units"
+                min={1}
+                step={1}
+                value={form.values.units}
+                onChange={(val) => form.setFieldValue("units", val || 0)}
+              />
+
+              <Text fw={500}>Product IDs for each unit:</Text>
+              {form.values.unitInputs.map((unit, idx) => (
+                <Grid key={idx} align="end">
+                  <Grid.Col span={8}>
+                    <TextInput
+                      label={`Unit #${idx + 1} Product ID`}
+                      placeholder={`e.g. MB-00${idx + 1}`}
+                      {...form.getInputProps(`unitInputs.${idx}.productId`)}
+                    />
+                  </Grid.Col>
+
+                  <Grid.Col span={4}>
+                    <Select
+                      label="Status"
+                      data={[
+                        { value: "IN_STOCK", label: "IN STOCK" },
+                       
+                      ]}
+                      value={form.values.unitInputs[idx].status}
+                      disabled
+                    />
+                  </Grid.Col>
+                </Grid>
+              ))}
 
               <Textarea
                 resize="vertical"
                 label="Specifications"
-                styles={{
-                  label: {
-                    fontSize: "18px",
-                    fontWeight: 500,
-                  },
-                }}
                 placeholder="e.g. 8GB / Intel i5 / 512GB SSD"
                 {...form.getInputProps("specs")}
               />
 
               <SelectWithAdd
-                label="Category *"
+                label="Category"
                 value={form.values.categoryId}
                 onChange={handleCategoryChange}
-                data={categories.map((c) => ({
-                  value: c.id.toString(),
-                  label: c.name,
-                }))}
+                data={categoryOptions}
                 onAddClick={() => setCategoryModalOpen(true)}
                 error={form.errors.categoryId}
               />
-
               <CategoryCreateModal
                 opened={categoryModalOpen}
                 onClose={() => setCategoryModalOpen(false)}
@@ -201,6 +290,7 @@ const AssetCreate = () => {
                   form.setFieldValue("categoryId", newCategory.id.toString());
                 }}
               />
+
               <SelectWithAdd
                 label="Subcategory"
                 value={form.values.subCategoryId}
@@ -221,14 +311,7 @@ const AssetCreate = () => {
                     (c) => c.id.toString() === form.values.categoryId,
                   );
                   if (updatedCategory) {
-                    // নতুন সাবক্যাটাগরি যোগ করা
-                    const updatedSubcategories = [
-                      ...subcategories,
-                      newSubcategory,
-                    ];
-                    setSubcategories(updatedSubcategories);
-
-                    // auto select
+                    setSubcategories([...subcategories, newSubcategory]);
                     form.setFieldValue(
                       "subCategoryId",
                       newSubcategory.id.toString(),
@@ -236,14 +319,12 @@ const AssetCreate = () => {
                   }
                 }}
               />
+
               <SelectWithAdd
-                label="Brand *"
+                label="Brand"
                 value={form.values.brandId}
                 onChange={(val) => form.setFieldValue("brandId", val)}
-                data={brands.map((b) => ({
-                  value: b.id.toString(),
-                  label: b.name,
-                }))}
+                data={brandOptions}
                 onAddClick={() => setBrandModalOpen(true)}
               />
               <BrandCreateModal
@@ -253,14 +334,12 @@ const AssetCreate = () => {
                   form.setFieldValue("brandId", newBrand.id.toString());
                 }}
               />
+
               <SelectWithAdd
-                label="Vendor *"
+                label="Vendor"
                 value={form.values.vendorId}
                 onChange={(val) => form.setFieldValue("vendorId", val)}
-                data={vendors.map((v) => ({
-                  value: v.id.toString(),
-                  label: v.name,
-                }))}
+                data={vendorOptions}
                 onAddClick={() => setVendorModalOpen(true)}
               />
               <VendorCreateModal
@@ -270,64 +349,32 @@ const AssetCreate = () => {
                   form.setFieldValue("vendorId", newVendor.id.toString());
                 }}
               />
+
               <TextInput
+                withAsterisk
                 label="Purchase Price"
                 type="number"
                 {...form.getInputProps("purchasePrice")}
-                styles={{
-                  label: {
-                    fontSize: "18px",
-                    fontWeight: 500,
-                  },
-                }}
               />
 
               <DateInput
                 label="Purchase Date"
-                styles={{
-                  label: {
-                    fontSize: "18px",
-                    fontWeight: 500,
-                  },
-                }}
                 withAsterisk
                 value={form.values.purchaseDate}
                 onChange={(v) => form.setFieldValue("purchaseDate", v)}
                 error={form.errors.purchaseDate}
               />
 
-              <Select
-                label="Asset Status"
-                styles={{
-                  label: {
-                    fontSize: "18px",
-                    fontWeight: 500,
-                  },
-                }}
-                data={[
-                  { value: "inuse", label: "In Use" },
-                  { value: "instock", label: "In Stock" },
-                  { value: "maintenance", label: "Maintenance" },
-                  { value: "damaged", label: "Damaged" },
-                  { value: "lost", label: "Lost" },
-                ]}
-                {...form.getInputProps("status")}
-              />
-
               <RichTextInput
                 label="Notes"
-                styles={{
-                  label: {
-                    fontSize: "18px",
-                    fontWeight: 500,
-                  },
-                }}
                 value={form.values.notes}
                 onChange={(val) => form.setFieldValue("notes", val)}
                 {...form.getInputProps("notes")}
               />
 
-              <Button type="submit" loading={createMutation.isPending}>
+              <FileUploadArea images={images} setImages={setImages} />
+
+              <Button type="submit" loading={createMutation.isLoading}>
                 Create Asset
               </Button>
             </Stack>

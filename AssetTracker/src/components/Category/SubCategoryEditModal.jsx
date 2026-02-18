@@ -14,7 +14,7 @@ const schema = Yup.object().shape({
     .required("Department name is required")
     .min(2, "Designation must be at least 2 characters")
     .max(80, "Designation cannot exceed 50 characters")
-    .matches(/^[A-Za-z\s]+$/, "Name can only contain letters and spaces"),
+    // .matches(/^[A-Za-z\s]+$/, "Name can only contain letters and spaces"),
 });
 const SubCategoryEditModal = ({ opened, onClose, subcategory, categories }) => {
   const queryClient = useQueryClient();

@@ -67,10 +67,7 @@ class EmployeeService {
               { fullName: { contains: term, mode: "insensitive" } },
               { email: { contains: term, mode: "insensitive" } },
               { phone: { contains: term, mode: "insensitive" } },
-              {
-                designation: { name: { contains: term, mode: "insensitive" } },
-              },
-              { department: { name: { contains: term, mode: "insensitive" } } },
+             
             ],
           })),
         };

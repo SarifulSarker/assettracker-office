@@ -43,10 +43,10 @@ const MovableItem = ({
     <Paper
       ref={ref}
       p="md"
-      mb="sm"
+      mt="sm"
       withBorder
       radius="md"
-      shadow="sm"
+   
       style={{
         opacity: isDragging ? 0.5 : 1,
         cursor: isReadOnly ? "default" : "grab",

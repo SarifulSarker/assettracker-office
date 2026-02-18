@@ -17,6 +17,7 @@ import {
   assignAssetsToEmployeeApi,
   getAssetsByEmployeeApi,
 } from "../../services/assetMapping";
+import { useQueryClient } from "@tanstack/react-query";
 
 const emptyBox = {
   padding: "16px",
@@ -30,6 +31,7 @@ const AssetMapping = () => {
   const [items, setItems] = useState([]);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
   const [assetSearch, setAssetSearch] = useState("");
+  const queryClient = useQueryClient();
 
   /* ---------------- API CALLS ---------------- */
 
@@ -60,6 +62,10 @@ const AssetMapping = () => {
       });
 
       setItems((prev) => prev.filter((i) => !vars.assetIds.includes(i.id)));
+      // 🔥 2. Refetch Employee Assets (3rd column)
+      queryClient.invalidateQueries({
+        queryKey: ["employeeAssets", String(vars.employeeId)],
+      });
     },
   });
 
@@ -68,7 +74,7 @@ const AssetMapping = () => {
   const employees = empData?.data?.employees || [];
   const assets = assetData?.data?.assets || [];
   const employeeAssets = (employeeAssetData?.data ?? []).filter(
-    (a) => !a.unassignedAt
+    (a) => !a.unassignedAt,
   );
 
   /* ------------ ---- INIT ASSETS ---------------- */
@@ -81,7 +87,7 @@ const AssetMapping = () => {
         subCategory: a.subCategory?.name || null, // ✅ exact key
         column: COLUMN_NAMES.ASSET,
         employeeId: null,
-      }))
+      })),
     );
   }, [assetData]);
 
@@ -120,8 +126,8 @@ const AssetMapping = () => {
               employeeId:
                 column === COLUMN_NAMES.EMPLOYEE ? selectedEmployeeId : null,
             }
-          : i
-      )
+          : i,
+      ),
     );
   };
 
@@ -138,7 +144,7 @@ const AssetMapping = () => {
       ));
 
   const selectedEmployee = employees.find(
-    (e) => String(e.id) === String(selectedEmployeeId)
+    (e) => String(e.id) === String(selectedEmployeeId),
   );
 
   /* ---------------- UI ---------------- */
@@ -156,7 +162,11 @@ const AssetMapping = () => {
         }}
       >
         {/* ASSET */}
-        <Column title="Asset" onDropItem={handleDropToColumn}>
+        <Column
+          title="Asset"
+          onDropItem={handleDropToColumn}
+          allowedDropFrom={[COLUMN_NAMES.EMPLOYEE]}
+        >
           <TextInput
             placeholder="Search assets..."
             value={assetSearch}
@@ -168,7 +178,11 @@ const AssetMapping = () => {
         </Column>
 
         {/* EMPLOYEE */}
-        <Column title="Employee" onDropItem={handleDropToColumn}>
+        <Column
+          title="Employee"
+          onDropItem={handleDropToColumn}
+          allowedDropFrom={[COLUMN_NAMES.ASSET]}
+        >
           <EmployeeHeader
             employees={employees}
             selectedEmployeeId={selectedEmployeeId}
@@ -230,7 +244,7 @@ const AssetMapping = () => {
           size="md"
           radius="md"
           onClick={() => {
-            // 1️⃣ employee selected কিনা
+            // 1 employee selected কিনা
             if (!selectedEmployeeId) {
               notifications.show({
                 title: "Employee not selected",
@@ -241,9 +255,9 @@ const AssetMapping = () => {
               return;
             }
 
-            // 2️⃣ dragged assets আছে কিনা
+            // 2 dragged assets আছে কিনা
             const selectedAssets = items.filter(
-              (i) => i.column === COLUMN_NAMES.EMPLOYEE
+              (i) => i.column === COLUMN_NAMES.EMPLOYEE,
             );
 
             if (selectedAssets.length === 0) {
@@ -256,7 +270,7 @@ const AssetMapping = () => {
               return;
             }
 
-            // 3️⃣ valid → mutation call
+            // 3 valid → mutation call
             mutation.mutate({
               employeeId: Number(selectedEmployeeId),
               assetIds: selectedAssets.map((i) => i.id),

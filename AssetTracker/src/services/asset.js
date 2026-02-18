@@ -30,7 +30,9 @@ export const updateAssetApi = async (uid, formData) => {
   if (!uid) throw new Error("Asset ID is required");
   if (!formData) throw new Error("Asset data is required");
 
-  return httpRequest.put(`/asset/${uid}`, formData);
+  const data = httpRequest.put(`/asset/${uid}`, formData);
+ 
+  return data;
 };
 
 // DELETE ASSET

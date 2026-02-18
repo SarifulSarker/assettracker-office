@@ -10,6 +10,7 @@ import {
   IconBrandAngular,
   IconBusinessplan,
   IconLayoutDashboard,
+  IconReport,
 } from "@tabler/icons-react";
 
 import * as urls from "./AppUrls";
@@ -79,6 +80,12 @@ const SidebarItems = [
         module: "brand",
         icon: IconBrandAngular,
         link: urls.BRAND,
+      },
+       {
+        label: "Reports",
+        module: "reports",
+        icon: IconReport,
+        link: urls.REPORT,
       },
     ],
   },

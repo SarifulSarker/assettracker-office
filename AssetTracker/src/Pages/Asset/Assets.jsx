@@ -25,14 +25,13 @@ import downloadAssetsCSV from "../../helpers/downloadAssetsCSV.js";
 import { deleteAssetApi, getAllAssetsApi } from "../../services/asset.js";
 import { usePermissions } from "../../hooks/useAuthPermissions.js";
 import StandardFilters from "../../constants/StandardFilters.jsx";
+import advancedFormat from "dayjs/plugin/advancedFormat";
+dayjs.extend(advancedFormat);
 const PAGE_SIZE = 10;
 
 const Assets = () => {
-
-
   const { hasPermission } = usePermissions();
-
-
+  
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -134,7 +133,6 @@ const Assets = () => {
     }
   };
 
-  //console.log(assets);
   const tableHeaders = [
     {
       key: "sl",
@@ -200,8 +198,11 @@ const Assets = () => {
       key: "purchaseDate",
       headerTitle: "Purchase Date",
       row: (v, row) =>
-        row.purchaseDate ? dayjs(row.purchaseDate).format("DD-MM-YYYY") : "-",
+        row.purchaseDate
+          ? dayjs(row.purchaseDate).format("Do MMM YYYY") // 12th June 2022
+          : "-",
     },
+
     {
       key: "actions",
       headerTitle: "Actions",
@@ -238,7 +239,7 @@ const Assets = () => {
           )}
 
           {hasPermission("asset", "logs") && (
-            <Tooltip label="Asset Log&Details" withArrow>
+            <Tooltip label="Log&Details" withArrow>
               <Button
                 size="xs"
                 onClick={() => navigate(`/assets/asset-log/${row.uid}`)}

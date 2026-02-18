@@ -146,11 +146,12 @@ const EmployeeAssetsModal = ({ opened, onClose, employee }) => {
 
         {/* Bulk unassign button */}
 
-        {assignments.length > 0 && hasPermission("asset_assignment", "unassign") && (
-          <Button color="red" onClick={confirmUnassignSelected}>
-            Select & Unassign
-          </Button>
-        )}
+        {assignments.length > 0 &&
+          hasPermission("asset_assignment", "unassign") && (
+            <Button color="red" onClick={confirmUnassignSelected}>
+              Select & Unassign
+            </Button>
+          )}
       </Stack>
     </Modal>
   );
