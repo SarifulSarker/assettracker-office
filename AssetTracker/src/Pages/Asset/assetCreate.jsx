@@ -45,12 +45,17 @@ const assetSchema = Yup.object().shape({
 
   notes: Yup.string().nullable(),
   units: Yup.number().min(1, "At least 1 unit required").required(),
-  unitInputs: Yup.array().of(
-    Yup.object().shape({
-      productId: Yup.string().required("Product ID required"),
-      status: Yup.string().required(),
-    }),
-  ),
+ unitInputs: Yup.array().of(
+  Yup.object().shape({
+    productId: Yup.string().required("Product ID required"),
+    status: Yup.string().required(),
+    purchasePrice: Yup.number()
+      .typeError("Unit price must be a number")
+      .min(0, "Price cannot be negative")
+      .required("Unit price required"),
+  }),
+),
+
 });
 
 const AssetCreate = () => {
@@ -103,7 +108,7 @@ const AssetCreate = () => {
       subCategoryId: "",
       brandId: "",
       vendorId: "",
-      purchasePrice: "",
+    
       purchaseDate: null,
       specs: "",
       notes: "",
@@ -132,6 +137,7 @@ const AssetCreate = () => {
         ...Array(totalUnits - arr.length).fill({
           productId: "",
           status: "IN_STOCK",
+           purchasePrice: "",
         }),
       ];
     } else if (totalUnits < arr.length) {
@@ -162,13 +168,12 @@ const AssetCreate = () => {
 
       // Ensure no empty productIds
       values.unitInputs.forEach((unit) => {
-        if (unit.productId) {
-          formData.append("productIds[]", unit.productId);
-        }
+        if (unit.productId) formData.append("productIds[]", unit.productId);
+        if (unit.purchasePrice !== undefined && unit.purchasePrice !== null)
+          formData.append("unitPrices[]", Number(unit.purchasePrice));
       });
 
-      if (values.purchasePrice)
-        formData.append("purchasePrice", Number(values.purchasePrice));
+     
 
       if (values.purchaseDate) {
         const date =
@@ -244,9 +249,11 @@ const AssetCreate = () => {
               />
 
               <Text fw={500}>Product IDs for each unit:</Text>
+
               {form.values.unitInputs.map((unit, idx) => (
-                <Grid key={idx} align="end">
-                  <Grid.Col span={8}>
+                <Grid key={idx} align="end" gutter="md">
+                  {/* Product ID */}
+                  <Grid.Col span={4}>
                     <TextInput
                       label={`Unit #${idx + 1} Product ID`}
                       placeholder={`e.g. MB-00${idx + 1}`}
@@ -254,15 +261,23 @@ const AssetCreate = () => {
                     />
                   </Grid.Col>
 
-                  <Grid.Col span={4}>
+                  {/* Status */}
+                  <Grid.Col span={3}>
                     <Select
                       label="Status"
-                      data={[
-                        { value: "IN_STOCK", label: "IN STOCK" },
-                       
-                      ]}
+                      data={[{ value: "IN_STOCK", label: "IN STOCK" }]}
                       value={form.values.unitInputs[idx].status}
                       disabled
+                    />
+                  </Grid.Col>
+
+                  {/* Purchase Price */}
+                  <Grid.Col span={5}>
+                    <NumberInput
+                      label="Unit Price"
+                      min={0}
+                      precision={2}
+                      {...form.getInputProps(`unitInputs.${idx}.purchasePrice`)}
                     />
                   </Grid.Col>
                 </Grid>
@@ -350,12 +365,7 @@ const AssetCreate = () => {
                 }}
               />
 
-              <TextInput
-                withAsterisk
-                label="Purchase Price"
-                type="number"
-                {...form.getInputProps("purchasePrice")}
-              />
+         
 
               <DateInput
                 label="Purchase Date"

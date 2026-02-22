@@ -31,7 +31,7 @@ const PAGE_SIZE = 10;
 
 const Assets = () => {
   const { hasPermission } = usePermissions();
-  
+
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -120,7 +120,7 @@ const Assets = () => {
 
   const assets = data?.data?.assets || [];
   const total = data?.data?.total || 0;
-
+  console.log(assets);
   const handleDownloadCSV = async () => {
     try {
       setIsExporting(true);
@@ -142,7 +142,7 @@ const Assets = () => {
     {
       key: "name",
       headerTitle: "Asset Name",
-      row: (v, row) => row.name || "-",
+      row: (v, row) => (row.name ? `${row.name} (${row.units ?? 0})` : "-"),
     },
     {
       key: "employees",
@@ -174,11 +174,11 @@ const Assets = () => {
       rowStyle: {}, // optional
     },
 
-    {
-      key: "mainCategory",
-      headerTitle: "Category",
-      row: (v, row) => row.category?.name || "-",
-    },
+    // {
+    //   key: "mainCategory",
+    //   headerTitle: "Category",
+    //   row: (v, row) => row.category?.name || "-",
+    // },
     {
       key: "subCategory",
       headerTitle: "Subcategory",
@@ -189,11 +189,11 @@ const Assets = () => {
       headerTitle: "Brand",
       row: (v, row) => row.brand?.name || "-",
     },
-    {
-      key: "vendor",
-      headerTitle: "Vendor",
-      row: (v, row) => row.vendor?.name || "-",
-    },
+    // {
+    //   key: "vendor",
+    //   headerTitle: "Vendor",
+    //   row: (v, row) => row.vendor?.name || "-",
+    // },
     {
       key: "purchaseDate",
       headerTitle: "Purchase Date",

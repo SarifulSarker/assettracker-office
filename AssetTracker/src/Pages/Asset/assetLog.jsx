@@ -43,7 +43,9 @@ const AssetLog = () => {
   });
 
   const asset = assetData?.data;
+
   const assetUID = uid;
+
   // console.log(asset?.images);
   /* ---------------- Logs ---------------- */
   const {
@@ -58,7 +60,14 @@ const AssetLog = () => {
         : getEmployeesByAssetApi(uid),
     enabled: !!assetUID,
   });
+  const totalPrice = asset?.assetUnits?.reduce(
+    (sum, unit) => sum + (unit.purchasePrice || 0),
+    0,
+  );
 
+  const formattedTotal = totalPrice?.toLocaleString("en-BD");
+
+  const unitPrices = asset?.assetUnits?.map((u) => u.purchasePrice)?.join(", ");
   const logs = context ? (AssignlogData ?? []) : (AssignlogData?.data ?? []);
   const activeLog = logs.find((l) => !l.unassignedAt);
 
@@ -196,12 +205,13 @@ const AssetLog = () => {
                 <Text fw={600} component="div">
                   Asset: {asset?.name || "N/A"}
                 </Text>
+                <Text component="div">Units: {asset?.units || "N/A"}</Text>
                 <Text size="sm" component="div">
                   <b>UID:</b> {asset?.uid || "N/A"}
                 </Text>
-                <Text size="sm" component="div">
+                {/* <Text size="sm" component="div">
                   <b>Asset Status:</b> {asset?.status || "N/A"}
-                </Text>
+                </Text> */}
                 <Text size="sm" component="div">
                   <b>Status:</b>{" "}
                   <Badge
@@ -276,18 +286,32 @@ const AssetLog = () => {
                     : "N/A"}
                 </Text>
 
-                <Flex align="center" gap={4}>
-                  <Text size="sm">
-                    <b>Purchase Price:</b>
-                  </Text>
+                <Flex direction="column" gap={2}>
+                  <Flex align="center" gap={4}>
+                    <Text size="sm" fw={500}>
+                      Purchase Summary:
+                    </Text>
 
-                  <IconCurrencyTaka size={16} />
+                    <IconCurrencyTaka size={16} />
 
-                  <Text size="sm">{asset?.purchasePrice ?? "N/A"}</Text>
+                    <Text size="sm" fw={600}>
+                      {formattedTotal ?? "N/A"}
+                    </Text>
+
+                    <Text size="xs" >
+                      ({asset?.units ?? 0} Units)
+                    </Text>
+                  </Flex>
+
+                  {unitPrices && (
+                    <Text size="xs" >
+                      Unit Prices: ৳{unitPrices}
+                    </Text>
+                  )}
                 </Flex>
                 {/* Assignment */}
                 <Group spacing="xs">
-                  <Text size="sm" c="dimmed" component="div">
+                  <Text size="sm"  component="div">
                     Current Status:
                   </Text>
                   <Badge color={activeLog ? "green" : "gray"} variant="light">

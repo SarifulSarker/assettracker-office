@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   Box,
   Text,
@@ -8,18 +8,15 @@ import {
   Paper,
   Textarea,
   Select,
+  Grid,
+  NumberInput,
   Group,
-  ActionIcon,
-  Image,
-  Loader,
-  Modal,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { useForm } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
-import { IconX } from "@tabler/icons-react";
 
 import PageTop from "../../components/global/PageTop.jsx";
 import { getAssetByIdApi, updateAssetApi } from "../../services/asset.js";
@@ -28,17 +25,13 @@ import { getAllVendorsApi } from "../../services/vendor.js";
 import { getAllCategoriesApi } from "../../services/category.js";
 import RichTextInput from "../../helpers/RichTextInput.jsx";
 import ImagePreviewList from "../../components/Asset/ImagePreviewList.jsx";
+
 const AssetEdit = () => {
   const navigate = useNavigate();
   const { uid } = useParams();
 
-  //const [subcategories, setSubcategories] = useState([]);
   const [images, setImages] = useState([]);
-
-  const [uploadOpened, setUploadOpened] = useState(false);
-
-  const cameraRef = useRef(null);
-  const galleryRef = useRef(null);
+  const [subcategories, setSubcategories] = useState([]);
 
   /* -------------------- QUERIES -------------------- */
   const { data: assetData, isLoading } = useQuery({
@@ -73,60 +66,60 @@ const AssetEdit = () => {
       name: "",
       specs: "",
       categoryId: "",
-      subcategoryId: "",
+      subCategoryId: "",
       brandId: "",
       vendorId: "",
-      purchasePrice: "",
+
       purchaseDate: null,
-      status: "",
+
       notes: "",
+      units: 1,
+      unitInputs: [
+        {
+          productId: "",
+          purchasePrice: "",
+          status: "IN_STOCK",
+        },
+      ],
     },
     validate: {
       name: (v) => (!v ? "Asset name is required" : null),
       categoryId: (v) => (!v ? "Category is required" : null),
       brandId: (v) => (!v ? "Brand is required" : null),
       vendorId: (v) => (!v ? "Vendor is required" : null),
-      purchasePrice: (v) => (!v ? "Purchase price is required" : null),
+
       purchaseDate: (v) => (!v ? "Purchase date is required" : null),
     },
   });
 
-  const categoryOptions = useMemo(() => {
-    return categories.map((c) => ({
-      value: c.id.toString(),
-      label: c.name,
-    }));
-  }, [categories]);
+  /* -------------------- MEMO OPTIONS -------------------- */
+  const categoryOptions = useMemo(
+    () => categories.map((c) => ({ value: c.id.toString(), label: c.name })),
+    [categories],
+  );
+  const brandOptions = useMemo(
+    () => brands.map((b) => ({ value: b.id.toString(), label: b.name })),
+    [brands],
+  );
+  const vendorOptions = useMemo(
+    () => vendors.map((v) => ({ value: v.id.toString(), label: v.name })),
+    [vendors],
+  );
 
-  const brandOptions = useMemo(() => {
-    return brands.map((b) => ({
-      value: b.id.toString(),
-      label: b.name,
-    }));
-  }, [brands]);
-
-  const vendorOptions = useMemo(() => {
-    return vendors.map((v) => ({
-      value: v.id.toString(),
-      label: v.name,
-    }));
-  }, [vendors]);
-  
-  const selectedCategory = useMemo(() => {
-    return categories.find((c) => c.id.toString() === form.values.categoryId);
-  }, [categories, form.values.categoryId]);
+  const selectedCategory = useMemo(
+    () => categories.find((c) => c.id.toString() === form.values.categoryId),
+    [categories, form.values.categoryId],
+  );
 
   const subCategoryOptions = useMemo(() => {
-    if (!selectedCategory) return [];
-
     return (
-      selectedCategory.children?.map((s) => ({
-        value: s.id.toString(),
-        label: s.name,
+      selectedCategory?.children?.map((sc) => ({
+        value: sc.id.toString(),
+        label: sc.name,
       })) || []
     );
   }, [selectedCategory]);
-
+  
   /* -------------------- LOAD DATA -------------------- */
   useEffect(() => {
     if (asset && categories.length) {
@@ -134,19 +127,62 @@ const AssetEdit = () => {
         name: asset.name || "",
         specs: asset.specs || "",
         categoryId: asset.categoryId?.toString() || "",
-        subcategoryId: asset.subCategory?.id?.toString() || "",
+        subCategoryId: asset.subCategory?.id?.toString() || "",
         brandId: asset.brandId?.toString() || "",
         vendorId: asset.vendorId?.toString() || "",
-        purchasePrice: asset.purchasePrice || "",
+
         purchaseDate: asset.purchaseDate ? new Date(asset.purchaseDate) : null,
-        status: asset.status || "",
+       
         notes: asset.notes || "",
+        units: asset.assetUnits?.length || 1,
+        unitInputs: asset.assetUnits?.map((u) => ({
+          productId: u.productId,
+          purchasePrice: u.purchasePrice,
+          status: u.status,
+        })) || [{ productId: "", purchasePrice: "", status: "IN_STOCK" }],
       });
 
-      // ✅ existing images load
       setImages(asset.images || []);
+      setSubcategories(
+        selectedCategory?.children ? selectedCategory.children : [],
+      );
     }
   }, [asset, categories]);
+
+  /* -------------------- HANDLE UNIT INPUTS -------------------- */
+  useEffect(() => {
+    if (!asset) return;
+
+    const actualUnits = asset.assetUnits?.length || 0; // existing units in DB
+    let totalUnits = Number(form.values.units) || actualUnits;
+
+    // cannot go below actual units
+    if (totalUnits < actualUnits) totalUnits = actualUnits;
+
+    // preserve existing units from asset data
+    const existingData =
+      asset.assetUnits?.map((u) => ({
+        productId: u.productId,
+        purchasePrice: u.purchasePrice,
+        status: u.status,
+      })) || [];
+
+    // create new empty units if user increased
+    const newUnitsCount = totalUnits - actualUnits;
+    const newUnits =
+      newUnitsCount > 0
+        ? Array(newUnitsCount).fill({
+            productId: "",
+            purchasePrice: "",
+            status: "IN_STOCK",
+          })
+        : [];
+
+    const updatedUnitInputs = [...existingData, ...newUnits];
+
+    form.setFieldValue("unitInputs", updatedUnitInputs);
+    form.setFieldValue("units", totalUnits);
+  }, [form.values.units, asset]);
 
   /* -------------------- MUTATION -------------------- */
   const updateMutation = useMutation({
@@ -155,24 +191,32 @@ const AssetEdit = () => {
 
       formData.append("name", values.name);
       formData.append("specs", values.specs || "");
-      formData.append("status", values.status);
+     
       formData.append("notes", values.notes || "");
       formData.append("categoryId", values.categoryId);
-      formData.append("subCategoryId", values.subcategoryId || "");
+      formData.append("subCategoryId", values.subCategoryId || "");
       formData.append("brandId", values.brandId);
       formData.append("vendorId", values.vendorId);
-      formData.append("purchasePrice", values.purchasePrice);
+     
       formData.append(
         "purchaseDate",
         new Date(values.purchaseDate).toISOString(),
       );
+      formData.append("units",Number(values.units) );
 
+      // Unit Inputs
+      values.unitInputs.forEach((unit) => {
+        formData.append("productIds[]", unit.productId);
+        formData.append(
+          "unitPrices[]",
+          unit.purchasePrice ? Number(unit.purchasePrice) : 0,
+        );
+      });
+
+      // Images
       images.forEach((img) => {
-        if (img instanceof File) {
-          formData.append("images", img); // new
-        } else {
-          formData.append("existingImages", img); // old
-        }
+        if (img instanceof File) formData.append("images", img);
+        else formData.append("existingImages", img);
       });
 
       return updateAssetApi(uid, formData);
@@ -196,150 +240,114 @@ const AssetEdit = () => {
     },
   });
 
-  /* -------------------- HANDLERS -------------------- */
   const handleCategoryChange = (value) => {
     form.setFieldValue("categoryId", value);
-    form.setFieldValue("subcategoryId", "");
+    form.setFieldValue("subCategoryId", "");
+    const cat = categories.find((c) => c.id.toString() === value);
+    setSubcategories(cat?.children || []);
   };
 
-  const handleRemoveImage = (index) => {
-    setImages((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const handleAddImages = (e) => {
-    const files = Array.from(e.target.files);
-    const all = [...images, ...files];
-
-    if (all.length >= 5) {
-      notifications.show({
-        title: "Limit exceeded",
-        message: "Maximum 5 images allowed",
-        color: "red",
-      });
-      return;
-    }
-
-    setImages(all);
-  };
-
-  /* -------------------- UI -------------------- */
-  if (isLoading) {
+  /* -------------------- RENDER -------------------- */
+  if (isLoading)
     return (
       <Box mt={100} ta="center">
-        <Loader />
+        Loading...
       </Box>
     );
-  }
-  {
-    /* Camera input */
-  }
 
   return (
     <>
-      <input
-        type="file"
-        accept="image/*"
-        capture="environment"
-        multiple
-        ref={cameraRef}
-        style={{ display: "none" }}
-        onChange={handleAddImages}
-      />
-
-      <input
-        type="file"
-        accept="image/*"
-        multiple
-        ref={galleryRef}
-        style={{ display: "none" }}
-        onChange={handleAddImages}
-      />
-
       <PageTop PAGE_TITLE="Edit Asset" backBtn />
-      <Box maw={600} mt={10} mx="auto">
-        <Paper p="xl" withBorder radius="lg">
+      <Box maw={700} mt={10} mx="auto">
+        <Paper p="xl" shadow="md" radius="lg">
           <form onSubmit={form.onSubmit((v) => updateMutation.mutate(v))}>
-            <Stack>
-              <Text fw={700}>Asset Images (max 5)</Text>
-              <Modal
-                opened={uploadOpened}
-                onClose={() => setUploadOpened(false)}
-                title="Upload Image"
-                centered
-              >
-                <Stack>
-                  <Button onClick={() => cameraRef.current.click()}>
-                    📷 Take Photo
-                  </Button>
-
-                  <Button
-                    variant="light"
-                    onClick={() => galleryRef.current.click()}
-                  >
-                    🖼️ Choose from Gallery
-                  </Button>
-                </Stack>
-              </Modal>
-
-              <Group>
-                <ImagePreviewList
-                  images={images}
-                  onRemove={handleRemoveImage}
-                />
-
-                {images.length < 5 && (
-                  <Button
-                    size="xs"
-                    variant="outline"
-                    style={{ height: 80 }}
-                    onClick={() => setUploadOpened(true)}
-                  >
-                    + Add
-                  </Button>
-                )}
-              </Group>
-
+            <Stack spacing="md">
               <TextInput
                 label="Asset Name"
                 withAsterisk
                 {...form.getInputProps("name")}
               />
-              <Textarea label="Specs" {...form.getInputProps("specs")} />
+              <Text fw={500}>Total Units</Text>
+              <NumberInput
+                min={1}
+                value={form.values.units}
+                onChange={(val) => form.setFieldValue("units", val || 1)}
+              />
+
+              {form.values.unitInputs.map((unit, idx) => (
+                <Grid key={idx} align="end" gutter="md">
+                  {/* Product ID */}
+                  <Grid.Col span={4}>
+                    <TextInput
+                      label={`Unit #${idx + 1} Product ID`}
+                      {...form.getInputProps(`unitInputs.${idx}.productId`)}
+                      readOnly={idx < (asset?.assetUnits?.length || 0)}
+                    />
+                  </Grid.Col>
+
+                  {/* Status */}
+                  <Grid.Col span={3}>
+                    <Select
+                      label="Status"
+                      data={[
+                        { value: "IN_STOCK", label: "IN STOCK" },
+                        { value: "IN_USE", label: "IN USE" },
+                        { value: "SOLD", label: "SOLD" },
+                        { value: "DAMAGED", label: "DAMAGED" },
+                        { value: "LOST", label: "LOST" },
+                      ]}
+                      {...form.getInputProps(`unitInputs.${idx}.status`)}
+                      // disabled={idx < (asset?.assetUnits?.length || 0)} // old units cannot change status
+                    />
+                  </Grid.Col>
+
+                  {/* Purchase Price */}
+                  <Grid.Col span={5}>
+                    <NumberInput
+                      label="Unit Price"
+                      min={0}
+                      precision={2}
+                      {...form.getInputProps(`unitInputs.${idx}.purchasePrice`)}
+                      readOnly={idx < (asset?.assetUnits?.length || 0)}
+                    />
+                  </Grid.Col>
+                </Grid>
+              ))}
+
+              <Textarea
+                label="Specifications"
+                placeholder="e.g. 8GB / Intel i5 / 512GB SSD"
+                {...form.getInputProps("specs")}
+              />
 
               <Select
                 label="Category"
                 withAsterisk
-                data={categoryOptions}
                 value={form.values.categoryId}
                 onChange={handleCategoryChange}
+                data={categoryOptions}
               />
 
               <Select
                 label="Subcategory"
-                disabled={!subCategoryOptions.length}
+                value={form.values.subCategoryId}
+                onChange={(val) => form.setFieldValue("subCategoryId", val)}
                 data={subCategoryOptions}
-                {...form.getInputProps("subcategoryId")}
+                disabled={!subCategoryOptions.length}
               />
 
               <Select
                 label="Brand"
                 withAsterisk
-                data={brandOptions}
                 {...form.getInputProps("brandId")}
+                data={brandOptions}
               />
 
               <Select
                 label="Vendor"
                 withAsterisk
-                data={vendorOptions}
                 {...form.getInputProps("vendorId")}
-              />
-
-              <TextInput
-                label="Purchase Price"
-                type="number"
-                withAsterisk
-                {...form.getInputProps("purchasePrice")}
+                data={vendorOptions}
               />
 
               <DateInput
@@ -348,22 +356,17 @@ const AssetEdit = () => {
                 onChange={(v) => form.setFieldValue("purchaseDate", v)}
               />
 
-              <Select
-                label="Status"
-                data={[
-                  { value: "inuse", label: "In Use" },
-                  { value: "instock", label: "In Stock" },
-                  { value: "maintenance", label: "Maintenance" },
-                  { value: "damaged", label: "Damaged" },
-                  { value: "lost", label: "Lost" },
-                ]}
-                {...form.getInputProps("status")}
-              />
-
               <RichTextInput
                 label="Notes"
                 value={form.values.notes}
-                onChange={(v) => form.setFieldValue("notes", v)}
+                onChange={(val) => form.setFieldValue("notes", val)}
+              />
+
+              <ImagePreviewList
+                images={images}
+                onRemove={(i) =>
+                  setImages((prev) => prev.filter((_, idx) => idx !== i))
+                }
               />
 
               <Button type="submit" loading={updateMutation.isPending}>

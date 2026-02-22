@@ -78,13 +78,14 @@ const AssetMapping = () => {
   );
 
   /* ------------ ---- INIT ASSETS ---------------- */
+  /* ------------ ---- INIT ASSETS ---------------- */
   useEffect(() => {
     setItems(
       assets.map((a) => ({
         id: a.id,
         name: a.name,
         category: a.category?.name || null,
-        subCategory: a.subCategory?.name || null, // ✅ exact key
+        subCategory: a.subCategory?.name || null,
         column: COLUMN_NAMES.ASSET,
         employeeId: null,
       })),
@@ -92,7 +93,6 @@ const AssetMapping = () => {
   }, [assetData]);
 
   /* ---------------- DND LOGIC ---------------- */
-
   const moveCardHandler = (from, to, column) => {
     setItems((prev) => {
       const list = prev.filter((i) => i.column === column);
@@ -131,15 +131,52 @@ const AssetMapping = () => {
     );
   };
 
+  /* ---------------- Checkbox / Cross ---------------- */
+  // Checkbox click → move asset to employee
+  const handleCheck = ({ id }) => {
+    if (!selectedEmployeeId) {
+      notifications.show({
+        title: "Employee not selected",
+        message: "Please select an employee first",
+        color: "red",
+        position: "top-center",
+      });
+      return;
+    }
+    setItems((prev) =>
+      prev.map((i) =>
+        i.id === id
+          ? {
+              ...i,
+              column: COLUMN_NAMES.EMPLOYEE,
+              employeeId: selectedEmployeeId,
+            }
+          : i,
+      ),
+    );
+  };
+
+  // Cross click → move back to asset
+  const handleCross = ({ id }) => {
+    setItems((prev) =>
+      prev.map((i) =>
+        i.id === id
+          ? { ...i, column: COLUMN_NAMES.ASSET, employeeId: null }
+          : i,
+      ),
+    );
+  };
+
+  /* ---------------- Render Items ---------------- */
   const renderItems = (column) =>
     items
       .filter((i) => i.column === column)
-      .map((item, index) => (
+      .map((item) => (
         <MovableItem
           key={item.id}
           {...item}
-          index={index}
-          moveCardHandler={moveCardHandler}
+          onCheck={handleCheck}
+          onCross={handleCross}
         />
       ));
 
@@ -148,17 +185,15 @@ const AssetMapping = () => {
   );
 
   /* ---------------- UI ---------------- */
-
   return (
     <DndProvider backend={HTML5Backend}>
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)", // 🔥 equal width
+          gridTemplateColumns: "repeat(3, 1fr)",
           gap: 24,
           padding: 24,
           width: "100%",
-          //minHeight: "85vh", // 🔥 more vertical space
         }}
       >
         {/* ASSET */}
@@ -191,9 +226,8 @@ const AssetMapping = () => {
           {renderItems(COLUMN_NAMES.EMPLOYEE)}
         </Column>
 
-        {/* EMPLOYEE ASSETS */}
+        {/* EMPLOYEE INFO */}
         <Column title="Employee Info">
-          {/* 🔥 Employee Info Header */}
           {selectedEmployee && (
             <div
               style={{
@@ -205,13 +239,13 @@ const AssetMapping = () => {
               }}
             >
               <div style={{ fontWeight: 600 }}>
-                Name:{selectedEmployee.fullName}
+                Name: {selectedEmployee.fullName}
               </div>
               <div style={{ fontSize: 13 }}>
                 Designation: {selectedEmployee.designation.name}
               </div>
               <div style={{ fontSize: 13 }}>
-                Deparment: {selectedEmployee.department.name}
+                Department: {selectedEmployee.department.name}
               </div>
             </div>
           )}
@@ -224,7 +258,6 @@ const AssetMapping = () => {
               This employee does not have any assigned assets
             </div>
           )}
-
           {employeeAssets.map((a) => (
             <MovableItem
               key={a.asset.id}
@@ -244,7 +277,6 @@ const AssetMapping = () => {
           size="md"
           radius="md"
           onClick={() => {
-            // 1 employee selected কিনা
             if (!selectedEmployeeId) {
               notifications.show({
                 title: "Employee not selected",
@@ -255,7 +287,6 @@ const AssetMapping = () => {
               return;
             }
 
-            // 2 dragged assets আছে কিনা
             const selectedAssets = items.filter(
               (i) => i.column === COLUMN_NAMES.EMPLOYEE,
             );
@@ -270,7 +301,6 @@ const AssetMapping = () => {
               return;
             }
 
-            // 3 valid → mutation call
             mutation.mutate({
               employeeId: Number(selectedEmployeeId),
               assetIds: selectedAssets.map((i) => i.id),

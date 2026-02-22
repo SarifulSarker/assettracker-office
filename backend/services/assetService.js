@@ -12,13 +12,13 @@ class AssetService {
     try {
       const {
         name,
-        units, // total number of units
-        productIds, // array of product IDs (length should match units)
+        units,
+        productIds = [],
+        unitPrices = [], // 🆕 NEW ARRAY (unit wise price)
         brandId,
         specs,
         notes,
         purchaseDate,
-        purchasePrice,
         categoryId,
         subCategoryId,
         vendorId,
@@ -26,6 +26,15 @@ class AssetService {
 
       if (!name) {
         return ErrorResponse(400, "Asset name is required");
+      }
+
+      // 🔒 Validation
+      if (productIds.length !== Number(units)) {
+        return ErrorResponse(400, "Units and productIds length mismatch");
+      }
+
+      if (unitPrices.length > 0 && unitPrices.length !== productIds.length) {
+        return ErrorResponse(400, "Each unit must have a price");
       }
 
       // ✅ image paths
@@ -39,12 +48,11 @@ class AssetService {
           name,
           uid: generateAssetUID(new Date()),
           specs,
-
           notes,
           purchaseDate: purchaseDate ? new Date(purchaseDate) : null,
-          purchasePrice: purchasePrice ? Number(purchasePrice) : null,
           units: Number(units),
           images: imagePaths,
+
           brand: brandId ? { connect: { id: Number(brandId) } } : undefined,
           category: categoryId
             ? { connect: { id: Number(categoryId) } }
@@ -62,16 +70,17 @@ class AssetService {
         },
       });
 
-      // -------------------- CREATE ASSET UNITS --------------------
-      const assetUnitData = productIds.map((pid) => ({
+      // -------------------- CREATE ASSET UNITS WITH PRICE 🆕 --------------------
+      const assetUnitData = productIds.map((pid, index) => ({
         assetId: asset.id,
         productId: pid,
-        status: "IN_STOCK", // default status
+        status: "IN_STOCK",
+        purchasePrice: unitPrices[index] ? Number(unitPrices[index]) : null,
       }));
 
       await prisma.assetUnit.createMany({
         data: assetUnitData,
-        skipDuplicates: true, // just in case
+        skipDuplicates: true,
       });
 
       // -------------------- ASSET LOG --------------------
@@ -87,7 +96,7 @@ class AssetService {
 
       return SuccessResponse(
         201,
-        "Asset created successfully with units",
+        "Asset created successfully with unit prices",
         asset,
       );
     } catch (error) {
@@ -190,6 +199,7 @@ class AssetService {
           assetLogs: {
             orderBy: { createdAt: "desc" }, // latest first
           },
+          assetUnits: true,
         },
       });
 
@@ -202,161 +212,196 @@ class AssetService {
   }
 
   // UPDATE
-  async updateAsset(uid, payload, issuer, files) {
-    try {
-      if (!uid) return ErrorResponse(400, "Asset UID is required");
+async updateAsset(uid, payload, issuer, files) {
+  try {
+    if (!uid) return ErrorResponse(400, "Asset UID is required");
 
-      // ---------------- Convert FormData to plain object ----------------
-      if (payload instanceof FormData) {
-        const obj = {};
-        for (const [key, value] of payload.entries()) {
+    /* ---------------- 1️⃣ Convert FormData ---------------- */
+    if (payload instanceof FormData) {
+      const obj = {};
+
+      for (const [key, value] of payload.entries()) {
+        if (key.endsWith("[]")) {
+          const realKey = key.replace("[]", "");
+          obj[realKey] = obj[realKey] || [];
+          obj[realKey].push(value);
+        } else {
           obj[key] = value;
         }
-        payload = obj;
       }
 
-      /* ---------------- 1️⃣ Fetch old asset with all relations ---------------- */
-      const oldAsset = await prisma.asset.findUnique({
-        where: { uid },
-        include: {
-          brand: true,
-          category: true,
-          subCategory: true,
-          vendor: true,
-        },
-      });
-
-      if (!oldAsset) return ErrorResponse(404, "Asset not found");
-
-      /* ---------------- 2️⃣ Relation → Model map ---------------- */
-      const relationModelMap = {
-        brand: prisma.brand,
-        category: prisma.category,
-        subCategory: prisma.category,
-        vendor: prisma.vendor,
-      };
-
-      /* ---------------- 3️⃣ Build updateData dynamically ---------------- */
-      const updateData = {};
-      const changedFields = {};
-
-      for (const [key, value] of Object.entries(payload)) {
-        if (key === "existingImages") continue;
-
-        if (value === undefined || value === null) continue;
-
-        // ---------- relation fields ----------
-        if (key.endsWith("Id")) {
-          const relationKey = key.replace("Id", "");
-          const oldRelation = oldAsset[relationKey];
-          const newId = Number(value);
-
-          if (!newId || oldRelation?.id === newId) continue;
-
-          const model = relationModelMap[relationKey];
-          if (!model) continue;
-
-          const newEntity = await model.findUnique({
-            where: { id: newId },
-            select: { name: true },
-          });
-
-          changedFields[relationKey] = {
-            from: oldRelation?.name || "N/A",
-            to: newEntity?.name || "N/A",
-          };
-
-          updateData[relationKey] = { connect: { id: newId } };
-          continue;
-        }
-
-        // ---------- date fields ----------
-        if (
-          oldAsset[key] instanceof Date ||
-          key.toLowerCase().includes("date")
-        ) {
-          const oldDate = oldAsset[key]
-            ? new Date(oldAsset[key]).toISOString()
-            : null;
-          const newDate = value ? new Date(value).toISOString() : null;
-
-          if (oldDate !== newDate) {
-            changedFields[key] = { from: oldAsset[key], to: value };
-            updateData[key] = new Date(value);
-          }
-          continue;
-        }
-
-        // ---------- purchasePrice Float ----------
-        if (key === "purchasePrice") {
-          const floatValue = parseFloat(value);
-          if (oldAsset.purchasePrice !== floatValue) {
-            changedFields[key] = {
-              from: oldAsset.purchasePrice,
-              to: floatValue,
-            };
-            updateData[key] = floatValue;
-          }
-          continue;
-        }
-
-        // ---------- scalar fields ----------
-        if (oldAsset[key] !== value) {
-          changedFields[key] = { from: oldAsset[key], to: value };
-          updateData[key] = value;
-        }
-      }
-
-      /* ---------------- 4️⃣ Handle images (REPLACE LOGIC) ---------------- */
-
-      // existing images sent from frontend
-      let existingImages = [];
-
-      if (payload.existingImages) {
-        existingImages = Array.isArray(payload.existingImages)
-          ? payload.existingImages
-          : [payload.existingImages];
-      }
-
-      // new uploaded images (multer files)
-      const newImages = files
-        ? files.map((file) => `/uploads/assets/${file.filename}`)
-        : [];
-
-      // overwrite images completely
-      updateData.images = [...existingImages, ...newImages];
-      delete updateData.existingImages;
-
-      const updatedAsset = await prisma.asset.update({
-        where: { uid },
-        data: updateData,
-        include: {
-          brand: true,
-          category: true,
-          subCategory: true,
-          vendor: true,
-        },
-      });
-
-      /* ---------------- 6️⃣ Save log ---------------- */
-      if (Object.keys(changedFields).length > 0) {
-        await prisma.assetLog.create({
-          data: {
-            asset_id: updatedAsset.id,
-            asset_uid: uid,
-            context: ASSET_LOG_CONTEXT.UPDATE,
-            description: `Updated fields: ${JSON.stringify(changedFields)}`,
-            issuer: issuer?.userFirstName || "system",
-          },
-        });
-      }
-
-      return SuccessResponse(200, "Asset updated successfully", updatedAsset);
-    } catch (error) {
-      console.error("UPDATE ASSET ERROR:", error);
-      return ErrorResponse(500, error.message || "Server Error");
+      payload = obj;
     }
+
+    /* ---------------- 2️⃣ Type Conversion ---------------- */
+    if (payload.units !== undefined) {
+      payload.units = Number(payload.units);
+    }
+
+    if (payload.unitPrices) {
+      payload.unitPrices = payload.unitPrices.map((p) => Number(p));
+    }
+
+    /* ---------------- 3️⃣ Fetch Existing Asset ---------------- */
+    const oldAsset = await prisma.asset.findUnique({
+      where: { uid },
+      include: {
+        brand: true,
+        category: true,
+        subCategory: true,
+        vendor: true,
+        assetUnits: true,
+      },
+    });
+
+    if (!oldAsset) return ErrorResponse(404, "Asset not found");
+
+    /* ---------------- 4️⃣ Build Update Data ---------------- */
+    const relationModelMap = {
+      brand: prisma.brand,
+      category: prisma.category,
+      subCategory: prisma.category,
+      vendor: prisma.vendor,
+    };
+
+    const skipFields = [
+      "existingImages",
+      "productIds",
+      "unitPrices",
+    ];
+
+    const updateData = {};
+    const changedFields = {};
+
+    for (const [key, value] of Object.entries(payload)) {
+      if (skipFields.includes(key)) continue;
+      if (value === undefined || value === null) continue;
+
+      /* ---------- Relation Fields ---------- */
+      if (key.endsWith("Id")) {
+        const relationKey = key.replace("Id", "");
+        const newId = Number(value);
+        const oldRelation = oldAsset[relationKey];
+
+        if (!newId || oldRelation?.id === newId) continue;
+
+        const model = relationModelMap[relationKey];
+        if (!model) continue;
+
+        const newEntity = await model.findUnique({
+          where: { id: newId },
+          select: { name: true },
+        });
+
+        updateData[relationKey] = { connect: { id: newId } };
+
+        changedFields[relationKey] = {
+          from: oldRelation?.name || "N/A",
+          to: newEntity?.name || "N/A",
+        };
+
+        continue;
+      }
+
+      /* ---------- Date Fields ---------- */
+      if (
+        oldAsset[key] instanceof Date ||
+        key.toLowerCase().includes("date")
+      ) {
+        const newDate = value ? new Date(value) : null;
+        const oldDate = oldAsset[key]
+          ? new Date(oldAsset[key]).toISOString()
+          : null;
+
+        if (newDate?.toISOString() !== oldDate) {
+          updateData[key] = newDate;
+          changedFields[key] = {
+            from: oldAsset[key],
+            to: value,
+          };
+        }
+
+        continue;
+      }
+
+      /* ---------- Scalar Fields ---------- */
+      if (oldAsset[key] !== value) {
+        updateData[key] = value;
+        changedFields[key] = {
+          from: oldAsset[key],
+          to: value,
+        };
+      }
+    }
+
+    /* ---------------- 5️⃣ Handle Images ---------------- */
+    const existingImages = payload.existingImages
+      ? Array.isArray(payload.existingImages)
+        ? payload.existingImages
+        : [payload.existingImages]
+      : [];
+
+    const newImages = files
+      ? files.map((file) => `/uploads/assets/${file.filename}`)
+      : [];
+
+    updateData.images = [...existingImages, ...newImages];
+
+    /* ---------------- 6️⃣ Update Asset ---------------- */
+    const updatedAsset = await prisma.asset.update({
+      where: { uid },
+      data: updateData,
+      include: {
+        brand: true,
+        category: true,
+        subCategory: true,
+        vendor: true,
+        assetUnits: true,
+      },
+    });
+
+    /* ---------------- 7️⃣ Update Asset Units ---------------- */
+    if (
+      payload.productIds &&
+      payload.unitPrices &&
+      payload.productIds.length === payload.unitPrices.length
+    ) {
+      await prisma.assetUnit.deleteMany({
+        where: { assetId: updatedAsset.id },
+      });
+
+      const assetUnitData = payload.productIds.map((pid, idx) => ({
+        assetId: updatedAsset.id,
+        productId: pid,
+        status: "IN_STOCK",
+        purchasePrice: payload.unitPrices[idx],
+      }));
+
+      await prisma.assetUnit.createMany({
+        data: assetUnitData,
+        skipDuplicates: true,
+      });
+    }
+
+    /* ---------------- 8️⃣ Save Log ---------------- */
+    if (Object.keys(changedFields).length > 0) {
+      await prisma.assetLog.create({
+        data: {
+          asset_id: updatedAsset.id,
+          asset_uid: uid,
+          context: ASSET_LOG_CONTEXT.UPDATE,
+          description: `Updated fields: ${JSON.stringify(changedFields)}`,
+          issuer: issuer?.userFirstName || "system",
+        },
+      });
+    }
+
+    return SuccessResponse(200, "Asset updated successfully", updatedAsset);
+  } catch (error) {
+    console.error("UPDATE ASSET ERROR:", error);
+    return ErrorResponse(500, error.message || "Server Error");
   }
+}
 
   // DELETE
   async deleteAsset(uid, issuer) {

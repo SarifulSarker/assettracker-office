@@ -190,7 +190,7 @@ model Asset {
 
   notes         String?
   purchaseDate  DateTime?
-  purchasePrice Float?
+ 
 
   // 🆕 total quantity of units
   units Int @default(0)
@@ -223,7 +223,7 @@ model AssetUnit {
 
   assetId Int
   asset   Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
-
+  purchasePrice Float?
   productId String     @unique
   status    UnitStatus @default(IN_STOCK)
 

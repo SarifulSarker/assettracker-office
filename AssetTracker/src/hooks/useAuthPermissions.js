@@ -2,7 +2,8 @@ import { useSelector } from "react-redux";
 // import { hasPermission as checkPermission } from "../helpers/permissionSelector.js";
 
 const checkPermission = (permissions, module, action, role) => {
-  if (role === "SUPERADMIN") return true;
+ 
+  if (role === "Super Admin") return true;
   if (!permissions || !permissions[module]) return false;
 
   return !!permissions[module][action]; // true/false
