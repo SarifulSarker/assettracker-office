@@ -89,7 +89,7 @@ class AssetAssignmentController {
     try {
       const { search } = req.query;
 
-      const response = await AssetAssignmentService.getUnassignedAssetsService({
+      const response = await AssetAssignmentService.getUnassignedAssetUnitsService({
         search,
       });
 

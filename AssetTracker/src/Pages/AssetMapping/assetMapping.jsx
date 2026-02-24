@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { Button, TextInput } from "@mantine/core";
+import { Button, Flex, TextInput } from "@mantine/core";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { notifications } from "@mantine/notifications";
 import { IconSearch } from "@tabler/icons-react";
@@ -78,7 +78,7 @@ const AssetMapping = () => {
   );
 
   /* ------------ ---- INIT ASSETS ---------------- */
-  /* ------------ ---- INIT ASSETS ---------------- */
+
   useEffect(() => {
     setItems(
       assets.map((a) => ({
@@ -201,32 +201,27 @@ const AssetMapping = () => {
           title="Asset"
           onDropItem={handleDropToColumn}
           allowedDropFrom={[COLUMN_NAMES.EMPLOYEE]}
+
         >
-          <TextInput
-            placeholder="Search assets..."
-            value={assetSearch}
-            onChange={(e) => setAssetSearch(e.target.value)}
-            mb="sm"
-            icon={<IconSearch size={16} />}
-          />
+          <Flex >
+            <TextInput
+              placeholder="Search assets..."
+              value={assetSearch}
+              onChange={(e) => setAssetSearch(e.target.value)}
+              mb="sm"
+              icon={<IconSearch size={16} />}
+            />
+
+            <EmployeeHeader
+              employees={employees}
+              selectedEmployeeId={selectedEmployeeId}
+              setSelectedEmployeeId={setSelectedEmployeeId}
+            />
+          </Flex>
           {renderItems(COLUMN_NAMES.ASSET)}
         </Column>
 
-        {/* EMPLOYEE */}
-        <Column
-          title="Employee"
-          onDropItem={handleDropToColumn}
-          allowedDropFrom={[COLUMN_NAMES.ASSET]}
-        >
-          <EmployeeHeader
-            employees={employees}
-            selectedEmployeeId={selectedEmployeeId}
-            setSelectedEmployeeId={setSelectedEmployeeId}
-          />
-          {renderItems(COLUMN_NAMES.EMPLOYEE)}
-        </Column>
-
-        {/* EMPLOYEE INFO */}
+       
         <Column title="Employee Info">
           {selectedEmployee && (
             <div
@@ -315,3 +310,6 @@ const AssetMapping = () => {
 };
 
 export default AssetMapping;
+
+
+// changes

@@ -120,7 +120,7 @@ const Assets = () => {
 
   const assets = data?.data?.assets || [];
   const total = data?.data?.total || 0;
-  console.log(assets);
+ 
   const handleDownloadCSV = async () => {
     try {
       setIsExporting(true);

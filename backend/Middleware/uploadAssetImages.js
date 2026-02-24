@@ -22,7 +22,7 @@ const storage = multer.diskStorage({
 
 const uploadAssetImages = multer({
   storage,
-  limits: { files: 5 },
-});
+  limits: { files: 50 }, // allow more files
+}).any(); // accept any field name
 
 export default uploadAssetImages;

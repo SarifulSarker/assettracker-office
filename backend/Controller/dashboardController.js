@@ -4,7 +4,7 @@ class DashboardController {
   async getAssetOverview(req, res) {
     try {
       const response = await dashboardService.getAssetOverview();
-      return res.status(response.statusCode || 200).json(response);
+      return res.status(response.responseCode || 200).json(response);
     } catch (error) {
       console.error("Error in getAssetOverview:", error);
       return res.status(500).json({

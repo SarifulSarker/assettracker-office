@@ -43,6 +43,7 @@ const Dashboard = () => {
     try {
       const data = await getAssetOverviewApi();
       setOverview(data.data);
+     
     } catch (err) {
       notifications.show({
         title: "Error",
@@ -68,10 +69,10 @@ const Dashboard = () => {
       value: `৳${formatBDT(overview?.totalAssetValue)}`,
     },
     { label: "Total Assets", value: overview?.totalAssets || 0 },
-    { label: "In Use", value: overview?.assetsInUse || 0 },
-    { label: "In Stock", value: overview?.assetsInStock || 0 },
-    { label: "In Maintenance", value: overview?.assetsInMaintenance || 0 },
-    { label: "Lost", value: overview?.assetsLost || 0 },
+    { label: "In Use", value: overview?.unitsInUse || 0 },
+    { label: "In Stock", value: overview?.unitsInStock || 0 },
+    { label: "In Maintenance", value: overview?.unitsInMaintenance || 0 },
+    { label: "Lost", value: overview?.unitsLost || 0 },
   ];
 
   return (

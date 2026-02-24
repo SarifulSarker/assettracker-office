@@ -94,7 +94,7 @@ class userService {
           email: true,
           phone: true,
           is_active: true,
-
+          roleInfo:true,
           createdAt: true,
           updatedAt: true,
         },

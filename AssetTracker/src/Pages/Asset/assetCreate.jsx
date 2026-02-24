@@ -45,17 +45,16 @@ const assetSchema = Yup.object().shape({
 
   notes: Yup.string().nullable(),
   units: Yup.number().min(1, "At least 1 unit required").required(),
- unitInputs: Yup.array().of(
-  Yup.object().shape({
-    productId: Yup.string().required("Product ID required"),
-    status: Yup.string().required(),
-    purchasePrice: Yup.number()
-      .typeError("Unit price must be a number")
-      .min(0, "Price cannot be negative")
-      .required("Unit price required"),
-  }),
-),
-
+  unitInputs: Yup.array().of(
+    Yup.object().shape({
+      productId: Yup.string().required("Product ID required"),
+      status: Yup.string().required(),
+      purchasePrice: Yup.number()
+        .typeError("Unit price must be a number")
+        .min(0, "Price cannot be negative")
+        .required("Unit price required"),
+    }),
+  ),
 });
 
 const AssetCreate = () => {
@@ -108,7 +107,7 @@ const AssetCreate = () => {
       subCategoryId: "",
       brandId: "",
       vendorId: "",
-    
+
       purchaseDate: null,
       specs: "",
       notes: "",
@@ -137,7 +136,7 @@ const AssetCreate = () => {
         ...Array(totalUnits - arr.length).fill({
           productId: "",
           status: "IN_STOCK",
-           purchasePrice: "",
+          purchasePrice: "",
         }),
       ];
     } else if (totalUnits < arr.length) {
@@ -167,14 +166,18 @@ const AssetCreate = () => {
       formData.append("status", values.status || "IN_STOCK"); // default
 
       // Ensure no empty productIds
-      values.unitInputs.forEach((unit) => {
+      values.unitInputs.forEach((unit, idx) => {
         if (unit.productId) formData.append("productIds[]", unit.productId);
         if (unit.purchasePrice !== undefined && unit.purchasePrice !== null)
           formData.append("unitPrices[]", Number(unit.purchasePrice));
+
+        // Append images for each unit
+        if (unit.images && unit.images.length > 0) {
+          unit.images.forEach((file) =>
+            formData.append(`unitImages[${idx}][]`, file),
+          );
+        }
       });
-
-     
-
       if (values.purchaseDate) {
         const date =
           values.purchaseDate instanceof Date
@@ -251,38 +254,55 @@ const AssetCreate = () => {
               <Text fw={500}>Product IDs for each unit:</Text>
 
               {form.values.unitInputs.map((unit, idx) => (
-                <Grid key={idx} align="end" gutter="md">
-                  {/* Product ID */}
-                  <Grid.Col span={4}>
-                    <TextInput
-                      label={`Unit #${idx + 1} Product ID`}
-                      placeholder={`e.g. MB-00${idx + 1}`}
-                      {...form.getInputProps(`unitInputs.${idx}.productId`)}
-                    />
-                  </Grid.Col>
+                <Paper key={idx} p="sm" shadow="xs" mb="md" withBorder>
+                  <Text fw={500} mb={5}>
+                    Unit #{idx + 1}
+                  </Text>
 
-                  {/* Status */}
-                  <Grid.Col span={3}>
-                    <Select
-                      label="Status"
-                      data={[{ value: "IN_STOCK", label: "IN STOCK" }]}
-                      value={form.values.unitInputs[idx].status}
-                      disabled
-                    />
-                  </Grid.Col>
+                  <Grid align="end" gutter="md">
+                    {/* Product ID */}
+                    <Grid.Col span={4}>
+                      <TextInput
+                        label="Product ID"
+                        placeholder={`e.g. MB-00${idx + 1}`}
+                        {...form.getInputProps(`unitInputs.${idx}.productId`)}
+                      />
+                    </Grid.Col>
 
-                  {/* Purchase Price */}
-                  <Grid.Col span={5}>
-                    <NumberInput
-                      label="Unit Price"
-                      min={0}
-                      precision={2}
-                      {...form.getInputProps(`unitInputs.${idx}.purchasePrice`)}
-                    />
-                  </Grid.Col>
-                </Grid>
+                    {/* Status */}
+                    <Grid.Col span={3}>
+                      <Select
+                        label="Status"
+                        data={[{ value: "IN_STOCK", label: "IN STOCK" }]}
+                        value={form.values.unitInputs[idx].status}
+                        disabled
+                      />
+                    </Grid.Col>
+
+                    {/* Purchase Price */}
+                    <Grid.Col span={5}>
+                      <NumberInput
+                        label="Unit Price"
+                        min={0}
+                        precision={2}
+                        {...form.getInputProps(
+                          `unitInputs.${idx}.purchasePrice`,
+                        )}
+                      />
+                    </Grid.Col>
+                  </Grid>
+
+                  {/* 🖼 Unit Image Upload */}
+                  <FileUploadArea
+                    images={unit.images || []}
+                    setImages={(files) => {
+                      const updatedUnits = [...form.values.unitInputs];
+                      updatedUnits[idx].images = files;
+                      form.setFieldValue("unitInputs", updatedUnits);
+                    }}
+                  />
+                </Paper>
               ))}
-
               <Textarea
                 resize="vertical"
                 label="Specifications"
@@ -365,8 +385,6 @@ const AssetCreate = () => {
                 }}
               />
 
-         
-
               <DateInput
                 label="Purchase Date"
                 withAsterisk
@@ -382,8 +400,7 @@ const AssetCreate = () => {
                 {...form.getInputProps("notes")}
               />
 
-              <FileUploadArea images={images} setImages={setImages} />
-
+          
               <Button type="submit" loading={createMutation.isLoading}>
                 Create Asset
               </Button>

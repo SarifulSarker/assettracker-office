@@ -1,6 +1,7 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, UnitStatus } from "@prisma/client";
 import { SuccessResponse, ErrorResponse } from "../utils/return.js";
 const prisma = new PrismaClient();
+
 
 class DashboardService {
   async getAssetOverview() {
@@ -10,47 +11,46 @@ class DashboardService {
         totalAssetValue,
         inUseCount,
         inStockCount,
-        inMaintenance,
-        inLost,
+        unitsInMaintenance,
+        inLostCount,
       ] = await Promise.all([
-        prisma.asset.count(),
+        prisma.assetUnit.count({
+          where: {
+            status: {
+              not: UnitStatus.SOLD,
+            },
+          },
+        }),
 
-        prisma.asset.aggregate({
+        prisma.assetUnit.aggregate({
           _sum: { purchasePrice: true },
         }),
 
-        prisma.asset.count({
-          where: { status: "inuse" },
+        prisma.assetUnit.count({
+          where: { status: UnitStatus.IN_USE },
         }),
 
-        prisma.asset.count({
-          where: { status: "instock" },
+        prisma.assetUnit.count({
+          where: { status: UnitStatus.IN_STOCK },
         }),
 
-        prisma.asset.count({
-          where: {
-            status:  "maintenance",
-           
-          },
+        prisma.assetUnit.count({
+          where: { status: UnitStatus.MAINTENANCE },
         }),
-        prisma.asset.count({
-          where: {
-            status:  "lost",
-           
-          },
+
+        prisma.assetUnit.count({
+          where: { status: UnitStatus.LOST },
         }),
       ]);
 
-      const data = {
+      return SuccessResponse(200, "Asset overview fetched successfully", {
         totalAssets,
         totalAssetValue: totalAssetValue._sum.purchasePrice || 0,
-        assetsInUse: inUseCount,
-        assetsInStock: inStockCount,
-        assetsInMaintenance: inMaintenance,
-        assetsLost:inLost,
-      };
-
-      return SuccessResponse(200, "Asset overview fetched successfully", data);
+        unitsInUse: inUseCount,
+        unitsInStock: inStockCount,
+        unitsInMaintenance:0,
+        unitsLost: inLostCount,
+      });
     } catch (error) {
       return ErrorResponse(500, error.message || "Server Error");
     }
@@ -58,47 +58,49 @@ class DashboardService {
 
   async getAssetsByCategory() {
     try {
-      const grouped = await prisma.asset.groupBy({
-        by: ["categoryId"],
+      const assets = await prisma.asset.findMany({
         where: {
           is_active: true,
           categoryId: { not: null },
         },
-        _count: { id: true },
-        _sum: { purchasePrice: true },
-      });
-
-      if (!grouped.length) {
-        return SuccessResponse(200, "No category data found", {
-          categories: [],
-          countSeries: [],
-          priceSeries: [],
-        });
-      }
-
-      const categories = await prisma.category.findMany({
-        where: {
-          id: { in: grouped.map((g) => g.categoryId) },
+        include: {
+          category: {
+            select: { id: true, name: true },
+          },
+          assetUnits: {
+            select: { purchasePrice: true },
+          },
         },
-        select: { id: true, name: true },
       });
 
-      const categoryMap = {};
-      categories.forEach((c) => {
-        categoryMap[c.id] = c.name;
+      const grouped = {};
+
+      assets.forEach((asset) => {
+        const catId = asset.category.id;
+        const catName = asset.category.name;
+
+        if (!grouped[catId]) {
+          grouped[catId] = {
+            name: catName,
+            count: 0,
+            totalValue: 0,
+          };
+        }
+
+        grouped[catId].count += asset.assetUnits.length;
+
+        asset.assetUnits.forEach((unit) => {
+          grouped[catId].totalValue += unit.purchasePrice || 0;
+        });
       });
+
+      const result = Object.values(grouped);
 
       const data = {
-        categories: [],
-        countSeries: [],
-        priceSeries: [],
+        categories: result.map((r) => r.name),
+        countSeries: result.map((r) => r.count),
+        priceSeries: result.map((r) => Math.round(r.totalValue)),
       };
-
-      grouped.forEach((g) => {
-        data.categories.push(categoryMap[g.categoryId] || "Unknown");
-        data.countSeries.push(g._count.id);
-        data.priceSeries.push(Math.round(g._sum.purchasePrice || 0));
-      });
 
       return SuccessResponse(
         200,
@@ -109,7 +111,6 @@ class DashboardService {
       return ErrorResponse(500, error.message || "Server Error");
     }
   }
-
   async getDepartmentWiseAssetCount() {
     try {
       // 1️⃣ Fetch all active asset assignments with employee & department

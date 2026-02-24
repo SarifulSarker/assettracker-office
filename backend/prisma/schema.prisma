@@ -181,16 +181,13 @@ model Asset {
 
   name String @unique
 
-  images String[] // ✅ multiple image path
-
   brandId Int?
   brand   Brand? @relation(fields: [brandId], references: [id])
 
-  specs         String?
+  specs String?
 
-  notes         String?
-  purchaseDate  DateTime?
- 
+  notes        String?
+  purchaseDate DateTime?
 
   // 🆕 total quantity of units
   units Int @default(0)
@@ -214,24 +211,25 @@ model Asset {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-
   @@map("assets")
 }
 
 model AssetUnit {
   id Int @id @default(autoincrement())
 
-  assetId Int
-  asset   Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  assetId       Int
+  asset         Asset      @relation(fields: [assetId], references: [id], onDelete: Cascade)
   purchasePrice Float?
-  productId String     @unique
-  status    UnitStatus @default(IN_STOCK)
+  productId     String     @unique
+  status        UnitStatus @default(IN_STOCK)
+  images        String[]
+
+ assigned      Boolean    @default(false) 
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   assetAssingmentEmployees AssetAssingmentEmployee[]
-
 
   @@unique([id, assetId])
   @@map("asset_units")
@@ -245,13 +243,14 @@ model AssetAssingmentEmployee {
   asset   Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
 
   assetUnitId Int
-  assetUnit AssetUnit @relation(fields: [assetUnitId, assetId], references: [id, assetId])
+  assetUnit   AssetUnit @relation(fields: [assetUnitId, assetId], references: [id, assetId])
 
   employeeId Int
   employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
   assignedAt   DateTime  @default(now())
   unassignedAt DateTime?
+
   is_active    Boolean   @default(true)
 
   createdAt DateTime @default(now())
@@ -300,4 +299,5 @@ enum UnitStatus {
   SOLD
   DAMAGED
   LOST
+  MAINTENANCE
 }

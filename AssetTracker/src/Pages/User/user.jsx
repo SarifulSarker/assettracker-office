@@ -88,7 +88,7 @@ const User = () => {
 
   const users = data?.users || [];
   const total = data?.total || 0;
-
+  console.log(users);
   const tableHeaders = [
     {
       key: "sl",
@@ -102,7 +102,11 @@ const User = () => {
     },
     { key: "email", headerTitle: "Email" },
     { key: "phone", headerTitle: "Phone" },
-
+     {
+      key: "Role",
+      headerTitle: "Role",
+      row: (v, row) => row.roleInfo.role,
+    },
     {
       key: "actions",
       headerTitle: "Actions",
@@ -146,8 +150,6 @@ const User = () => {
     <div>
       <TablePaperContent
         filters={
-        
-
           <StandardFilters
             searchKey={searchKey}
             onSearchChange={handleSearch}

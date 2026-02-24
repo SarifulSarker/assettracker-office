@@ -4,21 +4,35 @@ class AssetController {
   // CREATE
   async createAsset(req, res) {
     try {
+      // Separate files by fieldname
+      const images = req.files.filter((f) => f.fieldname === "images");
+
+      // Group unit images by index
+      const unitImages = [];
+      req.files.forEach((file) => {
+        const match = file.fieldname.match(/^unitImages\[(\d+)\]\[\]$/);
+        if (match) {
+          const idx = parseInt(match[1]);
+          unitImages[idx] = unitImages[idx] || [];
+          unitImages[idx].push(file);
+        }
+      });
+
       const result = await assetService.createAsset(
         req.body,
-        req.files, // ✅ images here
+        { images, unitImages },
         req.user,
       );
-     
+
       res.status(result.responseCode).json(result);
     } catch (error) {
+      console.error(error);
       res.status(500).json({
         success: false,
-        message: error.message,
+        message: error.message || "Server Error",
       });
     }
   }
-
   // GET ALL
   async getAll(req, res) {
     try {
@@ -61,19 +75,14 @@ class AssetController {
 
   async updateAsset(req, res) {
     try {
-      const purchasePrice = req.body.purchasePrice;
-      req.body.purchasePrice =
-        purchasePrice !== undefined && purchasePrice !== ""
-          ? parseFloat(purchasePrice)
-          : null;
-
       const result = await assetService.updateAsset(
         req.params.uid,
-        req.body, // <-- Form fields
+        req.body,
         req.user,
-        req.files, // <-- multer parsed files
+        req.files,
       );
 
+     
       res.status(result.responseCode).json(result);
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });

@@ -52,7 +52,7 @@ const FileUploadArea = ({ images, setImages }) => {
   const openGallery = () => galleryInputRef.current.click();
 
   return (
-    <Paper withBorder radius="md" p="md">
+    <Paper withBorder radius="md" p="md" mt={10}> 
       {/* ========= Modal ========= */}
       <Modal
         opened={opened}

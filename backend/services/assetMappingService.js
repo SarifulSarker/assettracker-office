@@ -6,6 +6,7 @@ import { ASSET_LOG_CONTEXT } from "../utils/ASSET_LOG_CONTEXT.js";
 const prisma = new PrismaClient();
 
 class AssetAssignmentService {
+
   async assignAssetsToEmployee(employeeId, assetIds, issuer) {
     try {
       if (!employeeId || !assetIds?.length) {
@@ -164,8 +165,7 @@ class AssetAssignmentService {
       }
 
       // 2️⃣ Bulk update
-      const updatedAssignments =
-        await prisma.assetAssingmentEmployee.updateMany({
+      const updatedAssignments = await prisma.assetAssingmentEmployee.updateMany({
           where: {
             id: { in: assignments.map((a) => a.id) },
           },
@@ -186,44 +186,42 @@ class AssetAssignmentService {
     }
   }
 
-  async getUnassignedAssetsService({ search }) {
+  async  getUnassignedAssetUnitsService({ search }) {
     try {
-      let filters = {};
+      let filters = {
+        assigned: false, // only unassigned units
+      };
 
       // 🔍 Search by asset name
       if (search) {
         const terms = search.trim().split(/\s+/);
-        filters = {
+        filters.asset = {
           AND: terms.map((term) => ({
             name: { contains: term, mode: "insensitive" },
           })),
         };
       }
 
-      const whereCondition = {
-        is_active: true,
-        ...filters,
-        assetAssingmentEmployees: {
-          none: { is_active: true }, // 🔥 no active assignment
-        },
-      };
-
-      const assets = await prisma.asset.findMany({
-        where: whereCondition,
+      const assetUnits = await prisma.assetUnit.findMany({
+        where: filters,
         include: {
-          brand: true,
-          category: true,
-          subCategory: true,
-          vendor: true,
+          asset: {
+            include: {
+              brand: true,
+              category: true,
+              subCategory: true,
+              vendor: true,
+            },
+          },
         },
         orderBy: { createdAt: "desc" },
       });
 
-      return SuccessResponse(200, "Unassigned assets fetched successfully", {
-        assets,
+      return SuccessResponse(200, "Unassigned asset units fetched successfully", {
+        assetUnits,
       });
     } catch (error) {
-      console.error("getUnassignedAssetsService error:", error);
+      console.error("getUnassignedAssetUnitsService error:", error);
       return ErrorResponse(500, error.message || "Server error");
     }
   }

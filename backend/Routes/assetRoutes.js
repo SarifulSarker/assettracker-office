@@ -5,17 +5,19 @@ import uploadAssetImages from "../Middleware/uploadAssetImages.js";
 const router = express.Router();
 router.post(
   "/create-asset",
-  uploadAssetImages.array("images", 5), // 🔥 SAME KEY NAME
+  uploadAssetImages, // accept any field
   assetController.createAsset,
 );
 
 router.get("/get-all-assets", assetController.getAll);
 router.get("/:uid", assetController.getAssetById);
+
 router.put(
   "/:uid",
-  uploadAssetImages.array("images", 5),
+  uploadAssetImages,
   assetController.updateAsset,
 );
+
 router.delete("/:uid", assetController.deleteAsset);
 
 export default router;

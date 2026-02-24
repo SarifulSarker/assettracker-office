@@ -16,6 +16,7 @@ import {
   Modal,
   Box,
   Overlay,
+  Grid,
 } from "@mantine/core";
 import { Image as MantineImage } from "@mantine/core";
 import {
@@ -34,7 +35,7 @@ const AssetLog = () => {
   const [context, setContext] = useState(null);
   const [opened, setOpened] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
-
+  const [selectedUnit, setSelectedUnit] = useState(null);
   /* ---------------- Asset Info ---------------- */
   const { data: assetData, isLoading: assetLoading } = useQuery({
     queryKey: ["asset", uid],
@@ -103,104 +104,6 @@ const AssetLog = () => {
             ) : (
               <Stack spacing="sm">
                 {/* Asset basic info */}
-
-                {/* Asset Images - Right/top side */}
-
-                {asset?.images && asset.images.length > 0 && (
-                  <Stack spacing="xs" mt="sm">
-                    <Text size="sm" fw={600}>
-                      Asset Images
-                    </Text>
-
-                    <Box
-                      onClick={() => {
-                        setActiveIndex(0);
-                        setOpened(true);
-                      }}
-                      style={{
-                        width: "30%",
-                        height: "150px",
-                        position: "relative",
-                        cursor: "pointer",
-                        borderRadius: 12,
-                        overflow: "hidden",
-                      }}
-                    >
-                      {/* Main thumbnail */}
-                      <MantineImage
-                        src={`${import.meta.env.VITE_APP_BACKEND_BASE_URL}${asset.images[0]}`}
-                        height={120}
-                        fit="cover"
-                      />
-
-                      {/* Overlay */}
-                      <Overlay
-                        gradient="linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%)"
-                        opacity={0.6}
-                        color="#000"
-                        radius="md"
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontWeight: 600,
-                          color: "white",
-                          transition: "opacity 0.3s",
-                          "&:hover": {
-                            opacity: 1,
-                          },
-                        }}
-                      >
-                        <span>Click to view gallery</span>
-                        <span style={{ fontSize: "0.75rem" }}>
-                          +{asset.images.length} photos
-                        </span>
-                      </Overlay>
-                    </Box>
-                  </Stack>
-                )}
-                <Modal
-                  opened={opened}
-                  onClose={() => setOpened(false)}
-                  centered
-                  withCloseButton={true}
-                  padding={10}
-                  size="70%"
-                  lockScroll
-                  withinPortal
-                  trapFocus
-                  styles={{
-                    overlay: {
-                      backdropFilter: "blur(3px)",
-                    },
-                  }}
-                >
-                  <Carousel withIndicators initialSlide={activeIndex}>
-                    {asset?.images?.map((img, i) => (
-                      <Carousel.Slide key={i}>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <img
-                            src={`${import.meta.env.VITE_APP_BACKEND_BASE_URL}${img}`}
-                            style={{
-                              width: "98%",
-                              display: "flex",
-                              alignItems: "center",
-                              objectFit: "contain",
-                              marginBottom: "40px", // ✅ prevent cut
-                            }}
-                          />
-                        </div>
-                      </Carousel.Slide>
-                    ))}
-                  </Carousel>
-                </Modal>
 
                 <Text fw={600} component="div">
                   Asset: {asset?.name || "N/A"}
@@ -286,32 +189,125 @@ const AssetLog = () => {
                     : "N/A"}
                 </Text>
 
-                <Flex direction="column" gap={2}>
-                  <Flex align="center" gap={4}>
-                    <Text size="sm" fw={500}>
-                      Purchase Summary:
-                    </Text>
+                {/* Unit Cards Grid */}
+                <Stack spacing="sm" mt="md">
+                  <Text fw={600}>Units</Text>
+                  <Grid>
+                    {asset?.assetUnits?.map((unit) => (
+                      <Grid.Col key={unit.id} span={3}>
+                        <Paper
+                          shadow="sm"
+                          p="sm"
+                          radius="md"
+                          style={{
+                            cursor:
+                              unit.images.length > 0 ? "pointer" : "default",
+                          }}
+                          onClick={() => {
+                            setSelectedUnit(unit); // store the clicked unit
+                            setOpened(true);
+                          }}
+                        >
+                          {unit.images.length > 0 ? (
+                            <Box style={{ position: "relative" }}>
+                              <MantineImage
+                                src={`${import.meta.env.VITE_APP_BACKEND_BASE_URL}${unit.images[0]}`}
+                                height={120}
+                                fit="cover"
+                                radius="md"
+                              />
+                              {unit.images.length > 1 && (
+                                <Overlay
+                                  opacity={0.4}
+                                  color="#000"
+                                  radius="md"
+                                  style={{
+                                    display: "flex",
+                                    justifyContent: "center",
+                                    alignItems: "center",
+                                    color: "white",
+                                    fontWeight: 600,
+                                    fontSize: "0.8rem",
+                                  }}
+                                >
+                                  +{unit.images.length} images
+                                </Overlay>
+                              )}
+                            </Box>
+                          ) : (
+                            <Box
+                              style={{
+                                height: 120,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                backgroundColor: "#f0f0f0",
+                                borderRadius: 8,
+                                color: "#777",
+                                fontWeight: 500,
+                              }}
+                            >
+                              No Image
+                            </Box>
+                          )}
 
-                    <IconCurrencyTaka size={16} />
+                          <Text size="sm" fw={500} mt="xs">
+                            Product ID: {unit.productId}
+                          </Text>
+                          <Flex align="center" gap={4}>
+                            <IconCurrencyTaka size={14} />
+                            <Text size="sm">{unit.purchasePrice ?? "N/A"}</Text>
+                          </Flex>
+                          <Badge
+                            color={
+                              unit.status === "IN_STOCK" ? "green" : "gray"
+                            }
+                            variant="light"
+                            mt="xs"
+                          >
+                            {unit.status}
+                          </Badge>
+                        </Paper>
+                      </Grid.Col>
+                    ))}
+                  </Grid>
+                </Stack>
 
-                    <Text size="sm" fw={600}>
-                      {formattedTotal ?? "N/A"}
-                    </Text>
-
-                    <Text size="xs" >
-                      ({asset?.units ?? 0} Units)
-                    </Text>
-                  </Flex>
-
-                  {unitPrices && (
-                    <Text size="xs" >
-                      Unit Prices: ৳{unitPrices}
+                {/* Modal Full-Unit Gallery */}
+                <Modal
+                  opened={opened}
+                  onClose={() => setOpened(false)}
+                  size="70%"
+                  centered
+                  padding={10}
+                  lockScroll
+                  withCloseButton
+                >
+                  {selectedUnit && selectedUnit.images.length > 0 ? (
+                    <Carousel withIndicators loop>
+                      {selectedUnit.images.map((img, i) => (
+                        <Carousel.Slide key={i}>
+                          <img
+                            src={`${import.meta.env.VITE_APP_BACKEND_BASE_URL}${img}`}
+                            style={{
+                              width: "98%",
+                              objectFit: "contain",
+                              marginBottom: "40px",
+                            }}
+                          />
+                        </Carousel.Slide>
+                      ))}
+                    </Carousel>
+                  ) : (
+                    <Text c="dimmed" align="center">
+                      No Images to display
                     </Text>
                   )}
-                </Flex>
+                </Modal>
+
                 {/* Assignment */}
                 <Group spacing="xs">
-                  <Text size="sm"  component="div">
+                  <Text size="sm" component="div">
                     Current Status:
                   </Text>
                   <Badge color={activeLog ? "green" : "gray"} variant="light">
