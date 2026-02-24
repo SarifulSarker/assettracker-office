@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { DndProvider } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend";
 import { Button, Flex, TextInput } from "@mantine/core";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { notifications } from "@mantine/notifications";
 import { IconSearch } from "@tabler/icons-react";
 
@@ -17,7 +15,6 @@ import {
   assignAssetsToEmployeeApi,
   getAssetsByEmployeeApi,
 } from "../../services/assetMapping";
-import { useQueryClient } from "@tanstack/react-query";
 
 const emptyBox = {
   padding: "16px",
@@ -33,8 +30,7 @@ const AssetMapping = () => {
   const [assetSearch, setAssetSearch] = useState("");
   const queryClient = useQueryClient();
 
-  /* ---------------- API CALLS ---------------- */
-
+  // ---------------- API CALLS ----------------
   const { data: empData } = useQuery({
     queryKey: ["employees"],
     queryFn: () => getAllEmployeesApi({ page: 1, perpage: 100 }),
@@ -60,25 +56,22 @@ const AssetMapping = () => {
         color: "green",
         position: "top-center",
       });
-
       setItems((prev) => prev.filter((i) => !vars.assetIds.includes(i.id)));
-      // 🔥 2. Refetch Employee Assets (3rd column)
       queryClient.invalidateQueries({
         queryKey: ["employeeAssets", String(vars.employeeId)],
       });
     },
   });
 
-  /* ---------------- DATA ---------------- */
-
+  // ---------------- DATA ----------------
   const employees = empData?.data?.employees || [];
-  const assets = assetData?.data?.assets || [];
+  const assets = assetData?.data?.assetUnits || [];
+ 
   const employeeAssets = (employeeAssetData?.data ?? []).filter(
-    (a) => !a.unassignedAt,
+    (a) => !a.unassignedAt
   );
 
-  /* ------------ ---- INIT ASSETS ---------------- */
-
+  // ---------------- INIT ASSETS ----------------
   useEffect(() => {
     setItems(
       assets.map((a) => ({
@@ -86,54 +79,13 @@ const AssetMapping = () => {
         name: a.name,
         category: a.category?.name || null,
         subCategory: a.subCategory?.name || null,
-        column: COLUMN_NAMES.ASSET,
-        employeeId: null,
-      })),
+        selected: false, // ✅ for checkbox
+      }))
     );
   }, [assetData]);
 
-  /* ---------------- DND LOGIC ---------------- */
-  const moveCardHandler = (from, to, column) => {
-    setItems((prev) => {
-      const list = prev.filter((i) => i.column === column);
-      const dragged = list[from];
-      if (!dragged) return prev;
-
-      list.splice(from, 1);
-      list.splice(to, 0, dragged);
-
-      let idx = 0;
-      return prev.map((i) => (i.column === column ? list[idx++] : i));
-    });
-  };
-
-  const handleDropToColumn = (item, column) => {
-    if (column === COLUMN_NAMES.EMPLOYEE && !selectedEmployeeId) {
-      notifications.show({
-        message: "Select employee first",
-        color: "red",
-        position: "top-center",
-      });
-      return;
-    }
-
-    setItems((prev) =>
-      prev.map((i) =>
-        i.id === item.id
-          ? {
-              ...i,
-              column,
-              employeeId:
-                column === COLUMN_NAMES.EMPLOYEE ? selectedEmployeeId : null,
-            }
-          : i,
-      ),
-    );
-  };
-
-  /* ---------------- Checkbox / Cross ---------------- */
-  // Checkbox click → move asset to employee
-  const handleCheck = ({ id }) => {
+  // ---------------- Checkbox / Cross ----------------
+  const handleCheck = (id) => {
     if (!selectedEmployeeId) {
       notifications.show({
         title: "Employee not selected",
@@ -145,85 +97,57 @@ const AssetMapping = () => {
     }
     setItems((prev) =>
       prev.map((i) =>
-        i.id === id
-          ? {
-              ...i,
-              column: COLUMN_NAMES.EMPLOYEE,
-              employeeId: selectedEmployeeId,
-            }
-          : i,
-      ),
+        i.id === id ? { ...i, selected: !i.selected } : i
+      )
     );
   };
-
-  // Cross click → move back to asset
-  const handleCross = ({ id }) => {
-    setItems((prev) =>
-      prev.map((i) =>
-        i.id === id
-          ? { ...i, column: COLUMN_NAMES.ASSET, employeeId: null }
-          : i,
-      ),
-    );
-  };
-
-  /* ---------------- Render Items ---------------- */
-  const renderItems = (column) =>
-    items
-      .filter((i) => i.column === column)
-      .map((item) => (
-        <MovableItem
-          key={item.id}
-          {...item}
-          onCheck={handleCheck}
-          onCross={handleCross}
-        />
-      ));
 
   const selectedEmployee = employees.find(
-    (e) => String(e.id) === String(selectedEmployeeId),
+    (e) => String(e.id) === String(selectedEmployeeId)
   );
 
-  /* ---------------- UI ---------------- */
+  // ---------------- UI ----------------
   return (
-    <DndProvider backend={HTML5Backend}>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
-          gap: 24,
-          padding: 24,
-          width: "100%",
-        }}
-      >
-        {/* ASSET */}
-        <Column
-          title="Asset"
-          onDropItem={handleDropToColumn}
-          allowedDropFrom={[COLUMN_NAMES.EMPLOYEE]}
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "3fr 2fr", // 3/5 assets, 2/5 employee info
+        gap: 24,
+        padding: 24,
+        width: "100%",
+      }}
+    >
+      {/* ASSETS COLUMN */}
+      <Column title="Assets">
+        <Flex direction="row" gap="sm">
+          <TextInput
+            placeholder="Search assets..."
+            value={assetSearch}
+            onChange={(e) => setAssetSearch(e.target.value)}
+            mb="sm"
+            icon={<IconSearch size={16} />}
+          />
+          <EmployeeHeader
+            employees={employees}
+            selectedEmployeeId={selectedEmployeeId}
+            setSelectedEmployeeId={setSelectedEmployeeId}
+          />
+        </Flex>
+        {items.length === 0 && <div style={emptyBox}>No assets found</div>}
+        {items.map((item) => (
+          <MovableItem
+            key={item.id}
+            {...item}
+            column={COLUMN_NAMES.ASSET}
+            onCheck={() => handleCheck(item.id)}
+          />
+        ))}
+      </Column>
 
-        >
-          <Flex >
-            <TextInput
-              placeholder="Search assets..."
-              value={assetSearch}
-              onChange={(e) => setAssetSearch(e.target.value)}
-              mb="sm"
-              icon={<IconSearch size={16} />}
-            />
-
-            <EmployeeHeader
-              employees={employees}
-              selectedEmployeeId={selectedEmployeeId}
-              setSelectedEmployeeId={setSelectedEmployeeId}
-            />
-          </Flex>
-          {renderItems(COLUMN_NAMES.ASSET)}
-        </Column>
-
-       
-        <Column title="Employee Info">
-          {selectedEmployee && (
+      {/* EMPLOYEE INFO COLUMN */}
+      <Column title="Employee Info">
+        {selectedEmployee ? (
+          <>
             <div
               style={{
                 padding: "12px",
@@ -233,9 +157,7 @@ const AssetMapping = () => {
                 border: "1px solid #e9ecef",
               }}
             >
-              <div style={{ fontWeight: 600 }}>
-                Name: {selectedEmployee.fullName}
-              </div>
+              <div style={{ fontWeight: 600 }}>Name: {selectedEmployee.fullName}</div>
               <div style={{ fontSize: 13 }}>
                 Designation: {selectedEmployee.designation.name}
               </div>
@@ -243,34 +165,32 @@ const AssetMapping = () => {
                 Department: {selectedEmployee.department.name}
               </div>
             </div>
-          )}
-          {!selectedEmployeeId && (
-            <div style={emptyBox}>Please select an employee</div>
-          )}
-          {isLoading && <div style={emptyBox}>Loading employee assets...</div>}
-          {!isLoading && selectedEmployeeId && employeeAssets.length === 0 && (
-            <div style={emptyBox}>
-              This employee does not have any assigned assets
-            </div>
-          )}
-          {employeeAssets.map((a) => (
-            <MovableItem
-              key={a.asset.id}
-              id={a.asset.id}
-              name={a.asset.name}
-              category={a.asset.category?.name}
-              subCategory={a.asset.subCategory?.name}
-              column={COLUMN_NAMES.EMPLOYEE_ASSETS}
-              isReadOnly
-            />
-          ))}
-        </Column>
-      </div>
 
-      <div style={{ display: "flex", justifyContent: "center", marginTop: 0 }}>
+            {isLoading && <div style={emptyBox}>Loading employee assets...</div>}
+            {!isLoading && employeeAssets.length === 0 && (
+              <div style={emptyBox}>This employee does not have any assigned assets</div>
+            )}
+            {!isLoading &&
+              employeeAssets.map((a) => (
+                <MovableItem
+                  key={a.asset.id}
+                  id={a.asset.id}
+                  name={a.asset.name}
+                  category={a.asset.category?.name}
+                  subCategory={a.asset.subCategory?.name}
+                  isReadOnly
+                />
+              ))}
+          </>
+        ) : (
+          <div style={emptyBox}>Please select an employee</div>
+        )}
+
         <Button
           size="md"
           radius="md"
+          fullWidth
+          mt="md"
           onClick={() => {
             if (!selectedEmployeeId) {
               notifications.show({
@@ -282,14 +202,11 @@ const AssetMapping = () => {
               return;
             }
 
-            const selectedAssets = items.filter(
-              (i) => i.column === COLUMN_NAMES.EMPLOYEE,
-            );
-
+            const selectedAssets = items.filter((i) => i.selected);
             if (selectedAssets.length === 0) {
               notifications.show({
                 title: "No assets selected",
-                message: "Please drag at least one asset to assign",
+                message: "Please select at least one asset",
                 color: "orange",
                 position: "top-center",
               });
@@ -304,12 +221,9 @@ const AssetMapping = () => {
         >
           Assign Assets
         </Button>
-      </div>
-    </DndProvider>
+      </Column>
+    </div>
   );
 };
 
 export default AssetMapping;
-
-
-// changes
