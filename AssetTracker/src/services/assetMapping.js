@@ -2,11 +2,11 @@
 import httpRequest from "../helpers/httpRequest.js";
 
 // Assign assets to employee
-export const assignAssetsToEmployeeApi = async ({ employeeId, assetIds }) => {
+export const assignAssetsToEmployeeApi = async ({ employeeId, assetUnitIds }) => {
   try {
-    const data = httpRequest.post("/asset-mapping/", {
+    const { data } = await httpRequest.post("/asset-mapping/", {
       employeeId,
-      assetIds,
+      assetUnitIds,
     });
     return data;
   } catch (err) {
@@ -37,15 +37,15 @@ export const getEmployeesByAssetApi = async (uid) => {
 };
 
 // Unassign an asset
-export const unassignAssetApi = async (assignmentIds) => {
+// ---------------------- services/assetMapping.js ----------------------
+export const unassignAssetApi = async (assetUnitIds) => {
   try {
-    if (!assignmentIds || !assignmentIds.length) {
-      throw new Error("No assignment IDs provided");
+    if (!assetUnitIds || !assetUnitIds.length) {
+      throw new Error("No asset unit IDs provided");
     }
 
-    // Send the array in the request body
     const { data } = await httpRequest.put("/asset-mapping/unassign-assets", {
-      assignmentIds, // ✅ this is key
+      assetUnitIds, // ✅ send array of assetUnitId
     });
 
     return data;
@@ -53,7 +53,6 @@ export const unassignAssetApi = async (assignmentIds) => {
     throw new Error(err?.response?.data?.message || err.message || "API Error");
   }
 };
-
 //get unassign asset
 export const getUnassignedAssetsApi = async ({ search }) => {
   try {

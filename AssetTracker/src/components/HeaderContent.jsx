@@ -6,7 +6,7 @@ const HeaderContent = () => {
   const user = useSelector((state) => state.auth.user); // user object
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
   const role = useSelector((state) => state.auth.user?.role);
-
+   
   return (
     <Flex direction="column">
       {isLoggedIn && user ? (

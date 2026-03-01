@@ -224,7 +224,7 @@ model AssetUnit {
   status        UnitStatus @default(IN_STOCK)
   images        String[]
 
- assigned      Boolean    @default(false) 
+  assigned      Boolean    @default(false) 
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -277,6 +277,7 @@ model AssetLog {
 }
 
 // -------------------- ASSET ASSIGNMENT DEPARTMENT --------------------
+
 model AssetAssingmentDepartment {
   id Int @id @default(autoincrement())
 

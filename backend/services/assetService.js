@@ -68,7 +68,6 @@ class AssetService {
           vendor: true,
         },
       });
-
       // -------------------- CREATE ASSET UNITS --------------------
       const assetUnits = [];
       for (let i = 0; i < totalUnits; i++) {
@@ -99,7 +98,7 @@ class AssetService {
           asset_uid: asset.uid,
           context: ASSET_LOG_CONTEXT.CREATE,
           description: `Asset created by ${issuer?.firstName || "system"}`,
-          issuer: issuer?.firstName || "system",
+          issuer:issuer?.userFirstName || "system",
         },
       });
 
@@ -317,7 +316,7 @@ class AssetService {
             asset_uid: uid,
             context: ASSET_LOG_CONTEXT.UPDATE,
             description: JSON.stringify(changedFields, null, 2),
-            issuer: issuer?.firstName || "system",
+            issuer: issuer?.userFirstName || "system",
           },
         });
       }
@@ -464,7 +463,7 @@ class AssetService {
           description: `${updatedAsset.name} Asset ${
             updatedAsset.is_active ? "Activated" : "Deactivated"
           } by ${issuer?.userFirstName || "system"}`,
-          issuer: issuer?.userFirstName || "system",
+          issuer:issuer?.userFirstName || "system",
         },
       });
 

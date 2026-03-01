@@ -31,7 +31,7 @@ const AssetReport = () => {
 
   const assets = data?.data || [];
   const total = data?.total || 0;
-
+  console.log(assets)
   const handleDownload = async () => {
     setIsExporting(true);
     try {

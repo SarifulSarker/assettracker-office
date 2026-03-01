@@ -312,7 +312,19 @@ const AssetEdit = () => {
                     onAdd={(unitIdx, file) => {
                       setUnitImages((prev) => {
                         const updated = [...prev];
-                        updated[unitIdx] = [...(updated[unitIdx] || []), file];
+                        const currentImages = updated[unitIdx] || [];
+
+                        if (currentImages.length >= 5) {
+                          notifications.show({
+                            title: "Limit exceeded",
+                            message: "Maximum 5 images allowed per unit",
+                            color: "red",
+                            position: "top-center",
+                          });
+                          return prev; // ❌ don't update
+                        }
+
+                        updated[unitIdx] = [...currentImages, file];
                         return updated;
                       });
                     }}

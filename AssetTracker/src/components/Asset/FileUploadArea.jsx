@@ -9,7 +9,12 @@ import {
   Stack,
   Button,
 } from "@mantine/core";
-import { IconPhoto, IconX, IconCamera, IconDeviceMobile } from "@tabler/icons-react";
+import {
+  IconPhoto,
+  IconX,
+  IconCamera,
+  IconDeviceMobile,
+} from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { useRef, useState } from "react";
 
@@ -43,16 +48,16 @@ const FileUploadArea = ({ images, setImages }) => {
   const handleFileChange = (e) => {
     handleDrop(Array.from(e.target.files));
   };
-
-  const removeImage = (index) =>
-    setImages((prev) => prev.filter((_, i) => i !== index));
-
+  const removeImage = (index) => {
+    const updated = images.filter((_, i) => i !== index);
+    setImages(updated);
+  };
   // ---------- Modal actions ----------
   const openCamera = () => cameraInputRef.current.click();
   const openGallery = () => galleryInputRef.current.click();
 
   return (
-    <Paper withBorder radius="md" p="md" mt={10}> 
+    <Paper withBorder radius="md" p="md" mt={10}>
       {/* ========= Modal ========= */}
       <Modal
         opened={opened}
@@ -70,9 +75,9 @@ const FileUploadArea = ({ images, setImages }) => {
             leftSection={<IconDeviceMobile size={18} />}
             onClick={openGallery}
           >
-             🖼️ Choose from Gallery
+            🖼️ Choose from Gallery
           </Button>
-{/* 
+          {/* 
           <Button color="red" variant="subtle" onClick={() => setOpened(false)}>
             Cancel
           </Button> */}
@@ -102,7 +107,7 @@ const FileUploadArea = ({ images, setImages }) => {
 
       {/* ========= Click Area ========= */}
       <Dropzone
-        onClick={() => setOpened(true)}   // 🔥 open modal now
+        onClick={() => setOpened(true)} // 🔥 open modal now
         onDrop={handleDrop}
         maxSize={5 * 1024 ** 2}
         accept={IMAGE_MIME_TYPE}

@@ -1,64 +1,75 @@
-import React from "react";
-import { Paper, Stack, Text, Badge, Group, Flex, Checkbox } from "@mantine/core";
+import { Card, Text, Badge, Group, Flex, Checkbox, Stack } from "@mantine/core";
 
-const AssetItem = ({ id, name, category, subCategory, selected, onCheck, onCross, isReadOnly }) => {
+const AssetCard = ({
+  id,
+  name,
+  category,
+  subCategory,
+  productId,
+  status,
+  selected,
+  onCheck,
+  isReadOnly,
+}) => {
   return (
-    <Paper
-      p="md"
-      mt="sm"
+    <Card
+      shadow="sm"
+      padding="lg"
       withBorder
-      radius="md"
       style={{
-        backgroundColor: isReadOnly ? "#f8f9fa" : "#e7f5ff",
+        backgroundColor: selected
+          ? "#d0ebff"
+          : isReadOnly
+            ? "#f8f9fa"
+            : "#ffffff",
+        transition: "0.2s",
       }}
     >
-      <Stack spacing={6}>
-        <Flex justify="space-between" align="center" wrap="wrap" gap={6}>
-          <Group spacing={6}>
-            {/* Checkbox for assets only */}
+      <Stack gap="xs">
+        <Flex justify="space-between" align="flex-start">
+          <Group gap="sm" align="flex-start">
             {!isReadOnly && (
-              <Checkbox
-                checked={selected}
-                onChange={() => onCheck?.(id)}
-                size="lg"
-                styles={{
-                  input: { width: 24, height: 24 },
-                }}
-              />
+              <Checkbox checked={selected} onChange={() => onCheck?.(id)} />
             )}
 
-            {/* Name + Badges */}
             <div>
-              <Text fw={600} fz="sm" lineClamp={1}>
+              {/* Asset Name */}
+              <Text fw={600} size="sm">
                 {name}
               </Text>
-              <Group spacing={6}>
-                {category && <Badge size="xs" variant="light" color="blue">{category}</Badge>}
-                {subCategory && <Badge size="xs" variant="light" color="gray">{subCategory}</Badge>}
+
+              {/* Product ID */}
+              <Badge  color="blue" variant="outline">
+                Product ID: {productId}
+              </Badge>
+
+              {/* Badges */}
+              <Group gap={6} mt={6}>
+                {category && (
+                  <Badge size="xs" variant="light">
+                    {category}
+                  </Badge>
+                )}
+                {subCategory && (
+                  <Badge size="xs" variant="outline">
+                    {subCategory}
+                  </Badge>
+                )}
+
+                {/* Status Badge */}
+                <Badge
+                  size="xs"
+                  color={status === "IN_STOCK" ? "green" : "red"}
+                >
+                  {status}
+                </Badge>
               </Group>
             </div>
           </Group>
-
-          {/* Cross button for employee assigned assets */}
-          {isReadOnly && onCross && (
-            <button
-              onClick={() => onCross?.(id)}
-              style={{
-                background: "transparent",
-                border: "none",
-                color: "red",
-                cursor: "pointer",
-                fontWeight: "bold",
-                fontSize: 18,
-              }}
-            >
-              ✕
-            </button>
-          )}
         </Flex>
       </Stack>
-    </Paper>
+    </Card>
   );
 };
 
-export default AssetItem;
+export default AssetCard;

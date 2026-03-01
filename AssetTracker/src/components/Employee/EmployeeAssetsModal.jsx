@@ -1,3 +1,4 @@
+// ---------------------- EmployeeAssetsModal.jsx ----------------------
 import React, { useState } from "react";
 import {
   Modal,
@@ -9,13 +10,11 @@ import {
   Divider,
   Button,
   Checkbox,
+  Flex,
 } from "@mantine/core";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { modals } from "@mantine/modals";
-import {
-  getAssetsByEmployeeApi,
-  unassignAssetApi,
-} from "../../services/assetMapping.js";
+import { getAssetsByEmployeeApi, unassignAssetApi } from "../../services/assetMapping.js";
 import { notifications } from "@mantine/notifications";
 import { usePermissions } from "../../hooks/useAuthPermissions.js";
 
@@ -24,21 +23,19 @@ const EmployeeAssetsModal = ({ opened, onClose, employee }) => {
   const queryClient = useQueryClient();
   const { hasPermission } = usePermissions();
 
-  const {
-    data: response,
-    isLoading,
-    isError,
-  } = useQuery({
+  // Fetch assigned assets
+  const { data: response, isLoading, isError } = useQuery({
     queryKey: ["employee-assets", employee?.id],
     queryFn: () => getAssetsByEmployeeApi(employee.id),
     enabled: opened && !!employee?.id,
   });
 
+  // Filter active assignments
   const assignments = (response?.data ?? []).filter((a) => !a.unassignedAt);
 
-  // Mutation for bulk unassign
+  // Mutation for unassigning selected asset units
   const unassignMutation = useMutation({
-    mutationFn: (assetIds) => unassignAssetApi(assetIds),
+    mutationFn: (assetUnitIds) => unassignAssetApi(assetUnitIds),
     onSuccess: () => {
       notifications.show({
         title: "Success",
@@ -52,11 +49,10 @@ const EmployeeAssetsModal = ({ opened, onClose, employee }) => {
 
   const toggleSelectAsset = (id) => {
     setSelectedAssets((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
   };
 
-  // Open confirmation modal before bulk unassign
   const confirmUnassignSelected = () => {
     if (selectedAssets.length === 0) {
       notifications.show({
@@ -72,8 +68,7 @@ const EmployeeAssetsModal = ({ opened, onClose, employee }) => {
       title: "Unassign Selected Assets",
       children: (
         <Text size="sm">
-          Are you sure you want to unassign {selectedAssets.length} selected
-          asset
+          Are you sure you want to unassign {selectedAssets.length} selected asset
           {selectedAssets.length > 1 ? "s" : ""}?
         </Text>
       ),
@@ -93,50 +88,49 @@ const EmployeeAssetsModal = ({ opened, onClose, employee }) => {
     >
       <Stack spacing="md">
         {isLoading && <Text>Loading...</Text>}
-        {isError && (
-          <Text color="red" ta="center">
-            Failed to load assets
-          </Text>
-        )}
+        {isError && <Text color="red" ta="center">Failed to load assets</Text>}
 
         {!isLoading &&
           !isError &&
           assignments.length > 0 &&
-          assignments.map((a) => (
-            <Paper key={a.id} p="md" withBorder radius="md">
-              <Group align="flex-start">
-                {hasPermission("asset_assignment", "unassign") && (
-                  <Checkbox
-                    checked={selectedAssets.includes(a.id)}
-                    onChange={() => toggleSelectAsset(a.id)}
-                  />
-                )}
+          assignments.map((a) => {
+            // Find the assigned assetUnit
+            const unit = a.asset.assetUnits.find(u => u.id === a.assetUnitId);
 
-                <Text fw={600}>{a.asset?.name || "Unknown Asset"}</Text>
+            return (
+              <Paper key={a.id} p="md" withBorder radius="md">
+                <Flex align="center" justify="space-between" mb="xs">
+                  <Group align="center">
+                    {hasPermission("asset_assignment", "unassign") && (
+                      <Checkbox
+                        checked={selectedAssets.includes(unit.id)}
+                        onChange={() => toggleSelectAsset(unit.id)}
+                      />
+                    )}
+                    <Text fw={600}>{a.asset?.name || "Unknown Asset"}</Text>
+                  </Group>
 
-                <Group spacing="xs" ml="auto">
-                  <Badge color={a.asset?.is_active ? "green" : "gray"}>
-                    {a.asset?.is_active ? "Active" : "Inactive"}
-                  </Badge>
-                </Group>
-              </Group>
+                  <Group spacing="xs">
+                    <Badge color={unit?.status === "IN_USE" ? "green" : "gray"}>
+                      {unit?.status || "Unknown"}
+                    </Badge>
+                    <Badge color="blue">{unit?.productId || "N/A"}</Badge>
+                  </Group>
+                </Flex>
 
-              <Divider my="xs" />
+                <Divider my="xs" />
 
-              <Text
-                size="sm"
-                style={{ whiteSpace: "pre-wrap", lineHeight: 1.5 }}
-              >
-                <b>Specs:</b>{" "}
-                {a.asset?.specs
-                  ? a.asset.specs
-                      .split("\n")
-                      .map((line, idx) => (idx === 0 ? line : "       " + line))
-                      .join("\n")
-                  : "N/A"}
-              </Text>
-            </Paper>
-          ))}
+                <Flex direction="column" gap="4px">
+                  <Text size="sm">
+                    <b>Specs:</b> {a.asset?.specs || "N/A"}
+                  </Text>
+                  <Text size="sm">
+                    <b>Purchase Price:</b> {unit?.purchasePrice || "N/A"}
+                  </Text>
+                </Flex>
+              </Paper>
+            );
+          })}
 
         {!isLoading && !isError && assignments.length === 0 && (
           <Text ta="center" color="dimmed">
@@ -144,14 +138,11 @@ const EmployeeAssetsModal = ({ opened, onClose, employee }) => {
           </Text>
         )}
 
-        {/* Bulk unassign button */}
-
-        {assignments.length > 0 &&
-          hasPermission("asset_assignment", "unassign") && (
-            <Button color="red" onClick={confirmUnassignSelected}>
-              Select & Unassign
-            </Button>
-          )}
+        {assignments.length > 0 && hasPermission("asset_assignment", "unassign") && (
+          <Button color="red" onClick={confirmUnassignSelected}>
+            Select & Unassign
+          </Button>
+        )}
       </Stack>
     </Modal>
   );

@@ -6,11 +6,10 @@ import { ASSET_LOG_CONTEXT } from "../utils/ASSET_LOG_CONTEXT.js";
 const prisma = new PrismaClient();
 
 class AssetAssignmentService {
-
-  async assignAssetsToEmployee(employeeId, assetIds, issuer) {
+  async assignAssetsToEmployee(employeeId, assetUnitIds, issuer) {
     try {
-      if (!employeeId || !assetIds?.length) {
-        return ErrorResponse(400, "Employee or assets missing");
+      if (!employeeId || !assetUnitIds?.length) {
+        return ErrorResponse(400, "Employee or asset units missing");
       }
 
       // 1️⃣ Fetch employee
@@ -29,45 +28,58 @@ class AssetAssignmentService {
         return ErrorResponse(404, "Employee not found");
       }
 
-      // 2️⃣ Fetch all assets to get their UIDs
-      const assets = await prisma.asset.findMany({
-        where: { id: { in: assetIds.map(Number) } },
-        select: { id: true, uid: true },
+      // 2️⃣ Fetch assetUnits with asset info
+      const assetUnits = await prisma.assetUnit.findMany({
+        where: { id: { in: assetUnitIds.map(Number) } },
+        include: {
+          asset: {
+            select: {
+              id: true,
+              uid: true,
+              name: true,
+            },
+          },
+        },
       });
 
-      const assetMap = new Map(assets.map((a) => [a.id, a.uid]));
+      if (!assetUnits.length) {
+        return ErrorResponse(404, "Asset units not found");
+      }
 
-      // 3️⃣ Assign assets
+      // 3️⃣ Transaction (Create assignment + update unit + log)
+      const result = await prisma.$transaction(async (tx) => {
+        const createdAssignments = [];
 
-      const assignments = await Promise.all(
-        assetIds.map(async (assetId) => {
+        for (const unit of assetUnits) {
+          if (unit.assigned) {
+            throw new Error(`AssetUnit ${unit.id} already assigned`);
+          }
+
           // 3a. Create assignment
-          const assignment = await prisma.assetAssingmentEmployee.create({
+          const assignment = await tx.assetAssingmentEmployee.create({
             data: {
-              assetId,
+              assetId: unit.assetId,
+              assetUnitId: unit.id,
               employeeId: employee.id,
               assignedAt: new Date(),
               is_active: true,
             },
           });
 
-          // 3b. Update asset status to "inuse"
-          await prisma.asset.update({
-            where: { id: assetId },
-            data: { status: "inuse" }, // <-- your need
+          // 3b. Update assetUnit
+          await tx.assetUnit.update({
+            where: { id: unit.id },
+            data: {
+              assigned: true,
+              status: "IN_USE",
+            },
           });
 
-          return assignment;
-        }),
-      );
-
-      // 4️⃣ Create logs with asset_uid
-      await Promise.all(
-        assetIds.map((assetId) =>
-          prisma.assetLog.create({
+          // 3c. Create Log
+          await tx.assetLog.create({
             data: {
-              asset_id: assetId,
-              asset_uid: assetMap.get(assetId), // <-- ADD THIS
+              asset_id: unit.assetId,
+              asset_uid: unit.asset?.uid,
               context: ASSET_LOG_CONTEXT.ASSIGN,
               description: JSON.stringify({
                 action: "ASSIGN",
@@ -78,19 +90,30 @@ class AssetAssignmentService {
                   department: employee.department,
                   designation: employee.designation,
                 },
-                asset: { id: assetId },
+                asset: {
+                  id: unit.assetId,
+                  name: unit.asset?.name,
+                },
+                assetUnit: {
+                  id: unit.id,
+                  productId: unit.productId,
+                },
                 assignedAt: new Date(),
               }),
               issuer: issuer?.userFirstName || "system",
             },
-          }),
-        ),
-      );
+          });
 
-      return SuccessResponse(200, "Assets assigned successfully", assignments);
+          createdAssignments.push(assignment);
+        }
+
+        return createdAssignments;
+      });
+
+      return SuccessResponse(200, "Asset units assigned successfully", result);
     } catch (error) {
-      console.error("ASSIGN ASSET ERROR:", error);
-      return ErrorResponse(500, "Server Error");
+      console.error("ASSIGN ERROR:", error);
+      return ErrorResponse(500, error.message || "Server Error");
     }
   }
 
@@ -104,12 +127,11 @@ class AssetAssignmentService {
             include: {
               category: true,
               subCategory: true,
+              assetUnits: true,
             },
           },
         },
       });
-
-      //  console.log("form api",assets)
 
       return SuccessResponse(
         200,
@@ -130,7 +152,15 @@ class AssetAssignmentService {
             uid: uid,
           },
         },
-        include: { employee: true },
+        include: {
+          employee: true,
+          assetUnit: {
+            select: {
+              id: true,
+              productId: true,
+            },
+          },
+        },
         orderBy: { createdAt: "desc" },
       });
 
@@ -145,48 +175,62 @@ class AssetAssignmentService {
     }
   }
 
-  async unassignAssetService(assignmentIds) {
+  // ---------------------- services/assetAssignmentService.js ----------------------
+  async unassignAssetsService(assetUnitIds) {
     try {
-      if (!assignmentIds || !assignmentIds.length) {
-        return ErrorResponse(400, "Assignment IDs are required");
+      if (!assetUnitIds || !assetUnitIds.length) {
+        return ErrorResponse(400, "Asset Unit IDs are required");
       }
 
-      // 1️⃣ Find active assignments
+      // 1️⃣ Find active assignments for these asset units
       const assignments = await prisma.assetAssingmentEmployee.findMany({
         where: {
-          id: { in: assignmentIds.map(Number) }, // ✅ use `in` for array
+          assetUnitId: { in: assetUnitIds.map(Number) },
           is_active: true,
           unassignedAt: null,
         },
       });
 
       if (!assignments.length) {
-        return ErrorResponse(404, "No active assignments found");
+        return ErrorResponse(
+          404,
+          "No active assignments found for these units",
+        );
       }
 
-      // 2️⃣ Bulk update
-      const updatedAssignments = await prisma.assetAssingmentEmployee.updateMany({
-          where: {
-            id: { in: assignments.map((a) => a.id) },
-          },
-          data: {
-            is_active: false,
-            unassignedAt: new Date(),
-          },
-        });
+      // 2️⃣ Update assignments to mark unassigned
+      await prisma.assetAssingmentEmployee.updateMany({
+        where: {
+          assetUnitId: { in: assetUnitIds.map(Number) },
+        },
+        data: {
+          is_active: false,
+          unassignedAt: new Date(),
+        },
+      });
+
+      // 3️⃣ Update AssetUnit status and assigned field
+      await prisma.assetUnit.updateMany({
+        where: {
+          id: { in: assetUnitIds.map(Number) },
+        },
+        data: {
+          status: "IN_STOCK",
+          assigned: false,
+        },
+      });
 
       return SuccessResponse(
         200,
         "Assets unassigned successfully",
-        updatedAssignments,
+        assignments,
       );
     } catch (error) {
       console.error("UNASSIGN ASSET SERVICE ERROR:", error);
       return ErrorResponse(500, error.message || "Server error");
     }
   }
-
-  async  getUnassignedAssetUnitsService({ search }) {
+  async getUnassignedAssetUnitsService({ search }) {
     try {
       let filters = {
         assigned: false, // only unassigned units
@@ -217,9 +261,13 @@ class AssetAssignmentService {
         orderBy: { createdAt: "desc" },
       });
 
-      return SuccessResponse(200, "Unassigned asset units fetched successfully", {
-        assetUnits,
-      });
+      return SuccessResponse(
+        200,
+        "Unassigned asset units fetched successfully",
+        {
+          assetUnits,
+        },
+      );
     } catch (error) {
       console.error("getUnassignedAssetUnitsService error:", error);
       return ErrorResponse(500, error.message || "Server error");
@@ -336,6 +384,7 @@ class AssetAssignmentService {
               asset: {
                 include: { category: true, subCategory: true },
               },
+            
             },
           },
         },
@@ -352,7 +401,7 @@ class AssetAssignmentService {
           employeeName: emp.fullName,
           employeeUid: emp.uid,
           assignedAsset: assets.map((a) => a.name).join(", "),
-          assetType: assets.map((a) => a.subCategory?.name || "").join(", "),
+          assetType: assets.map((a) => a.category?.name || "").join(", "),
           assetPrice: assets.reduce(
             (sum, a) => sum + (a.purchasePrice || 0),
             0,
@@ -362,7 +411,7 @@ class AssetAssignmentService {
             .join(", "),
         };
       });
-
+  
       return SuccessResponse(200, "Asset Assignment Data fetched", {
         data,
         total,

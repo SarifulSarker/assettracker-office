@@ -71,6 +71,7 @@ const AssetLog = () => {
   const unitPrices = asset?.assetUnits?.map((u) => u.purchasePrice)?.join(", ");
   const logs = context ? (AssignlogData ?? []) : (AssignlogData?.data ?? []);
   const activeLog = logs.find((l) => !l.unassignedAt);
+ console.log(logs)
 
   /* ---------------- UI ---------------- */
   return (
@@ -314,7 +315,7 @@ const AssetLog = () => {
                     {activeLog ? "ASSIGNED" : "UNASSIGNED"}
                   </Badge>
                 </Group>
-
+                
                 {activeLog && (
                   <>
                     <Divider my="xs" />
@@ -363,6 +364,7 @@ const AssetLog = () => {
                     {log.unassignedAt ? "Inactive" : "Active"}
                   </Badge>
                 </Group>
+                <Text>Product ID : {log.assetUnit.productId}</Text>
                 <Text size="xs" c="dimmed" component="div">
                   Assigned: {new Date(log.createdAt).toLocaleString()}
                 </Text>

@@ -1,12 +1,22 @@
 import React, { useEffect, useState } from "react";
-import { Button, Flex, TextInput } from "@mantine/core";
+import {
+  Badge,
+  Button,
+  Card,
+  Flex,
+  Stack,
+  Text,
+  TextInput,
+  SimpleGrid,
+  ScrollArea,
+} from "@mantine/core";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { notifications } from "@mantine/notifications";
 import { IconSearch } from "@tabler/icons-react";
 
-import Column from "../../components/AssetMapping/Column";
 import MovableItem from "../../components/AssetMapping/MovableItem";
 import EmployeeHeader from "../../components/AssetMapping/EmployeeHeader";
+import EmployeeAssetsCard from "../../components/AssetMapping/EmployeeAssetsCard";
 import { COLUMN_NAMES } from "./data";
 
 import { getAllEmployeesApi } from "../../services/employee";
@@ -29,7 +39,7 @@ const AssetMapping = () => {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
   const [assetSearch, setAssetSearch] = useState("");
   const queryClient = useQueryClient();
-
+  const [employeeAssets, setEmployeeAssets] = useState([]);
   // ---------------- API CALLS ----------------
   const { data: empData } = useQuery({
     queryKey: ["employees"],
@@ -41,7 +51,7 @@ const AssetMapping = () => {
     queryFn: () => getUnassignedAssetsApi({ search: assetSearch }),
   });
 
-  const { data: employeeAssetData, isLoading } = useQuery({
+  const { data: employeeAssetData } = useQuery({
     queryKey: ["employeeAssets", selectedEmployeeId],
     queryFn: () => getAssetsByEmployeeApi(selectedEmployeeId),
     enabled: !!selectedEmployeeId,
@@ -56,7 +66,7 @@ const AssetMapping = () => {
         color: "green",
         position: "top-center",
       });
-      setItems((prev) => prev.filter((i) => !vars.assetIds.includes(i.id)));
+      setItems((prev) => prev.filter((i) => !vars.assetUnitIds.includes(i.id)));
       queryClient.invalidateQueries({
         queryKey: ["employeeAssets", String(vars.employeeId)],
       });
@@ -66,24 +76,51 @@ const AssetMapping = () => {
   // ---------------- DATA ----------------
   const employees = empData?.data?.employees || [];
   const assets = assetData?.data?.assetUnits || [];
- 
-  const employeeAssets = (employeeAssetData?.data ?? []).filter(
-    (a) => !a.unassignedAt
+
+  const employeesAssets = (employeeAssetData?.data ?? []).filter(
+    (a) => !a.unassignedAt,
   );
+  
+  const handleAssignAssets = () => {
+    if (!selectedEmployeeId) return;
+    const selectedAssets = items.filter((i) => i.selected);
+    if (selectedAssets.length === 0) return;
 
+    // ---------------- Optimistic update ----------------
+    setItems((prev) => prev.filter((i) => !selectedAssets.includes(i)));
+    setEmployeeAssets((prev) => [...prev, ...selectedAssets]);
+
+    // ---------------- Trigger backend call ----------------
+    mutation.mutate({
+      employeeId: Number(selectedEmployeeId),
+      assetUnitIds: selectedAssets.map((i) => i.id),
+    });
+  };
   // ---------------- INIT ASSETS ----------------
-  useEffect(() => {
-    setItems(
-      assets.map((a) => ({
-        id: a.id,
-        name: a.name,
-        category: a.category?.name || null,
-        subCategory: a.subCategory?.name || null,
-        selected: false, // ✅ for checkbox
-      }))
-    );
-  }, [assetData]);
+  const mappedAssets = React.useMemo(() => {
+    return (assets || []).map((a) => ({
+      id: a.id,
+      name: a.asset?.name || "",
+      category: a.asset?.category?.name || null,
+      subCategory: a.asset?.subCategory?.name || null,
+      productId: a.productId,
+      status: a.status,
+      selected: false,
+    }));
+  }, [assets]);
 
+  useEffect(() => {
+    setItems((prev) => {
+      const newItems = mappedAssets;
+      if (JSON.stringify(prev) !== JSON.stringify(newItems)) return newItems;
+      return prev;
+    });
+  }, [mappedAssets]);
+  useEffect(() => {
+    if (employeeAssetData?.data) {
+      setEmployeeAssets(employeeAssetData.data.filter((a) => !a.unassignedAt));
+    }
+  }, [employeeAssetData]);
   // ---------------- Checkbox / Cross ----------------
   const handleCheck = (id) => {
     if (!selectedEmployeeId) {
@@ -96,108 +133,44 @@ const AssetMapping = () => {
       return;
     }
     setItems((prev) =>
-      prev.map((i) =>
-        i.id === id ? { ...i, selected: !i.selected } : i
-      )
+      prev.map((i) => (i.id === id ? { ...i, selected: !i.selected } : i)),
     );
   };
 
   const selectedEmployee = employees.find(
-    (e) => String(e.id) === String(selectedEmployeeId)
+    (e) => String(e.id) === String(selectedEmployeeId),
   );
 
   // ---------------- UI ----------------
   return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "3fr 2fr", // 3/5 assets, 2/5 employee info
-        gap: 24,
-        padding: 24,
-        width: "100%",
-      }}
-    >
-      {/* ASSETS COLUMN */}
-      <Column title="Assets">
-        <Flex direction="row" gap="sm">
-          <TextInput
-            placeholder="Search assets..."
-            value={assetSearch}
-            onChange={(e) => setAssetSearch(e.target.value)}
-            mb="sm"
-            icon={<IconSearch size={16} />}
-          />
+    <div style={{ padding: 24, width: "100%" }}>
+      {/* ================= TOP BAR ================= */}
+      <Flex justify="space-between" align="center" mb="lg" gap="md">
+        <TextInput
+          placeholder="Search assets..."
+          value={assetSearch}
+          onChange={(e) => setAssetSearch(e.target.value)}
+          icon={<IconSearch size={16} />}
+          style={{ width:250 }}
+        />
+
+        <div style={{ width: 250 }}>
           <EmployeeHeader
             employees={employees}
             selectedEmployeeId={selectedEmployeeId}
             setSelectedEmployeeId={setSelectedEmployeeId}
           />
-        </Flex>
-        {items.length === 0 && <div style={emptyBox}>No assets found</div>}
-        {items.map((item) => (
-          <MovableItem
-            key={item.id}
-            {...item}
-            column={COLUMN_NAMES.ASSET}
-            onCheck={() => handleCheck(item.id)}
-          />
-        ))}
-      </Column>
-
-      {/* EMPLOYEE INFO COLUMN */}
-      <Column title="Employee Info">
-        {selectedEmployee ? (
-          <>
-            <div
-              style={{
-                padding: "12px",
-                marginBottom: "12px",
-                borderRadius: "8px",
-                background: "#f8f9fa",
-                border: "1px solid #e9ecef",
-              }}
-            >
-              <div style={{ fontWeight: 600 }}>Name: {selectedEmployee.fullName}</div>
-              <div style={{ fontSize: 13 }}>
-                Designation: {selectedEmployee.designation.name}
-              </div>
-              <div style={{ fontSize: 13 }}>
-                Department: {selectedEmployee.department.name}
-              </div>
-            </div>
-
-            {isLoading && <div style={emptyBox}>Loading employee assets...</div>}
-            {!isLoading && employeeAssets.length === 0 && (
-              <div style={emptyBox}>This employee does not have any assigned assets</div>
-            )}
-            {!isLoading &&
-              employeeAssets.map((a) => (
-                <MovableItem
-                  key={a.asset.id}
-                  id={a.asset.id}
-                  name={a.asset.name}
-                  category={a.asset.category?.name}
-                  subCategory={a.asset.subCategory?.name}
-                  isReadOnly
-                />
-              ))}
-          </>
-        ) : (
-          <div style={emptyBox}>Please select an employee</div>
-        )}
+        </div>
 
         <Button
           size="md"
           radius="md"
-          fullWidth
-          mt="md"
           onClick={() => {
             if (!selectedEmployeeId) {
               notifications.show({
                 title: "Employee not selected",
                 message: "Please select an employee first",
                 color: "red",
-                position: "top-center",
               });
               return;
             }
@@ -208,20 +181,47 @@ const AssetMapping = () => {
                 title: "No assets selected",
                 message: "Please select at least one asset",
                 color: "orange",
-                position: "top-center",
               });
               return;
             }
 
             mutation.mutate({
               employeeId: Number(selectedEmployeeId),
-              assetIds: selectedAssets.map((i) => i.id),
+              assetUnitIds: selectedAssets.map((i) => i.id),
             });
           }}
         >
           Assign Assets
         </Button>
-      </Column>
+      </Flex>
+
+      {/* ================= EMPLOYEE ASSETS CARD ================= */}
+      {/* <EmployeeAssetsCard
+        selectedEmployee={selectedEmployee}
+        employeesAssets={employeesAssets}
+      /> */}
+      <EmployeeAssetsCard
+        selectedEmployee={selectedEmployee}
+        employeesAssets={employeeAssets}
+      />
+      {/* ================= ASSET CARDS ================= */}
+      <Text  weight={600} size="lg">UnAssign Assets</Text>
+      <ScrollArea h={500} type="auto" offsetScrollbars>
+        {items.length === 0 ? (
+          <div style={emptyBox}>No assets found</div>
+        ) : (
+          <SimpleGrid cols={4} spacing="lg">
+            {items.map((item) => (
+              <MovableItem
+                key={item.id}
+                {...item}
+                column={COLUMN_NAMES.ASSET}
+                onCheck={() => handleCheck(item.id)}
+              />
+            ))}
+          </SimpleGrid>
+        )}
+      </ScrollArea>
     </div>
   );
 };

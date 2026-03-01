@@ -120,7 +120,7 @@ const Assets = () => {
 
   const assets = data?.data?.assets || [];
   const total = data?.data?.total || 0;
- 
+
   const handleDownloadCSV = async () => {
     try {
       setIsExporting(true);
@@ -290,24 +290,7 @@ const Assets = () => {
         }
         filterBadges={null}
         exportAndPagination={
-          <Flex justify="space-between" align="center">
-            {/* LEFT: Download icon */}
-            <Tooltip label="Download CSV" withArrow>
-              <ActionIcon
-                variant="filled"
-                color="blue"
-                loading={isExporting}
-                disabled={isExporting}
-                onClick={handleDownloadCSV}
-                style={{
-                  backgroundColor: COLORS.secondary,
-                }}
-              >
-                <IconDownload size={18} />
-              </ActionIcon>
-            </Tooltip>
-
-            {/* RIGHT: Pagination */}
+          <Flex justify="flex-end">
             <CustomPagination
               page={page}
               setPage={setPage}

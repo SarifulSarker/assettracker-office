@@ -1,32 +1,33 @@
 import AssetAssignmentService from "../services/assetMappingService.js";
 
 class AssetAssignmentController {
-  async assignAssets(req, res) {
-    try {
-      const { employeeId, assetIds } = req.body;
-      const result = await AssetAssignmentService.assignAssetsToEmployee(
-        employeeId,
-        assetIds,
-        req.user,
-      );
+async assignAssets(req, res) {
+  try {
+    const { employeeId, assetUnitIds } = req.body;
 
-      // use statusCode from service response
-      return res.status(result.responseCode || 200).json(result);
-    } catch (error) {
-      console.error("Assign Assets Controller Error:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Internal server error",
-        error: error.message,
-      });
-    }
+    const result = await AssetAssignmentService.assignAssetsToEmployee(
+      employeeId,
+      
+      assetUnitIds,
+      req.user,
+    );
+
+    return res.status(result.responseCode || 200).json(result);
+  } catch (error) {
+    console.error("Assign Assets Controller Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
   }
+}
 
   async getAssetsByEmployee(req, res) {
     try {
       const employeeId = parseInt(req.params.id);
-      const result =
-        await AssetAssignmentService.getAssetsByEmployee(employeeId);
+      const result = await AssetAssignmentService.getAssetsByEmployee(employeeId);
+     
       return res.status(result.responseCode || 200).json(result);
     } catch (error) {
       console.error("Get Assets By Employee Controller Error:", error);
@@ -37,11 +38,12 @@ class AssetAssignmentController {
       });
     }
   }
-
+      
   async getEmployeesByAsset(req, res) {
     try {
       const uid = req.params.uid;
       const result = await AssetAssignmentService.getEmployeesByAsset(uid);
+     
       return res.status(result.statusCode || 200).json(result);
     } catch (error) {
       console.error("Get Employees By Asset Controller Error:", error);
@@ -54,36 +56,36 @@ class AssetAssignmentController {
   }
 
   // Controller: unassign multiple assets
-  async unassignAssets(req, res) {
-    try {
-      // Expect an array of assignment IDs in the body
-      const { assignmentIds } = req.body;
+// ---------------------- controllers/assetAssignmentController.js ----------------------
+async unassignAssets(req, res) {
+  try {
+    // Expect an array of assetUnitIds from frontend
+    const { assetUnitIds } = req.body;
 
-      if (
-        !assignmentIds ||
-        !Array.isArray(assignmentIds) ||
-        assignmentIds.length === 0
-      ) {
-        return res.status(400).json({
-          success: false,
-          message: "assignmentIds array is required",
-        });
-      }
-
-      // Call the updated service for bulk unassign
-      const response =
-        await AssetAssignmentService.unassignAssetService(assignmentIds);
-
-      return res.status(response.statusCode || 200).json(response);
-    } catch (error) {
-      console.error("Unassign Assets Controller Error:", error);
-      return res.status(500).json({
+    if (
+      !assetUnitIds ||
+      !Array.isArray(assetUnitIds) ||
+      assetUnitIds.length === 0
+    ) {
+      return res.status(400).json({
         success: false,
-        message: "Internal server error",
-        error: error.message,
+        message: "assetUnitIds array is required",
       });
     }
+
+    // Call service
+    const response = await AssetAssignmentService.unassignAssetsService(assetUnitIds);
+
+    return res.status(response.responseCode || 200).json(response);
+  } catch (error) {
+    console.error("Unassign Assets Controller Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
   }
+}
 
   async getUnassignedAssets(req, res) {
     try {

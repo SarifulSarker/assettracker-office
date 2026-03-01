@@ -47,6 +47,12 @@ const SidebarItems = [
     link: urls.ASSET_MAPPING,
   },
   {
+    label: "Reports",
+    module: "reports",
+    icon: IconReport,
+    link: urls.REPORT,
+  },
+  {
     label: "Settings",
     module: null, // parent container, permission check on children
     icon: IconSettings,
@@ -80,12 +86,6 @@ const SidebarItems = [
         module: "brand",
         icon: IconBrandAngular,
         link: urls.BRAND,
-      },
-       {
-        label: "Reports",
-        module: "reports",
-        icon: IconReport,
-        link: urls.REPORT,
       },
     ],
   },

@@ -178,6 +178,7 @@ const AssetCreate = () => {
           );
         }
       });
+      
       if (values.purchaseDate) {
         const date =
           values.purchaseDate instanceof Date
